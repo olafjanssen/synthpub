@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from ..models.article import Article
 from ..services.curator_service import CuratorService
-from ..utils.db import db
+from ..utils.db import db, db_session
 import asyncio
 
 bp = Blueprint('articles', __name__, url_prefix='/api/articles')
@@ -45,3 +45,22 @@ def synthesize_article():
     # Process with AI Curator
     result = asyncio.run(curator_service.process_new_content(data))
     return jsonify(result)
+
+@bp.route('/update-by-topic/<int:topic_id>', methods=['POST'])
+def update_article_by_topic(topic_id):
+    """Update article related to a specific topic."""
+    try:
+        with db_session() as session:
+            article = session.query(Article).filter_by(topic_id=topic_id).first()
+            if not article:
+                return jsonify({'status': 'error', 'message': 'Article not found'}), 404
+
+            # Call the curator service to update the article
+            result = asyncio.run(curator_service.update_article(article.id, {
+                'content': article.content,
+                'topic': article.topic.name
+            }))
+
+            return jsonify(result)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500

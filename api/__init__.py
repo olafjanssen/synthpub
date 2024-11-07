@@ -19,9 +19,9 @@ def create_app(config_class=Config):
         curator_routes
     )
     
-    app.register_blueprint(article_routes.bp)
-    app.register_blueprint(topic_routes.bp)
-    app.register_blueprint(news_routes.bp)
-    app.register_blueprint(curator_routes.bp)
+    app.register_blueprint(article_routes)
+    app.register_blueprint(topic_routes)
+    app.register_blueprint(news_routes)
+    app.register_blueprint(curator_routes)
 
     return app

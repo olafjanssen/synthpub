@@ -1,5 +1,5 @@
 from typing import Optional, List
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 from .db import db, db_session
 
 class DatabaseManager:
@@ -16,7 +16,8 @@ class DatabaseManager:
     @staticmethod
     def get_table_names() -> List[str]:
         """Get all table names in the database."""
-        return db.engine.table_names()
+        inspector = inspect(db.engine)
+        return inspector.get_table_names()
 
     @staticmethod
     def get_table_count(table_name: str) -> Optional[int]:

@@ -11,7 +11,6 @@ Key Principles
 - Use the Receive an Object, Return an Object (RORO) pattern where applicable.
 - Make sure to keep the README.md file updated with the latest information about the project and instructions for running all aspects of the project.
 
-
 Python/Flask
 - Use def for function definitions.
 - Use type hints for all function signatures where possible.
@@ -92,5 +91,12 @@ Deployment
 - Use Gunicorn or uWSGI as WSGI HTTP Server.
 - Implement proper logging and monitoring in production.
 - Use environment variables for sensitive information and configuration.
+
+Markdown
+- When working with markdown files, do not wrap the beginning and end of your answers inside backticks. Instead, output the markdown content as free text. You may use backticks for code snippets within the markdown content.
+- When proposing an edit to a markdown file, first decide if there will be code snippets in the markdown file.
+- If there are no code snippets, wrap the beginning and end of your answer in backticks and markdown as the language.
+- If there are code snippets, indent the code snippets with two spaces and the correct language for proper rendering. Indentations level 0 and 4 is not allowed.
+- If a markdown code block is indented with any value other than 2 spaces, automatically fix it
 
 Refer to Flask documentation for detailed information on Views, Blueprints, and Extensions for best practices.

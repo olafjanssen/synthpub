@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 import numpy as np
 from .base_agent import BaseAgent
-from .llm.agent_llm import AgentLLM
+from ..llm.agent_llm import AgentLLM
 
 class RelevanceFilter(BaseAgent):
     """Agent for filtering content based on relevance to topics."""

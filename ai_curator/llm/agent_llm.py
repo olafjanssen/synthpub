@@ -1,10 +1,14 @@
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 import json
+import logging
 from .ollama_client import OllamaClient
 from .prompt_manager import PromptManager
 
 class AgentLLM:
-    """LLM integration for AI Curator agents."""
+    """
+    LLM integration for AI Curator agents.
+    Handles all LLM operations including generation, embeddings, and specific agent tasks.
+    """
     
     def __init__(
         self,
@@ -12,43 +16,157 @@ class AgentLLM:
         prompts_path: Optional[str] = None,
         config: Optional[Dict] = None
     ):
-        self.llm = OllamaClient(model_name, config=config)
+        self.config = config or {}
+        self.logger = logging.getLogger(__name__)
+        self.llm = OllamaClient(
+            model_name=model_name,
+            base_url=self.config.get('base_url', 'http://localhost:11434'),
+            config=self.config
+        )
         self.prompt_manager = PromptManager(prompts_path)
-    
+
     async def analyze_relevance(self, content: str, topic: str) -> Dict:
-        """Analyze content relevance using LLM."""
-        prompt = self.prompt_manager.get_prompt(
-            'relevance',
-            content=content,
-            topic=topic
-        )
-        response = await self.llm.generate(prompt)
-        return json.loads(response)
-    
+        """
+        Analyze content relevance using LLM.
+        
+        Args:
+            content: The content to analyze
+            topic: The topic to check relevance against
+            
+        Returns:
+            Dict containing relevance analysis results
+        """
+        try:
+            prompt = self.prompt_manager.get_prompt(
+                'relevance',
+                content=content,
+                topic=topic
+            )
+            response = await self.llm.generate(prompt)
+            return json.loads(response)
+        except Exception as e:
+            self.logger.error(f"Relevance analysis failed: {str(e)}")
+            raise
+
     async def extract_substance(self, content: str) -> Dict:
-        """Extract substance from content using LLM."""
-        prompt = self.prompt_manager.get_prompt(
-            'extract_substance',
-            content=content
-        )
-        response = await self.llm.generate(prompt)
-        return json.loads(response)
-    
+        """
+        Extract key information and insights from content.
+        
+        Args:
+            content: The content to analyze
+            
+        Returns:
+            Dict containing extracted information
+        """
+        try:
+            prompt = self.prompt_manager.get_prompt(
+                'extract_substance',
+                content=content
+            )
+            response = await self.llm.generate(prompt)
+            return json.loads(response)
+        except Exception as e:
+            self.logger.error(f"Substance extraction failed: {str(e)}")
+            raise
+
     async def synthesize_content(
         self,
         content: str,
         topic: str,
         existing_article: Optional[Dict] = None
-    ) -> str:
-        """Synthesize content using LLM."""
-        prompt = self.prompt_manager.get_prompt(
-            'synthesize_article',
-            content=content,
-            topic=topic,
-            existing_article=json.dumps(existing_article) if existing_article else "None"
-        )
-        return await self.llm.generate(prompt)
-    
+    ) -> Dict:
+        """
+        Synthesize new content or update existing article.
+        
+        Args:
+            content: New content to synthesize
+            topic: The topic of the article
+            existing_article: Optional existing article to update
+            
+        Returns:
+            Dict containing the synthesized article
+        """
+        try:
+            prompt = self.prompt_manager.get_prompt(
+                'synthesize_article',
+                content=content,
+                topic=topic,
+                existing_article=json.dumps(existing_article) if existing_article else "None"
+            )
+            response = await self.llm.generate(prompt)
+            
+            # Ensure the response is properly structured
+            return {
+                'content': response,
+                'metadata': {
+                    'topic': topic,
+                    'is_update': existing_article is not None,
+                    'source_length': len(content)
+                }
+            }
+        except Exception as e:
+            self.logger.error(f"Content synthesis failed: {str(e)}")
+            raise
+
     async def get_embeddings(self, text: str) -> List[float]:
-        """Get embeddings for text."""
-        return await self.llm.embed(text) 
+        """
+        Get vector embeddings for text.
+        
+        Args:
+            text: Text to generate embeddings for
+            
+        Returns:
+            List of embedding values
+        """
+        try:
+            return await self.llm.embed(text)
+        except Exception as e:
+            self.logger.error(f"Embedding generation failed: {str(e)}")
+            raise
+
+    async def enhance_content(self, content: str) -> Dict:
+        """
+        Enhance content with additional elements like summaries and keywords.
+        
+        Args:
+            content: Content to enhance
+            
+        Returns:
+            Dict containing enhanced content elements
+        """
+        try:
+            prompt = self.prompt_manager.get_prompt(
+                'enhance_content',
+                content=content
+            )
+            response = await self.llm.generate(prompt)
+            return json.loads(response)
+        except Exception as e:
+            self.logger.error(f"Content enhancement failed: {str(e)}")
+            raise
+
+    def is_available(self) -> bool:
+        """Check if LLM service is available."""
+        return self.llm.is_available()
+
+    async def validate_response(self, response: str, expected_format: str) -> bool:
+        """
+        Validate LLM response format.
+        
+        Args:
+            response: The LLM response to validate
+            expected_format: Expected format description
+            
+        Returns:
+            bool indicating if response is valid
+        """
+        try:
+            prompt = self.prompt_manager.get_prompt(
+                'validate_response',
+                response=response,
+                expected_format=expected_format
+            )
+            validation_result = await self.llm.generate(prompt)
+            return json.loads(validation_result)['is_valid']
+        except Exception:
+            return False
