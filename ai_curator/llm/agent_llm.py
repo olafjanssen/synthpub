@@ -12,7 +12,7 @@ class AgentLLM:
     
     def __init__(
         self,
-        model_name: str = "mistral",
+        model_name: str = "smollm:135m",
         prompts_path: Optional[str] = None,
         config: Optional[Dict] = None
     ):
@@ -24,6 +24,7 @@ class AgentLLM:
             config=self.config
         )
         self.prompt_manager = PromptManager(prompts_path)
+        self.model_name = model_name
 
     async def analyze_relevance(self, content: str, topic: str) -> Dict:
         """
@@ -170,3 +171,25 @@ class AgentLLM:
             return json.loads(validation_result)['is_valid']
         except Exception:
             return False
+
+    async def generate_initial_content(self, topic: str) -> str:
+        """Generate initial content for a given topic using the Ollama LLM."""
+        try:
+            # Define the prompt for the LLM
+            prompt = f"Write an introductory article about the topic: {topic}. Include key points and insights."
+
+            # Call the Ollama API to generate content
+            response = await self.llm.generate(
+                model=self.model_name,
+                prompt=prompt,
+                max_tokens=500,  # Adjust the token limit as needed
+                temperature=0.7  # Adjust the creativity level as needed
+            )
+            print(f"Generated content: {response}")
+            # Extract the generated content from the response
+            initial_content = response.strip()
+            return initial_content
+
+        except Exception as e:
+            print(f"Error generating content with Ollama: {e}")
+            raise

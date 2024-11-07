@@ -14,13 +14,14 @@ class Article(db.Model):
         updated_at (datetime): Timestamp when article was last updated
         version (int): Version number of the article, increments with updates
     """
+    __tablename__ = 'article'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(db.String, nullable=False)
     topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    version = db.Column(db.Integer, default=1)
+    created_at = db.Column(db.DateTime, nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False)
+    version = db.Column(db.Integer, nullable=False)
     
     def to_dict(self):
         """

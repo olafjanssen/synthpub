@@ -2,14 +2,14 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 class BaseAgent(ABC):
-    """Base class for all AI agents in the system."""
+    """Abstract base class for all agents."""
     
     def __init__(self, config: Optional[Dict] = None):
-        self.config = config or {}
+        self.config = config
     
     @abstractmethod
-    async def process(self, data: Any) -> Dict:
-        """Process the input data and return results."""
+    async def process(self, data: Dict) -> Dict:
+        """Abstract method to process data."""
         pass
     
     def validate_input(self, data: Any) -> bool:

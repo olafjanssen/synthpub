@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
-from ..models.topic import Topic
-from ..utils.db import db
+from ..models import Topic, Article
+from ..utils.db import db, db_session
 
 bp = Blueprint('topics', __name__, url_prefix='/api/topics')
 
@@ -53,10 +53,22 @@ def update_topic(id):
     db.session.commit()
     return jsonify(topic.to_dict())
 
-@bp.route('/<int:id>', methods=['DELETE'])
-def delete_topic(id):
-    """Delete a topic."""
-    topic = Topic.query.get_or_404(id)
-    db.session.delete(topic)
-    db.session.commit()
-    return '', 204
+@bp.route('/<int:topic_id>', methods=['DELETE'])
+def delete_topic(topic_id):
+    """Delete a topic and its associated articles."""
+    try:
+        topic = Topic.query.get(topic_id)
+        if not topic:
+            return jsonify({'status': 'error', 'message': 'Topic not found'}), 404
+
+        # Delete all articles associated with the topic
+        Article.query.filter_by(topic_id=topic_id).delete()
+
+        # Delete the topic
+        db.session.delete(topic)
+        db.session.commit()
+
+        return jsonify({'status': 'success', 'message': 'Topic and associated articles deleted'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': str(e)}), 500

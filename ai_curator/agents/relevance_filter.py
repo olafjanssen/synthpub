@@ -9,7 +9,7 @@ class RelevanceFilter(BaseAgent):
     def __init__(self, config: Optional[Dict] = None):
         super().__init__(config)
         self.llm = AgentLLM(
-            model_name=config.get('model_name', 'mistral'),
+            model_name=config.get('model_name', 'smollm:135m'),
             config=config.get('llm_config')
         )
     

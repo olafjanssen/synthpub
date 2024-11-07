@@ -2,12 +2,25 @@ from typing import Dict, List, Optional
 from ..utils.db import db_session
 from ai_curator.orchestrator import AICuratorOrchestrator
 from ai_curator.config.curator_config import CuratorConfig
+from ai_curator.agents.article_synthesizer import ArticleSynthesizer
 
 class CuratorService:
     def __init__(self):
         config = CuratorConfig()
         self.orchestrator = AICuratorOrchestrator(config.config)
+        self.article_synthesizer = ArticleSynthesizer(config.config)
     
+    async def create_initial_article(self, topic: str) -> Dict:
+        """Create an initial article using the ArticleSynthesizer."""
+        try:
+            result = await self.article_synthesizer.generate_initial_content(topic)
+            if 'content' not in result:
+                raise ValueError("Content generation failed")
+            return result
+        except Exception as e:
+            print(f"Error in create_initial_article: {e}")
+            return {'status': 'error', 'message': str(e)}
+
     async def process_new_content(self, content_data: Dict) -> Dict:
         """Process new content through the AI Curator."""
         try:

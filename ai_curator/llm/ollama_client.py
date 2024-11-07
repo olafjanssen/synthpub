@@ -9,13 +9,13 @@ class OllamaClient(BaseLLM):
     
     def __init__(
         self, 
-        model_name: str = "mistral", 
+        model_name: str = "smollm:135m", 
         base_url: str = "http://localhost:11434",
         config: Optional[Dict] = None
     ):
         super().__init__(model_name, config)
         self.base_url = base_url
-        self.client = httpx.AsyncClient(base_url=base_url, timeout=30.0)
+        self.client = httpx.AsyncClient(base_url=base_url, timeout=60.0)
     
     async def generate(self, prompt: str, **kwargs) -> str:
         """Generate text using Ollama."""
@@ -26,6 +26,7 @@ class OllamaClient(BaseLLM):
                     "model": self.model_name,
                     "prompt": prompt,
                     "stream": False,
+                    "timeout": 60.0,
                     **kwargs
                 }
             )

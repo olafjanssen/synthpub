@@ -3,6 +3,7 @@ from ..models.article import Article
 from ..services.curator_service import CuratorService
 from ..utils.db import db, db_session
 import asyncio
+from datetime import datetime
 
 bp = Blueprint('articles', __name__, url_prefix='/api/articles')
 curator_service = CuratorService()
@@ -64,3 +65,66 @@ def update_article_by_topic(topic_id):
             return jsonify(result)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@bp.route('/<int:article_id>', methods=['DELETE'])
+def delete_article(article_id):
+    """Delete an article by ID."""
+    try:
+        with db_session() as session:
+            article = session.query(Article).get(article_id)
+            if not article:
+                return jsonify({'status': 'error', 'message': 'Article not found'}), 404
+
+            session.delete(article)
+            session.commit()
+            return jsonify({'status': 'success', 'message': 'Article deleted'}), 200
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@bp.route('/create-initial', methods=['POST'])
+def create_initial_article():
+    """Create an initial article using the curator service."""
+    try:
+        data = request.get_json()
+        topic_name = data.get('topic')
+        if not topic_name:
+            return jsonify({'status': 'error', 'message': 'Topic name is required'}), 400
+
+        # Generate initial content using the curator service
+        result = asyncio.run(curator_service.create_initial_article(topic_name))
+        
+        # Ensure a title is provided
+        title = f"Introduction to {topic_name}"
+
+        # Assuming you have a function to save the article
+        article = save_article_to_db(title, result['content'], topic_name)
+        
+        return jsonify({'status': 'success', 'article': article.to_dict()}), 201
+    except Exception as e:
+        print(f"Error creating initial article: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+def save_article_to_db(title: str, content: str, topic_name: str):
+    """Save an article to the database."""
+    from ..models import Article, Topic
+
+    # Find the topic by name
+    topic = Topic.query.filter_by(name=topic_name).first()
+    if not topic:
+        raise ValueError("Topic not found")
+
+    # Create a new article
+    article = Article(
+        title=title,
+        content=content,
+        topic_id=topic.id,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+        version=1
+    )
+
+    # Add and commit the article to the database
+    db.session.add(article)
+    db.session.commit()
+
+    return article

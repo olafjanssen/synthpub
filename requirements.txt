@@ -9,3 +9,8 @@ click==8.1.7
 httpx==0.24.1
 numpy>=1.26.0 
 requests==2.31.0
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.11.1
+pytest-cov>=4.1.0
+

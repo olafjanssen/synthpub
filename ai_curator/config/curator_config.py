@@ -7,7 +7,7 @@ class CuratorConfig:
     
     DEFAULT_CONFIG = {
         'llm': {
-            'model_name': 'mistral',
+            'model_name': 'smollm:135m',
             'base_url': 'http://localhost:11434',
             'timeout': 30.0
         },
