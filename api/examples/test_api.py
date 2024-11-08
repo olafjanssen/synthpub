@@ -3,7 +3,6 @@ Example script to test the SynthPub API endpoints.
 """
 import requests
 import json
-from typing import Dict, Any
 
 API_URL = "http://localhost:8000"
 
@@ -29,9 +28,28 @@ def test_create_topic():
     response = requests.post(f"{API_URL}/topics/", json=topic_data)
     print_response(response)
     
-    # Try creating same topic again (should fail)
-    print("\n--- Testing duplicate topic creation ---")
-    response = requests.post(f"{API_URL}/topics/", json=topic_data)
+    # More safely get topic ID
+    if response.status_code == 200:
+        response_data = response.json()
+        topic_id = response_data.get("id")
+        if not topic_id:
+            print("Warning: No topic ID returned in response")
+            return None
+        return topic_id
+    else:
+        print(f"Error creating topic: {response.status_code}")
+        return None
+
+def test_get_topic(topic_id: str):
+    """Test getting a specific topic."""
+    print("\n=== Testing Get Topic ===")
+    
+    response = requests.get(f"{API_URL}/topics/{topic_id}")
+    print_response(response)
+    
+    print("\n--- Testing get non-existent topic ---")
+    fake_id = "123e4567-e89b-12d3-a456-426614174000"
+    response = requests.get(f"{API_URL}/topics/{fake_id}")
     print_response(response)
 
 def test_list_topics():
@@ -43,14 +61,13 @@ def test_list_topics():
 
 def main():
     """Run all API tests."""
-    print("Running API tests...")
     try:
-        test_create_topic()
+        topic_id = test_create_topic()
+        test_get_topic(topic_id)
         test_list_topics()
     except requests.exceptions.ConnectionError:
-        print("Error: Could not connect to the API.")
-        print("Make sure the API server is running on http://localhost:8000") 
-
+        print("\nError: Could not connect to the API.")
+        print("Make sure the API server is running on http://localhost:8000")
 
 if __name__ == "__main__":
     main() 

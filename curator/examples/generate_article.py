@@ -1,13 +1,13 @@
 """
 Example script demonstrating article generation and refinement.
 """
-from curator.article_generator import generate_article
+from curator.article_generator import generate_and_save_article
 from curator.article_refiner import refine_article
 
 def main():
     # Generate initial article
     topic = "The impact of artificial intelligence on modern journalism"
-    article = generate_article(topic)
+    article = generate_and_save_article(topic)
     print("Original Article:\n", article)
     
     # Refine with new context

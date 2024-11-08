@@ -2,9 +2,8 @@
 Database operations for topics using JSON file storage.
 """
 import json
-import os
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict
 from api.models import Topic
 
 DB_PATH = Path("db/topics.json")
@@ -20,10 +19,13 @@ def load_topics() -> Dict[str, Topic]:
     init_db()
     content = DB_PATH.read_text()
     data = json.loads(content)
-    return {name: Topic(**topic_data) for name, topic_data in data.items()}
+    # Convert directly to Topic objects
+    topics = {id_str: Topic(**topic_data) for id_str, topic_data in data.items()}
+    return topics
 
 def save_topics(topics: Dict[str, Topic]):
     """Save topics to JSON file."""
     init_db()
-    data = {name: topic.model_dump() for name, topic in topics.items()}
-    DB_PATH.write_text(json.dumps(data, indent=2)) 
+    # Direct conversion to dict
+    data = {id_: topic.model_dump() for id_, topic in topics.items()}
+    DB_PATH.write_text(json.dumps(data, indent=2))

@@ -1,15 +1,26 @@
 """
-Pydantic models for API requests and responses.
+Pydantic models for the API.
 """
+from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 
 class TopicCreate(BaseModel):
-    """Request model for creating a topic."""
+    """Model for creating a new topic."""
     name: str
     description: str
 
-class Topic(BaseModel):
-    """Response model for a topic."""
-    name: str
-    description: str
-    article: str | None = None 
+class Topic(TopicCreate):
+    """Model for a topic with generated article."""
+    id: str
+    article: str
+
+class Article(BaseModel):
+    """Article model with metadata and content."""
+    id: str
+    title: str
+    topic_id: str
+    content: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    version: int = 1
