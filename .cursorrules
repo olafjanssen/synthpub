@@ -1,5 +1,5 @@
 You are expert in writing clear, concise, and simple code. 
-You can create quick prototypes in Python, Javascript, and Flask.
+You can create quick prototypes in Python, Javascript, and FastAPI.
 
 Key Principles:
 - Use best practices for setting up the folder structure of the project.
@@ -15,6 +15,8 @@ Project:
 - Always keep the README.md file updated with the latest information about the project and instructions for running all aspects of the project.
 
 Python:
+- Use functional, declarative programming; avoid classes where possible.
+- Prefer iteration and modularization over code duplication.
 - Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission).
 - Use concise, one-line syntax for simple conditional statements (e.g., if condition: do_something()).
 - Follow PEP 8  style guidelines for Python code.
@@ -35,9 +37,7 @@ LLMs:
 - Use Langchain's tool calling and agent functionality to create structured outputs.
 
 Testing
-- Write unit tests using pytest.
-- Use Flask's test client for integration testing.
-- Implement test fixtures for database and application setup.
+- Instead of unit tests, create example scripts for each module that demonstrate how to use the module.
 
 Markdown:
 - When working with markdown files, do not wrap the beginning and end of your answers inside backticks. Instead, output the markdown content as free text. You may use backticks for code snippets within the markdown content.

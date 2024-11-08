@@ -1,0 +1,11 @@
+langchain==0.1.12
+six==1.16.0
+pyyaml==6.0.1
+requests==2.31.0
+beautifulsoup4==4.12.3
+feedparser==6.0.11
+fastapi==0.110.0
+uvicorn==0.27.1
+pydantic==2.6.3
+langchain-ollama==0.1.12
+

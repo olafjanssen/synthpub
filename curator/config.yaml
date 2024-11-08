@@ -1,0 +1,5 @@
+llm:
+  article_generation:
+    model_name: "smollm:135m"
+  article_refinement:
+    model_name: "smollm:135m" 
