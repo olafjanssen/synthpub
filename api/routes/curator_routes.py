@@ -10,7 +10,7 @@ def update_article(article_id):
     """Update an article using the curator service."""
     try:
         data = request.get_json()
-        result = asyncio.run(curator_service.update_article(article_id, data))
+        result = asyncio.run(curator_service.process_article(data, article_id))
         return jsonify(result)
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500 
+        return jsonify({'status': 'error', 'message': str(e)}), 500

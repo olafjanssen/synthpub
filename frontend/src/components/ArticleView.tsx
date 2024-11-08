@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { articlesApi, Article, Topic, topicsApi } from '../services/api';
+import ReactMarkdown from 'react-markdown';
 
 const ArticleView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,9 +72,7 @@ const ArticleView: React.FC = () => {
             </div>
 
             <div className="article-content">
-              {article.content.split('\n').map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
+              <ReactMarkdown>{article.content}</ReactMarkdown>
             </div>
           </div>
         </div>
@@ -82,4 +81,4 @@ const ArticleView: React.FC = () => {
   );
 };
 
-export default ArticleView; 
+export default ArticleView;

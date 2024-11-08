@@ -21,6 +21,9 @@ class PromptManager:
                 - relevance_score (0-1)
                 - reasoning
                 - key_topics_identified
+
+                Only return the JSON response, no other text or comments, so:
+                {relevance_score: 0.5, reasoning: "The content is relevant because...", key_topics_identified: ["topic1", "topic2"]}
             """,
             
             'extract_substance': """
