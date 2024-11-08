@@ -5,6 +5,7 @@
 - [x] Add Id to Topic model
 - [x] Add Article model and store in db
 - [ ] Add refined articles also in db
+- [x] Refactor the code so the API is more modular
 
 ## Front-end
 

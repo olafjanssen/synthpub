@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import List, Optional
 import uuid
 
-from .models import Article
+from ..models.article import Article
 
 DB_PATH = Path("db/articles")
 

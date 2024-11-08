@@ -1,19 +1,7 @@
-"""
-Pydantic models for the API.
-"""
+"""Article model definitions."""
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
-
-class TopicCreate(BaseModel):
-    """Model for creating a new topic."""
-    name: str
-    description: str
-
-class Topic(TopicCreate):
-    """Model for a topic with generated article."""
-    id: str
-    article: str
 
 class Article(BaseModel):
     """Article model with metadata and content."""
@@ -23,4 +11,4 @@ class Article(BaseModel):
     content: str
     created_at: datetime
     updated_at: Optional[datetime] = None
-    version: int = 1
+    version: int = 1 
