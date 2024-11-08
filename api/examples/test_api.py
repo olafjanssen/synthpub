@@ -3,8 +3,24 @@ Example script to test the SynthPub API endpoints.
 """
 import requests
 import json
+import shutil
+from pathlib import Path
 
 API_URL = "http://localhost:8000"
+DB_PATH = Path("db")
+
+def clean_database():
+    """Remove all files from the db folder."""
+    print("\n=== Cleaning Database ===")
+    
+    if DB_PATH.exists():
+        shutil.rmtree(DB_PATH)
+        print("Database cleaned")
+    
+    # Recreate empty db folder structure
+    (DB_PATH / "articles").mkdir(parents=True, exist_ok=True)
+    (DB_PATH / "topics").mkdir(parents=True, exist_ok=True)
+    print("Database structure recreated")
 
 def print_response(response: requests.Response):
     """Helper function to print formatted API responses."""
@@ -21,7 +37,8 @@ def test_create_topic():
     # Test data
     topic_data = {
         "name": "python_basics",
-        "description": "Introduction to Python programming language"
+        "description": "Introduction to Python programming language",
+        "feed_urls": ["https://www.developer-tech.com/categories/developer-languages/developer-languages-python/", "feed://pythoninsider.blogspot.com/feeds/posts/default"]
     }
     
     # Create topic
@@ -59,11 +76,34 @@ def test_list_topics():
     response = requests.get(f"{API_URL}/topics/")
     print_response(response)
 
+def test_update_feeds(topic_id: str):
+    """Test updating feed URLs for a topic."""
+    print("\n=== Testing Update Feed URLs ===")
+
+def test_update_topic(topic_id: str):
+    """Test updating a topic's article based on feed content."""
+    print("\n=== Testing Topic Update ===")
+    
+    # Test updating existing topic
+    response = requests.post(f"{API_URL}/topics/{topic_id}/update")
+    print_response(response)
+    
+    print("\n--- Testing update non-existent topic ---")
+    fake_id = "123e4567-e89b-12d3-a456-426614174000"
+    response = requests.post(f"{API_URL}/topics/{fake_id}/update")
+    print_response(response)
+
 def main():
     """Run all API tests."""
     try:
+        # Clean database before running tests
+        clean_database()
+        
         topic_id = test_create_topic()
-        test_get_topic(topic_id)
+        if topic_id:
+            test_get_topic(topic_id)
+            test_update_feeds(topic_id)
+            test_update_topic(topic_id)
         test_list_topics()
     except requests.exceptions.ConnectionError:
         print("\nError: Could not connect to the API.")

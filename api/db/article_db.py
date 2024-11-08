@@ -81,28 +81,55 @@ def list_articles() -> List[Article]:
             
     return articles
 
-def create_article(title: str, topic_id: str, content: str) -> Article:
+def create_article(
+    title: str, 
+    topic_id: str, 
+    content: str,
+    version: int = 1,
+    created_at: Optional[datetime] = None,
+    updated_at: Optional[datetime] = None
+) -> Article:
     """Create and save a new article."""
     article = Article(
         id=str(uuid.uuid4()),
         title=title,
         topic_id=topic_id,
         content=content,
-        created_at=datetime.utcnow()
+        version=version,
+        created_at=created_at or datetime.utcnow(),  # Use provided date or current time
+        updated_at=updated_at  # Use provided update date or None for new articles
     )
     
     save_article(article)
     return article
 
 def update_article(article_id: str, content: str) -> Optional[Article]:
-    """Update existing article with new content."""
-    article = get_article(article_id)
-    if not article:
-        return None
-        
-    article.content = content
-    article.updated_at = datetime.utcnow()
-    article.version += 1
+    """
+    Update existing article by creating a new version.
     
-    save_article(article)
-    return article
+    Args:
+        article_id: ID of the article to update
+        content: New content for the article
+        
+    Returns:
+        New Article object with incremented version number
+    """
+    # Get the current article
+    current_article = get_article(article_id)
+    if not current_article:
+        return None
+    
+    # Create new article version
+    new_article = Article(
+        id=str(uuid.uuid4()),  # Generate new ID for the new version
+        title=current_article.title,  # Keep the same title
+        topic_id=current_article.topic_id,  # Keep the same topic
+        content=content,  # New content
+        version=current_article.version + 1,  # Increment version number
+        created_at=current_article.created_at,  # Keep original creation date
+        updated_at=datetime.utcnow()  # Set new update time
+    )
+    
+    # Save as a new file
+    save_article(new_article)
+    return new_article
