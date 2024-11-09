@@ -1,0 +1,70 @@
+/* Custom styles */
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.feed-urls {
+    margin-top: 1rem;
+}
+
+.feed-list {
+    padding-left: 1.2rem;
+    margin-bottom: 0;
+}
+
+.feed-list li {
+    word-break: break-all;
+}
+
+.remove-feed {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.feed-url {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.article-text {
+    padding: 2rem;
+    background-color: white;
+    border-radius: 0.25rem;
+}
+
+.article-text p {
+    margin-bottom: 1.5rem;
+}
+
+.article-metadata {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    margin-bottom: 2rem;
+}
+
+.article-metadata div {
+    margin-bottom: 0.5rem;
+}
+
+.article-metadata div:last-child {
+    margin-bottom: 0;
+}
+
+/* Add some spacing around the markdown content */
+.markdown-body {
+    padding: 1rem;
+}
+
+.toast-container {
+    z-index: 1050;
+}
+
+.toast {
+    opacity: 1 !important;
+} 

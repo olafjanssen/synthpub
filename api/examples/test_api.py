@@ -35,12 +35,19 @@ def test_create_topic():
     print("\n=== Testing Topic Creation ===")
     
     # Test data
+    # topic_data = {
+    #     "name": "python_basics",
+    #     "description": "Introduction to Python programming language",
+    #     "feed_urls": ["https://www.developer-tech.com/categories/developer-languages/developer-languages-python/", "feed://pythoninsider.blogspot.com/feeds/posts/default"]
+    # }
+
     topic_data = {
-        "name": "python_basics",
-        "description": "Introduction to Python programming language",
-        "feed_urls": ["https://www.developer-tech.com/categories/developer-languages/developer-languages-python/", "feed://pythoninsider.blogspot.com/feeds/posts/default"]
+        "name": "MDA Framework",
+        "description": "Introduction to Mechanics-Dynamics-Aesthetics framework",
+        "feed_urls": ["https://en.wikipedia.org/wiki/MDA_framework"]
     }
-    
+
+
     # Create topic
     response = requests.post(f"{API_URL}/topics/", json=topic_data)
     print_response(response)

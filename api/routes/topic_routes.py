@@ -20,12 +20,12 @@ async def create_topic_route(topic: TopicCreate):
         # Generate topic ID first
         topic_id = str(uuid4())
         
-        # Generate article content
-        title, content = generate_article(topic.description)
+        # Generate article content using topic description
+        content = generate_article(topic.description)
         
-        # Save article with topic ID
+        # Save article with topic ID and topic name as title
         article_id = create_article(
-            title=title,
+            title=topic.name,
             topic_id=topic_id,
             content=content
         ).id
@@ -107,7 +107,7 @@ async def update_topic_route(topic_id: str):
             # Refine the article with this entry's content
             refined_content = refine_article(refined_content, entry_context)
             
-            # Create new version of the article
+            # Create new version of the article with same title
             latest_article = update_article(
                 article_id=latest_article.id,
                 content=refined_content

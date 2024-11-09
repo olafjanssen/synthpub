@@ -21,3 +21,11 @@ curl http://localhost:8000/topics/AI%20Ethics
 
 # List all topics
 curl http://localhost:8000/topics/
+```
+
+## Frontend Usage
+
+```bash 
+cd frontend
+python -m http.server 8080
+```
