@@ -14,7 +14,7 @@ def generate_article(topic_description: str) -> str:
         Generated article content as string
     """
     model_name = config['llm']['article_generation']['model_name']
-    llm = OllamaLLM(model=model_name)
+    llm = OllamaLLM(model=model_name, num_predict=config['llm']['article_generation']['max_tokens'])
     
     prompt = PromptTemplate.from_template(
         """You are an expert content writer. Write a clear and engaging article 

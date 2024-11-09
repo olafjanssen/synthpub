@@ -7,7 +7,7 @@ from curator.article_refiner import refine_article
 
 def main():
     # Fetch content from a webpage
-    url = "https://dogfoodstudios.nl/page/students/"
+    url = "https://en.wikipedia.org/wiki/MDA_framework"
     try:
         webpage_data = fetch_webpage(url)
         

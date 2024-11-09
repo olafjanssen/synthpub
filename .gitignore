@@ -166,3 +166,5 @@ cython_debug/
 # Local database
 db/*.json
 db/articles/
+db_backup/
+

@@ -1,5 +1,7 @@
 llm:
   article_generation:
-    model_name: "smollm:135m"
+    model_name: "llama3.2:latest"
+    max_tokens: 800
   article_refinement:
-    model_name: "smollm:135m" 
+    model_name: "llama3.2:latest"
+    max_tokens: 800

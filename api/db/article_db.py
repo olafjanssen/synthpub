@@ -22,7 +22,8 @@ def article_to_markdown(article: Article) -> str:
         "topic_id": article.topic_id,
         "created_at": article.created_at.isoformat(),
         "updated_at": article.updated_at.isoformat() if article.updated_at else None,
-        "version": article.version
+        "version": article.version,
+        "previous_version": article.previous_version
     }
     
     return f"""---
@@ -121,13 +122,14 @@ def update_article(article_id: str, content: str) -> Optional[Article]:
     
     # Create new article version
     new_article = Article(
-        id=str(uuid.uuid4()),  # Generate new ID for the new version
-        title=current_article.title,  # Keep the same title
-        topic_id=current_article.topic_id,  # Keep the same topic
-        content=content,  # New content
-        version=current_article.version + 1,  # Increment version number
-        created_at=current_article.created_at,  # Keep original creation date
-        updated_at=datetime.utcnow()  # Set new update time
+        id=str(uuid.uuid4()),
+        title=current_article.title,
+        topic_id=current_article.topic_id,
+        content=content,
+        version=current_article.version + 1,
+        created_at=current_article.created_at,
+        updated_at=datetime.utcnow(),
+        previous_version=current_article.id  # Link to previous version
     )
     
     # Save as a new file

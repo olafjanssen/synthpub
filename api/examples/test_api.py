@@ -43,7 +43,7 @@ def test_create_topic():
 
     topic_data = {
         "name": "MDA Framework",
-        "description": "Introduction to Mechanics-Dynamics-Aesthetics framework",
+        "description": "Concise overview of the Mechanics-Dynamics-Aesthetics (MDA) framework in Game Design.",
         "feed_urls": ["https://en.wikipedia.org/wiki/MDA_framework"]
     }
 

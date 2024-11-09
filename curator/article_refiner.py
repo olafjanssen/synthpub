@@ -17,7 +17,7 @@ def refine_article(article: str, new_context: str) -> str:
         str: Refined article text
     """
     model_name = config['llm']['article_refinement']['model_name']
-    llm = OllamaLLM(model=model_name)
+    llm = OllamaLLM(model=model_name, num_predict=config['llm']['article_refinement']['max_tokens'])
     
     prompt = PromptTemplate.from_template(
         "Here is an existing article:\n\n{article}\n\n"
@@ -25,9 +25,14 @@ def refine_article(article: str, new_context: str) -> str:
         "Please create an updated version of the article that incorporates "
         "the new information while maintaining the same concise style. "
         "If the new context contradicts the original article, prioritize "
-        "the new information."
+        "the new information. Keep it within 300-500 words."
     )
     
+    print(prompt.format(
+        article=article,
+        new_context=new_context
+    ))
+
     return llm.invoke(prompt.format(
         article=article,
         new_context=new_context
