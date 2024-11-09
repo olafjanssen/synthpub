@@ -102,7 +102,7 @@ async def update_topic_route(topic_id: str):
         # Refine the article iteratively with each feed entry
         for feed_entry in feed_contents:
             # Create context for this feed entry
-            entry_context = f"From {feed_entry['url']}:\n{feed_entry['title']}\n{feed_entry['content'][:500]}..."
+            entry_context = f"From {feed_entry['url']}:\n{feed_entry['title']}\n{feed_entry['content']}..."
             
             # Refine the article with this entry's content
             refined_content = refine_article(refined_content, entry_context)
