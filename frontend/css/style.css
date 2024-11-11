@@ -46,14 +46,30 @@
     background-color: #f8f9fa;
     border-radius: 0.25rem;
     margin-bottom: 2rem;
+    font-size: 0.9rem;
+    color: #666;
 }
 
-.article-metadata div {
-    margin-bottom: 0.5rem;
+.article-metadata hr {
+    border-color: #ddd;
 }
 
-.article-metadata div:last-child {
-    margin-bottom: 0;
+.article-metadata a {
+    color: #0366d6;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.article-metadata a:hover {
+    text-decoration: underline;
+}
+
+#source-feed-info {
+    font-size: 0.85rem;
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
 }
 
 /* Add some spacing around the markdown content */

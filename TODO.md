@@ -13,6 +13,8 @@
 - [x] Allow for different LLM providers such as Ollama and OpenAI
 - [x] Store in the topic file a list of feed urls that have been used to update the article, and include a hash of the content of the article so we know when it has been updated
 - [ ] Make sure the article does not update using already processed feed items
+- [ ] Add a source feed to the article model
+- [ ] Refactor the code so that almost no logic is in the routes, but mostly in the curator package
 
 ## Front-end
 

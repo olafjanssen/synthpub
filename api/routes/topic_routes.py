@@ -107,17 +107,19 @@ async def update_topic_route(topic_id: str):
         
         # Refine article with new content
         refined_content = current_article.content
-        for content in feed_contents:
+        for content, feed_item in zip(feed_contents, new_feed_items):
             refined_content = refine_article(refined_content, content)
+            # Create new version for each feed item
+            current_article = update_article(
+                article_id=current_article.id,
+                content=refined_content,
+                feed_item=feed_item
+            )
+            if not current_article:
+                raise HTTPException(status_code=500, detail="Failed to update article")
         
-        # Create new article version
-        new_article = update_article(
-            article_id=current_article.id,
-            content=refined_content
-        )
-        
-        # Update topic
-        topic.article = new_article.id
+        # Update topic with new article and feed items
+        topic.article = current_article.id
         topic.processed_feeds.extend(new_feed_items)
         
         # Save updated topic

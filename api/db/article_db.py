@@ -7,6 +7,7 @@ from typing import List, Optional
 import uuid
 
 from ..models.article import Article
+from ..models.feed_item import FeedItem
 
 DB_PATH = Path("db/articles")
 
@@ -23,7 +24,8 @@ def article_to_markdown(article: Article) -> str:
         "updated_at": article.updated_at.isoformat() if article.updated_at else None,
         "version": article.version,
         "previous_version": article.previous_version,
-        "next_version": article.next_version
+        "next_version": article.next_version,
+        "source_feed": article.source_feed.model_dump() if article.source_feed else None
     }
     return f"""---
 {yaml.dump(metadata, sort_keys=False)}---
@@ -43,6 +45,14 @@ def markdown_to_article(content: str) -> Article:
     metadata["created_at"] = datetime.fromisoformat(metadata["created_at"])
     if metadata["updated_at"]:
         metadata["updated_at"] = datetime.fromisoformat(metadata["updated_at"])
+    
+    # Convert source feed data if present
+    if metadata.get("source_feed"):
+        feed_data = metadata["source_feed"]
+        # Handle accessed_at which might be string or datetime
+        if isinstance(feed_data["accessed_at"], str):
+            feed_data["accessed_at"] = datetime.fromisoformat(feed_data["accessed_at"])
+        metadata["source_feed"] = FeedItem(**feed_data)
     
     return Article(content=content.strip(), **metadata)
 
@@ -103,14 +113,14 @@ def create_article(
     save_article(article)
     return article
 
-def update_article(article_id: str, content: str) -> Optional[Article]:
+def update_article(article_id: str, content: str, feed_item: Optional[FeedItem] = None) -> Optional[Article]:
     """
     Update existing article by creating a new version.
-    Links both previous and next versions.
     
     Args:
         article_id: ID of the article to update
         content: New content for the article
+        feed_item: Feed item that triggered this update
         
     Returns:
         New Article object with incremented version number
@@ -130,7 +140,8 @@ def update_article(article_id: str, content: str) -> Optional[Article]:
         created_at=current_article.created_at,
         updated_at=datetime.utcnow(),
         previous_version=current_article.id,
-        next_version=None  # This is the latest version
+        next_version=None,  # This is the latest version
+        source_feed=feed_item  # Store the feed item that triggered this update
     )
     
     # Update the previous article to point to this new version

@@ -35,6 +35,21 @@ function displayArticle(article) {
     document.getElementById('article-created').textContent = formatDate(article.created_at);
     document.getElementById('article-updated').textContent = article.updated_at ? formatDate(article.updated_at) : 'Never';
     
+    // Display feed source info if available
+    const sourceFeedInfo = document.getElementById('source-feed-info');
+    if (article.source_feed) {
+        const feedUrl = document.getElementById('feed-url');
+        feedUrl.href = article.source_feed.url;
+        feedUrl.textContent = article.source_feed.url;
+        
+        document.getElementById('feed-accessed').textContent = 
+            formatDate(article.source_feed.accessed_at);
+            
+        sourceFeedInfo.style.display = 'block';
+    } else {
+        sourceFeedInfo.style.display = 'none';
+    }
+    
     // Render markdown content
     const contentElement = document.getElementById('article-text');
     contentElement.innerHTML = marked.parse(article.content);
