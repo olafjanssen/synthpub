@@ -166,4 +166,5 @@ cython_debug/
 # Local database
 db/topics/
 db/articles/
+db_test/
 

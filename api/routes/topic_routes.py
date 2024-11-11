@@ -4,9 +4,7 @@ from uuid import uuid4
 from ..models.topic import Topic, TopicCreate
 from ..db.topic_db import load_topics, save_topics
 from ..db.article_db import create_article, get_article, update_article
-from curator.article_generator import generate_article
-from curator.feeds.feed_processor import process_feeds
-from curator.article_refiner import refine_article
+from curator.topic_manager import create_new_topic, process_topic_updates
 from typing import List
 
 router = APIRouter()
@@ -16,29 +14,16 @@ async def create_topic_route(topic: TopicCreate):
     """Create a new topic and generate its initial article."""
     try:
         topics = load_topics()
-        
-        # Generate topic ID first
         topic_id = str(uuid4())
         
-        # Generate article content using topic description
-        content = generate_article(topic.description)
-        
-        # Save article with topic ID and topic name as title
-        article_id = create_article(
-            title=topic.name,
-            topic_id=topic_id,
-            content=content
-        ).id
-        
-        # Create new topic with feed URLs
-        topic_data = Topic(
-            id=topic_id,
-            name=topic.name,
-            description=topic.description,
-            article=article_id,
-            feed_urls=topic.feed_urls  # Include feed URLs from request
+        # Create topic and initial article
+        article_id, topic_data = create_new_topic(
+            topic=topic,
+            create_article_fn=create_article,
+            topic_id=topic_id
         )
         
+        # Save to database
         topics[topic_data.id] = topic_data
         save_topics(topics)
         
@@ -80,56 +65,29 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
 async def update_topic_route(topic_id: str):
     """Update topic article based on feed content."""
     try:
-        # Load topic
+        # Load data
         topics = load_topics()
         if topic_id not in topics:
             raise HTTPException(status_code=404, detail="Topic not found")
         
         topic = topics[topic_id]
-        
-        # Process feeds and get feed items
-        feed_contents, feed_items = process_feeds(topic.feed_urls)
-        
-        # Create lookup of processed feed items by URL and hash
-        processed_items = {
-            (item.url, item.content_hash): item 
-            for item in topic.processed_feeds
-        }
-        
-        # Filter out unchanged and already processed feeds
-        new_content_pairs = []
-        for content, feed_item in zip(feed_contents, feed_items):
-            key = (feed_item.url, feed_item.content_hash)
-            if key not in processed_items:
-                new_content_pairs.append((content, feed_item))
-        
-        if not new_content_pairs:
-            return topic
-            
-        # Update article with new content
         current_article = get_article(topic.article)
         if not current_article:
             raise HTTPException(status_code=404, detail="Article not found")
         
-        # Refine article with new content
-        refined_content = current_article.content
-        for content, feed_item in new_content_pairs:
-            refined_content = refine_article(refined_content, content)
-            # Create new version for each feed item
-            current_article = update_article(
-                article_id=current_article.id,
-                content=refined_content,
-                feed_item=feed_item
-            )
-            if not current_article:
-                raise HTTPException(status_code=500, detail="Failed to update article")
+        # Process updates
+        updated_article, new_feed_items = process_topic_updates(
+            topic=topic,
+            current_article=current_article,
+            update_article_fn=update_article
+        )
         
-        # Update topic with new article and feed items
-        topic.article = current_article.id
-        topic.processed_feeds.extend(feed_items)
+        if updated_article:
+            # Update topic with new data
+            topic.article = updated_article.id
+            topic.processed_feeds.extend(new_feed_items)
+            save_topics(topics)
         
-        # Save updated topic
-        save_topics(topics)
         return topic
         
     except Exception as e:
