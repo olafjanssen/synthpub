@@ -1,9 +1,9 @@
 llm:
   article_generation:
-    provider: "ollama"
-    model_name: "smollm:135m"
-    # provider: "openai"
-    # model_name: "gpt-4o-mini"
+    # provider: "ollama"
+    # model_name: "smollm:135m"
+    provider: "openai"
+    model_name: "gpt-4o-mini"
     max_tokens: 800
   article_refinement:
     # provider: "ollama"

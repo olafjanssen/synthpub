@@ -1,6 +1,7 @@
 """Topic model definitions."""
 from pydantic import BaseModel
 from typing import List
+from .feed_item import FeedItem
 
 class TopicCreate(BaseModel):
     """Data required to create a new topic."""
@@ -12,3 +13,4 @@ class Topic(TopicCreate):
     """Topic model with all fields."""
     id: str
     article: str  # ID of the associated article
+    processed_feeds: List[FeedItem] = []  # List of processed feed items

@@ -79,44 +79,48 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
 @router.post("/topics/{topic_id}/update", response_model=Topic)
 async def update_topic_route(topic_id: str):
     """Update topic article based on feed content."""
-    # Load topic
-    topics = load_topics()
-    if topic_id not in topics:
-        raise HTTPException(status_code=404, detail="Topic not found")
-    
-    topic = topics[topic_id]
-    
     try:
-        # Get current article
+        # Load topic
+        topics = load_topics()
+        if topic_id not in topics:
+            raise HTTPException(status_code=404, detail="Topic not found")
+        
+        topic = topics[topic_id]
+        
+        # Process feeds and get feed items
+        feed_contents, feed_items = process_feeds(topic.feed_urls)
+        
+        # Filter out already processed feeds
+        processed_urls = {item.url for item in topic.processed_feeds}
+        new_feed_items = [
+            item for item in feed_items 
+            if item.url not in processed_urls
+        ]
+        
+        if not new_feed_items:
+            return topic
+            
+        # Update article with new content
         current_article = get_article(topic.article)
         if not current_article:
             raise HTTPException(status_code=404, detail="Article not found")
         
-        # Process all feeds
-        feed_contents = process_feeds(topic.feed_urls)
-        
-        # Start with the current article content
+        # Refine article with new content
         refined_content = current_article.content
-        latest_article = current_article
+        for content in feed_contents:
+            refined_content = refine_article(refined_content, content)
         
-        # Refine the article iteratively with each feed entry
-        for feed_entry in feed_contents:
-            # Create context for this feed entry
-            entry_context = f"From {feed_entry['url']}:\n{feed_entry['title']}\n{feed_entry['content']}..."
-            
-            # Refine the article with this entry's content
-            refined_content = refine_article(refined_content, entry_context)
-            
-            # Create new version of the article with same title
-            latest_article = update_article(
-                article_id=latest_article.id,
-                content=refined_content
-            )
-            
-            # Update topic reference
-            topic.article = latest_article.id
+        # Create new article version
+        new_article = update_article(
+            article_id=current_article.id,
+            content=refined_content
+        )
         
-        # Save final topic state
+        # Update topic
+        topic.article = new_article.id
+        topic.processed_feeds.extend(new_feed_items)
+        
+        # Save updated topic
         save_topics(topics)
         return topic
         
