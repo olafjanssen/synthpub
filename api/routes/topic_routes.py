@@ -90,14 +90,20 @@ async def update_topic_route(topic_id: str):
         # Process feeds and get feed items
         feed_contents, feed_items = process_feeds(topic.feed_urls)
         
-        # Filter out already processed feeds
-        processed_urls = {item.url for item in topic.processed_feeds}
-        new_feed_items = [
-            item for item in feed_items 
-            if item.url not in processed_urls
-        ]
+        # Create lookup of processed feed items by URL and hash
+        processed_items = {
+            (item.url, item.content_hash): item 
+            for item in topic.processed_feeds
+        }
         
-        if not new_feed_items:
+        # Filter out unchanged and already processed feeds
+        new_content_pairs = []
+        for content, feed_item in zip(feed_contents, feed_items):
+            key = (feed_item.url, feed_item.content_hash)
+            if key not in processed_items:
+                new_content_pairs.append((content, feed_item))
+        
+        if not new_content_pairs:
             return topic
             
         # Update article with new content
@@ -107,7 +113,7 @@ async def update_topic_route(topic_id: str):
         
         # Refine article with new content
         refined_content = current_article.content
-        for content, feed_item in zip(feed_contents, new_feed_items):
+        for content, feed_item in new_content_pairs:
             refined_content = refine_article(refined_content, content)
             # Create new version for each feed item
             current_article = update_article(
@@ -120,7 +126,7 @@ async def update_topic_route(topic_id: str):
         
         # Update topic with new article and feed items
         topic.article = current_article.id
-        topic.processed_feeds.extend(new_feed_items)
+        topic.processed_feeds.extend(feed_items)
         
         # Save updated topic
         save_topics(topics)
