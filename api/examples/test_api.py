@@ -34,13 +34,6 @@ def test_create_topic():
     """Test creating a new topic."""
     print("\n=== Testing Topic Creation ===")
     
-    # Test data
-    # topic_data = {
-    #     "name": "python_basics",
-    #     "description": "Introduction to Python programming language",
-    #     "feed_urls": ["https://www.developer-tech.com/categories/developer-languages/developer-languages-python/", "feed://pythoninsider.blogspot.com/feeds/posts/default"]
-    # }
-
     topic_data = {
         "name": "MDA Framework",
         "description": "Concise overview of the Mechanics-Dynamics-Aesthetics (MDA) framework in Game Design.",

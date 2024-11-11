@@ -22,12 +22,9 @@ def fetch_rss_links(url: str) -> List[Dict[str, str]]:
         
     feed = feedparser.parse(url)
     
-    entries = []
-    for entry in feed.entries:
-        entries.append({
-            'title': entry.title,
-            'link': entry.link,
-            'published': entry.get('published', ''),
-        })
+    entries = feed.entries
     
-    return entries
+    # Sort entries by published date (oldest to newest)
+    sorted_entries = sorted(entries, key=lambda entry: datetime.strptime(entry.published, '%a, %d %b %Y %H:%M:%S %Z'))
+    
+    return sorted_entries

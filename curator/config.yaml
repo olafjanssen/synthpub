@@ -1,7 +1,14 @@
 llm:
   article_generation:
-    model_name: "llama3.2:latest"
+    provider: "ollama"
+    model_name: "smollm:135m"
+    # provider: "openai"
+    # model_name: "gpt-4o-mini"
     max_tokens: 800
   article_refinement:
-    model_name: "llama3.2:latest"
+    # provider: "ollama"
+    # model_name: "llama3.2:latest"
     max_tokens: 800
+    provider: "openai"
+    model_name: "gpt-4o-mini"
+    

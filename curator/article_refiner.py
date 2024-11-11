@@ -1,9 +1,8 @@
 """
 Article refiner module for updating existing articles with new context.
 """
-from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
-from .config import config
+from .llm_utils import get_llm
 
 def refine_article(article: str, new_context: str) -> str:
     """
@@ -16,24 +15,18 @@ def refine_article(article: str, new_context: str) -> str:
     Returns:
         str: Refined article text
     """
-    model_name = config['llm']['article_refinement']['model_name']
-    llm = OllamaLLM(model=model_name, num_predict=config['llm']['article_refinement']['max_tokens'])
+    llm = get_llm('article_refinement')
     
     prompt = PromptTemplate.from_template(
         "Here is an existing article:\n\n{article}\n\n"
         "Given this new context:\n{new_context}\n\n"
         "Please create an updated version of the article that incorporates "
-        "the new information while maintaining the same concise style. "
+        "the new information while maintaining the same concise style. Try to keep as much as the original article as possible."
         "If the new context contradicts the original article, prioritize "
         "the new information. Keep it within 300-500 words."
     )
     
-    print(prompt.format(
-        article=article,
-        new_context=new_context
-    ))
-
     return llm.invoke(prompt.format(
         article=article,
         new_context=new_context
-    )) 
+    )).content 
