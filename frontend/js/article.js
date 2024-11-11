@@ -42,22 +42,33 @@ function displayArticle(article) {
 
 function setupVersionNavigation(article) {
     const prevButton = document.getElementById('prev-version');
+    const nextButton = document.getElementById('next-version');
     
     // Enable/disable previous version button
     if (article.previous_version) {
         prevButton.disabled = false;
-        prevButton.onclick = () => {
-            // Update URL without reloading page
-            const url = new URL(window.location);
-            url.searchParams.set('id', article.previous_version);
-            window.history.pushState({}, '', url);
-            
-            // Fetch previous version
-            fetchArticle(article.previous_version);
-        };
+        prevButton.onclick = () => navigateToVersion(article.previous_version);
     } else {
         prevButton.disabled = true;
     }
+    
+    // Enable/disable next version button
+    if (article.next_version) {
+        nextButton.disabled = false;
+        nextButton.onclick = () => navigateToVersion(article.next_version);
+    } else {
+        nextButton.disabled = true;
+    }
+}
+
+function navigateToVersion(articleId) {
+    // Update URL without reloading page
+    const url = new URL(window.location);
+    url.searchParams.set('id', articleId);
+    window.history.pushState({}, '', url);
+    
+    // Fetch and display the article
+    fetchArticle(articleId);
 }
 
 function init() {

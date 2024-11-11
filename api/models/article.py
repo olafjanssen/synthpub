@@ -13,3 +13,4 @@ class Article(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
     previous_version: Optional[str] = None  # ID of the previous version
+    next_version: Optional[str] = None  # ID of the next version

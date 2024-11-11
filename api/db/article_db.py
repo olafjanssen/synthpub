@@ -13,7 +13,6 @@ DB_PATH = Path("db/articles")
 def ensure_db_exists():
     """Create the articles directory if it doesn't exist."""
     DB_PATH.mkdir(parents=True, exist_ok=True)
-
 def article_to_markdown(article: Article) -> str:
     """Convert article to markdown with YAML front matter."""
     metadata = {
@@ -23,9 +22,9 @@ def article_to_markdown(article: Article) -> str:
         "created_at": article.created_at.isoformat(),
         "updated_at": article.updated_at.isoformat() if article.updated_at else None,
         "version": article.version,
-        "previous_version": article.previous_version
+        "previous_version": article.previous_version,
+        "next_version": article.next_version
     }
-    
     return f"""---
 {yaml.dump(metadata, sort_keys=False)}---
 
@@ -107,6 +106,7 @@ def create_article(
 def update_article(article_id: str, content: str) -> Optional[Article]:
     """
     Update existing article by creating a new version.
+    Links both previous and next versions.
     
     Args:
         article_id: ID of the article to update
@@ -129,9 +129,47 @@ def update_article(article_id: str, content: str) -> Optional[Article]:
         version=current_article.version + 1,
         created_at=current_article.created_at,
         updated_at=datetime.utcnow(),
-        previous_version=current_article.id  # Link to previous version
+        previous_version=current_article.id,
+        next_version=None  # This is the latest version
     )
     
-    # Save as a new file
+    # Update the previous article to point to this new version
+    current_article.next_version = new_article.id
+    save_article(current_article)
+    
+    # Save the new version
     save_article(new_article)
     return new_article
+
+def get_article_history(article_id: str) -> List[Article]:
+    """
+    Get the complete version history of an article.
+    Returns list ordered from oldest to newest.
+    """
+    articles = []
+    current = get_article(article_id)
+    
+    # First, go back to the earliest version
+    while current and current.previous_version:
+        current = get_article(current.previous_version)
+    
+    # Now collect all versions going forward
+    while current:
+        articles.append(current)
+        if current.next_version:
+            current = get_article(current.next_version)
+        else:
+            break
+    
+    return articles
+
+def get_latest_version(article_id: str) -> Optional[Article]:
+    """Get the most recent version of an article."""
+    current = get_article(article_id)
+    if not current:
+        return None
+        
+    while current.next_version:
+        current = get_article(current.next_version)
+    
+    return current
