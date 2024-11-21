@@ -12,9 +12,16 @@
 - [x] Create separate topic files instead of having everything in one json file
 - [x] Allow for different LLM providers such as Ollama and OpenAI
 - [x] Store in the topic file a list of feed urls that have been used to update the article, and include a hash of the content of the article so we know when it has been updated
-- [ ] Make sure the article does not update using already processed feed items
-- [ ] Add a source feed to the article model
-- [ ] Refactor the code so that almost no logic is in the routes, but mostly in the curator package
+- [x] Make sure the article does not update using already processed feed items
+- [x] Add a source feed to the article model
+- [x] Refactor the code so that almost no logic is in the routes, but mostly in the curator package
+- [x] Create a Youtube transcript connector
+- [ ] Create a Exchange email connector
+- [ ] Create a (gmail) email connector
+- [ ] Create a MS Teams connector
+- [ ] Use the initial generator to optionally only create a structure, not content
+- [ ] Add a relevance filter
+- [ ] Add a substance extractor
 
 ## Front-end
 
@@ -23,4 +30,5 @@
 - [x] Create navigation to previous versions of an article
 - [x] Create navigation to next version of an article
 - [ ] Add a page for a list of articles
+- [ ] Create a artice page version that shows the origin of each part of the article similar to git blame.
 
