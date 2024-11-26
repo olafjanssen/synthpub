@@ -1,13 +1,140 @@
-/* Custom styles */
+/* Base styles */
+body {
+    background-image: url('/img/backdrop_schop.jpg');  /* Add your background image */
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* Card modifications */
 .card {
     transition: transform 0.2s;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+/* Alternating card background colors */
+#topics-list .col:nth-child(4n+1) .card {
+    background-color: #009FB6;  /* Blue */
+}
+
+#topics-list .col:nth-child(4n+2) .card {
+    background-color: #f9ec31;  /* Yellow */
+}
+
+#topics-list .col:nth-child(4n+3) .card {
+    background-color: #f1686f;  /* Red */
+}
+
+#topics-list .col:nth-child(4n+4) .card {
+    background-color: #1C9963;  /* Green */
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+.card-body {
+    background-color: rgba(255, 255, 255, 0);
+    border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.card-footer {
+    background-color: rgba(255, 255, 255, 0);
+    border-top: none;
+    border-radius: 0 0 0.25rem 0.25rem;
+}
+
+/* Ensure text remains readable on yellow background */
+.card-title {
+    color: rgba(0,0,0,.84);
+}
+
+.card-text {
+    color: rgba(0,0,0,.7);
+}
+
+/* Text styling */
+.article-text {
+    padding: 2rem;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 0.25rem;
+    color: rgba(0,0,0,.84);
+}
+
+.article-metadata {
+    padding: 1rem;
+    background-color: rgba(248, 249, 250, 0.9);
+    border-radius: 0.25rem;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    color: rgba(0,0,0,.54);
+}
+
+/* Link styling */
+.article-metadata a {
+    color: rgba(0, 0, 0, 0.84);
+    text-decoration: none;
+}
+
+.article-metadata a:hover {
+    text-decoration: underline;
+    color: rgba(0, 0, 0, 0.94);
+}
+
+/* Source feed styling */
+#source-feed-info {
+    font-size: 0.85rem;
+    background-color: rgba(248, 249, 250, 0.9);
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    color: rgba(0,0,0,.44);
+}
+
+/* Button styling */
+.btn-primary {
+    background-color: rgba(0, 0, 0, 0.84) !important;
+    border-color: rgba(0, 0, 0, 0.84) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: rgba(0, 0, 0, 0.94) !important;
+    border-color: rgba(0, 0, 0, 0.94) !important;
+}
+
+.btn-outline-primary,
+.btn-outline-secondary {
+    background-color: white !important;  /* Force solid background for outlined buttons */
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+    background-color: #f8f9fa !important;  /* Light gray background on hover */
+}
+
+
+
+/* Toast modifications */
+.toast {
+    background-color: rgba(255, 255, 255, 0.95);
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Version navigation */
+#version-nav {
+    margin-left: auto;
+}
+
+#version-nav button:disabled {
+    opacity: 0.6;
+}
+
+/* Custom styles */
 .feed-urls {
     margin-top: 1rem;
 }
@@ -31,47 +158,6 @@
     border-bottom-right-radius: 0;
 }
 
-.article-text {
-    padding: 2rem;
-    background-color: white;
-    border-radius: 0.25rem;
-}
-
-.article-text p {
-    margin-bottom: 1.5rem;
-}
-
-.article-metadata {
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 0.25rem;
-    margin-bottom: 2rem;
-    font-size: 0.9rem;
-    color: #666;
-}
-
-.article-metadata hr {
-    border-color: #ddd;
-}
-
-.article-metadata a {
-    color: #0366d6;
-    text-decoration: none;
-    word-break: break-all;
-}
-
-.article-metadata a:hover {
-    text-decoration: underline;
-}
-
-#source-feed-info {
-    font-size: 0.85rem;
-    background-color: #f8f9fa;
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-top: 0.5rem;
-}
-
 /* Add some spacing around the markdown content */
 .markdown-body {
     padding: 1rem;
@@ -81,18 +167,32 @@
     z-index: 1050;
 }
 
-.toast {
-    opacity: 1 !important;
-}
-
-#version-nav {
-    margin-left: auto;
-}
-
-#version-nav button:disabled {
-    opacity: 0.6;
-}
-
 .btn-group {
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Navbar styling */
+.navbar {
+    background-color: transparent !important;
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    color: #f9ec31 !important;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+}
+
+.navbar-brand:hover {
+    color: #e4d82c !important;
+}
+
+.navbar img {
+    max-height: 50px;
+    margin: 0 2rem;
+    width: auto;
 } 
+

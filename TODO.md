@@ -31,4 +31,5 @@
 - [x] Create navigation to next version of an article
 - [ ] Add a page for a list of articles
 - [ ] Create a artice page version that shows the origin of each part of the article similar to git blame.
+- [ ] Styling update towards dpbtse.com
 
