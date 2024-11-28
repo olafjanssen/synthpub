@@ -30,8 +30,13 @@ function displayTopics(topics) {
         const topicElement = template.content.cloneNode(true);
         
         // Fill in the template
-        topicElement.querySelector('.card-title').textContent = topic.name;
+        topicElement.querySelector('.topic-name').textContent = topic.name;
         topicElement.querySelector('.description').textContent = topic.description;
+        
+        // Set up view article button
+        const viewButton = topicElement.querySelector('.view-article');
+        viewButton.dataset.topicId = topic.id;
+        viewButton.addEventListener('click', () => window.location.href = `article.html?id=${topic.article}`);
         
         // Add feed URLs
         const feedList = topicElement.querySelector('.feed-list');
@@ -41,14 +46,15 @@ function displayTopics(topics) {
             feedList.appendChild(li);
         });
         
-        // Add data attributes and event listeners
-        const viewButton = topicElement.querySelector('.view-article');
-        viewButton.dataset.topicId = topic.id;
-        viewButton.dataset.articleId = topic.article;
-        viewButton.addEventListener('click', () => viewArticle(topic.id, topic.article));
-        
+        // Add data attributes and event listeners for other buttons
         const updateButton = topicElement.querySelector('.update-article');
+        const editButton = topicElement.querySelector('.edit-article');
+        
+        updateButton.dataset.topicId = topic.id;
+        editButton.dataset.topicId = topic.id;
+        
         updateButton.addEventListener('click', () => updateArticle(topic.id));
+        editButton.addEventListener('click', () => editTopic(topic.id));
         
         topicsList.appendChild(topicElement);
     });
@@ -155,6 +161,103 @@ async function createTopic() {
 function viewArticle(topicId, articleId) {
     window.location.href = `article.html?id=${articleId}`;
 }
+
+async function removeTopic(topicId) {
+    try {
+        const response = await fetch(`${API_URL}/topics/${topicId}/`, {
+            method: 'DELETE',
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Refresh the topics list
+        await fetchTopics();
+    } catch (error) {
+        console.error('Error removing topic:', error);
+        showError('Failed to remove topic. Please try again later.');
+    }
+}
+
+function editTopic(topicId) {
+    const topicElement = document.querySelector(`[data-topic-id="${topicId}"]`).closest('.card');
+    const topicName = topicElement.querySelector('.card-title').textContent;
+    const topicDescription = topicElement.querySelector('.description').textContent;
+    const feedUrls = Array.from(topicElement.querySelectorAll('.feed-list li')).map(li => li.textContent);
+
+    // Populate the edit form
+    document.getElementById('editTopicId').value = topicId;
+    document.getElementById('editTopicName').value = topicName;
+    document.getElementById('editTopicDescription').value = topicDescription;
+
+    // Clear existing feed URLs
+    const editFeedUrlsContainer = document.getElementById('editFeedUrlsContainer');
+    editFeedUrlsContainer.innerHTML = '';
+    feedUrls.forEach(url => {
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group mb-2';
+        inputGroup.innerHTML = `
+            <input type="url" class="form-control feed-url" value="${url}">
+            <button type="button" class="btn btn-outline-danger remove-feed" onclick="removeFeedInput(this)">×</button>
+        `;
+        editFeedUrlsContainer.appendChild(inputGroup);
+    });
+}
+
+async function updateTopic() {
+    const topicId = document.getElementById('editTopicId').value;
+    const name = document.getElementById('editTopicName').value;
+    const description = document.getElementById('editTopicDescription').value;
+    const feedInputs = document.querySelectorAll('#editFeedUrlsContainer .feed-url');
+
+    // Collect non-empty feed URLs
+    const feed_urls = Array.from(feedInputs)
+        .map(input => input.value.trim())
+        .filter(url => url !== '');
+
+    const topicData = {
+        name,
+        description,
+        feed_urls
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/topics/${topicId}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(topicData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Close modal and refresh topics list
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
+        modal.hide();
+        await fetchTopics();
+    } catch (error) {
+        console.error('Error updating topic:', error);
+        showError('Failed to update topic. Please try again later.');
+    }
+}
+
+// Update the event listeners for the buttons
+document.addEventListener('DOMContentLoaded', () => {
+    fetchTopics();
+    document.getElementById('topics-list').addEventListener('click', (event) => {
+        if (event.target.classList.contains('remove-article')) {
+            const topicId = event.target.closest('.card-footer').querySelector('.view-article').dataset.topicId;
+            removeTopic(topicId);
+        } else if (event.target.classList.contains('edit-article')) {
+            const topicId = event.target.closest('.card-footer').querySelector('.view-article').dataset.topicId;
+            editTopic(topicId);
+        }
+    });
+});
 
 // Initial load
 document.addEventListener('DOMContentLoaded', fetchTopics); 

@@ -7,6 +7,7 @@ import yaml
 import uuid
 from api.models import Topic
 from datetime import datetime
+from shutil import move
 
 from api.models.feed_item import FeedItem
 
@@ -45,13 +46,16 @@ def get_topic(topic_id: str) -> Optional[Topic]:
         return Topic(**data)
 
 def list_topics() -> List[Topic]:
-    """List all topics."""
+    """List all active (non-deleted) topics."""
     ensure_db_exists()
     
     topics = []
+    # Correctly exclude files that start with '_'
     for file in DB_PATH.glob("*.yaml"):
-        with open(file, "r", encoding="utf-8") as f:
-            topics.append(Topic(**yaml.safe_load(f)))
+        if not file.name.startswith('_'):
+            print(f"Loading topic from {file}")
+            with open(file, "r", encoding="utf-8") as f:
+                topics.append(Topic(**yaml.safe_load(f)))
             
     return topics
 
@@ -83,3 +87,36 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
         except Exception as e:
             print(f"Error parsing feed item: {e}")
     return feed_items
+
+def mark_topic_deleted(topic_id: str) -> bool:
+    """
+    Mark a topic as deleted by prefixing its filename with '_'.
+    Returns True if successful, False if topic not found.
+    """
+    filename = DB_PATH / f"{topic_id}.yaml"
+    if not filename.exists():
+        return False
+        
+    # New filename with '_' prefix
+    new_filename = DB_PATH / f"_{topic_id}.yaml"
+    
+    # Move/rename the file
+    move(filename, new_filename)
+    return True
+
+def update_topic(topic_id: str, updated_data: dict) -> Optional[Topic]:
+    """
+    Update a topic with new data.
+    Returns updated Topic if successful, None if topic not found.
+    """
+    topic = get_topic(topic_id)
+    if not topic:
+        return None
+        
+    # Update topic fields
+    for key, value in updated_data.items():
+        if hasattr(topic, key):
+            setattr(topic, key, value)
+            
+    save_topic(topic)
+    return topic

@@ -9,10 +9,11 @@ body {
 
 /* Card modifications */
 .card {
-    transition: transform 0.2s;
     border: none;
     border-radius: 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    transform: none !important;
+    transition: none !important;
 }
 
 /* Alternating card background colors */
@@ -33,7 +34,6 @@ body {
 }
 
 .card:hover {
-    transform: translateY(-5px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
@@ -327,5 +327,56 @@ pre {
 .article-metadata {
     max-width: 960px;
     margin: 0 auto 2rem auto;
+}
+
+/* Sources section styling */
+.article-sources {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0, 0, 0, .1);
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, .54);
+}
+
+.article-sources h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: rgba(0, 0, 0, .84);
+}
+
+.sources-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sources-list li {
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.sources-list a {
+    color: #009FB6;
+    text-decoration: none;
+}
+
+.sources-list a:hover {
+    text-decoration: underline;
+}
+
+/* Add these styles to your existing CSS */
+.card-header {
+    background-color: rgba(255, 255, 255, 0.5) !important;  /* 50% opacity white */
+}
+
+/* Style the icon buttons */
+.card-header .btn-link {
+    color: rgba(0, 0, 0, 0.84) !important;  /* Black icons */
+}
+
+.card-header .btn-link:hover {
+    color: rgba(0, 0, 0, 1) !important;  /* Darker on hover */
 }
 

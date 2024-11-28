@@ -22,6 +22,8 @@
 - [ ] Use the initial generator to optionally only create a structure, not content
 - [ ] Add a relevance filter
 - [ ] Add a substance extractor
+- [x] Add a list of sources at the bottom of the article
+- [x] Add a page or modal to edit a topic
 
 ## Front-end
 
@@ -29,7 +31,6 @@
 - [x] Add a page for a list of topics
 - [x] Create navigation to previous versions of an article
 - [x] Create navigation to next version of an article
-- [ ] Add a page for a list of articles
 - [ ] Create a artice page version that shows the origin of each part of the article similar to git blame.
-- [ ] Styling update towards dpbtse.com
+- [x] Styling update towards dpbtse.com
 

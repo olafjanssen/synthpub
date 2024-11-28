@@ -1,16 +1,29 @@
-"""Topic model definitions."""
+"""Topic-related data models."""
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 from .feed_item import FeedItem
 
-class TopicCreate(BaseModel):
-    """Data required to create a new topic."""
+class TopicBase(BaseModel):
+    """Base topic model."""
     name: str
     description: str
-    feed_urls: List[str] = []  # Default to empty list if not provided
+    feed_urls: List[str]
 
-class Topic(TopicCreate):
-    """Topic model with all fields."""
+class TopicCreate(TopicBase):
+    """Topic creation model."""
+    pass
+
+class TopicUpdate(BaseModel):
+    """Topic update model."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    feed_urls: Optional[List[str]] = None
+
+class Topic(TopicBase):
+    """Complete topic model."""
     id: str
-    article: str  # ID of the associated article
-    processed_feeds: List[FeedItem] = []  # List of processed feed items
+    article: Optional[str] = None
+    processed_feeds: List[FeedItem] = []
+    created_at: datetime = datetime.now()
+    updated_at: Optional[datetime] = None

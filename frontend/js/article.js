@@ -16,11 +16,30 @@ async function fetchArticle(articleId) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const article = await response.json();
+        
+        // Display article first
         displayArticle(article);
         setupVersionNavigation(article);
+        
+        // Then fetch and display sources
+        await fetchAndDisplaySources(article.topic_id);
     } catch (error) {
         console.error('Error fetching article:', error);
         showError('Failed to load article. Please try again later.');
+    }
+}
+
+async function fetchAndDisplaySources(topic_id) {
+    try {
+        // Get all topics
+        const response = await fetch(`${API_URL}/topics/${topic_id}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const topic = await response.json();
+        if (topic) {
+            displaySources(topic.processed_feeds);
+        }
+    } catch (error) {
+        console.error('Error fetching sources:', error);
     }
 }
 
@@ -115,6 +134,23 @@ function showError(message) {
             ${message}
         </div>
     `;
+}
+
+function displaySources(sources) {
+    const sourcesList = document.getElementById('article-sources');
+    if (!sources || sources.length === 0) {
+        sourcesList.parentElement.style.display = 'none';
+        return;
+    }
+    
+    sourcesList.innerHTML = sources.map(source => `
+        <li>
+            <a href="${source.url}" target="_blank" rel="noopener noreferrer">
+                ${source.title || source.url}
+            </a>
+            ${source.accessed_at ? `<span class="text-muted"> (accessed ${new Date(source.accessed_at).toLocaleDateString()})</span>` : ''}
+        </li>
+    `).join('');
 }
 
 // Load article when page loads

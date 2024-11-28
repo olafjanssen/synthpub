@@ -1,8 +1,8 @@
 """Topic-related API routes."""
 from fastapi import APIRouter, HTTPException
 from uuid import uuid4
-from ..models.topic import Topic, TopicCreate
-from ..db.topic_db import load_topics, save_topics
+from ..models.topic import Topic, TopicCreate, TopicUpdate
+from ..db.topic_db import load_topics, save_topics, mark_topic_deleted, update_topic
 from ..db.article_db import create_article, get_article, update_article
 from curator.topic_manager import create_new_topic, process_topic_updates
 from typing import List
@@ -89,6 +89,46 @@ async def update_topic_route(topic_id: str):
             save_topics(topics)
         
         return topic
+        
+    except Exception as e:
+        print(f"Error updating topic: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@router.delete("/topics/{topic_id}", response_model=dict)
+async def delete_topic_route(topic_id: str):
+    """Mark a topic as deleted (soft delete)."""
+    try:
+        # Check if topic exists
+        topics = load_topics()
+        if topic_id not in topics:
+            raise HTTPException(status_code=404, detail="Topic not found")
+        
+        # Mark topic as deleted
+        success = mark_topic_deleted(topic_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete topic")
+        
+        return {"message": "Topic marked as deleted", "topic_id": topic_id}
+        
+    except Exception as e:
+        print(f"Error deleting topic: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@router.put("/topics/{topic_id}", response_model=Topic)
+async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
+    """Update a topic's details."""
+    try:
+        # Check if topic exists
+        topics = load_topics()
+        if topic_id not in topics:
+            raise HTTPException(status_code=404, detail="Topic not found")
+        
+        # Update topic
+        updated_topic = update_topic(topic_id, topic_update.model_dump(exclude_unset=True))
+        if not updated_topic:
+            raise HTTPException(status_code=500, detail="Failed to update topic")
+        
+        return updated_topic
         
     except Exception as e:
         print(f"Error updating topic: {str(e)}")
