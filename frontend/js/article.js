@@ -142,8 +142,15 @@ function displaySources(sources) {
         sourcesList.parentElement.style.display = 'none';
         return;
     }
+
+    const relevantSources = sources.filter(source => source.is_relevant);
     
-    sourcesList.innerHTML = sources.map(source => `
+    if (relevantSources.length === 0) {
+        sourcesList.parentElement.style.display = 'none';
+        return;
+    }
+    
+    sourcesList.innerHTML = relevantSources.map(source => `
         <li>
             <a href="${source.url}" target="_blank" rel="noopener noreferrer">
                 ${source.title || source.url}

@@ -172,8 +172,10 @@ async function removeTopic(topicId) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Refresh the topics list
-        await fetchTopics();
+        // Close modal and refresh topics list
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
+        modal.hide();
+        await fetchTopics();        
     } catch (error) {
         console.error('Error removing topic:', error);
         showError('Failed to remove topic. Please try again later.');
@@ -248,14 +250,19 @@ async function updateTopic() {
 // Update the event listeners for the buttons
 document.addEventListener('DOMContentLoaded', () => {
     fetchTopics();
+    
+    // Handle edit button clicks in topic list
     document.getElementById('topics-list').addEventListener('click', (event) => {
-        if (event.target.classList.contains('remove-article')) {
-            const topicId = event.target.closest('.card-footer').querySelector('.view-article').dataset.topicId;
-            removeTopic(topicId);
-        } else if (event.target.classList.contains('edit-article')) {
-            const topicId = event.target.closest('.card-footer').querySelector('.view-article').dataset.topicId;
+        if (event.target.classList.contains('edit-article')) {
+            const topicId = event.target.closest('.card').querySelector('.view-article').dataset.topicId;
             editTopic(topicId);
         }
+    });
+
+    // Handle remove button click in edit modal
+    document.querySelector('.remove-article').addEventListener('click', () => {
+        const topicId = document.getElementById('editTopicId').value;
+        removeTopic(topicId);
     });
 });
 

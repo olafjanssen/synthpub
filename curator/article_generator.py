@@ -14,14 +14,21 @@ def generate_article(topic_description: str) -> str:
     """
     llm = get_llm('article_generation')
     
-    prompt = PromptTemplate.from_template(
-        """You are an expert content writer. Write a clear and engaging article 
-        about the following topic in the language of the given description. The article should start with a title and be
-        informative but concise (around 300-500 words).
+    # prompt = PromptTemplate.from_template(
+    #     """You are an expert content writer. Write a clear and engaging article 
+    #     about the following topic in the language of the given description. The article should start with a title and be
+    #     informative but concise (around 300-500 words).
         
-        Topic: {topic_description}"""
+    #     Topic: {topic_description}"""
+    # )
+
+    prompt = PromptTemplate.from_template(
+        """You are an expert content writer for a Wikipedia-like article. Create a minimal Markdown header structure for an article about the following topic.
+        Choose a clear and concise title and write a short introduction solely based on the topic description.
+        
+        Topic description: {topic_description}"""
     )
-    
+
     content = llm.invoke(prompt.format(topic_description=topic_description)).content
     
     return content.strip()

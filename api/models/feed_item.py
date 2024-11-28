@@ -8,6 +8,7 @@ class FeedItem(BaseModel):
     url: str
     accessed_at: datetime
     content_hash: str
+    is_relevant: bool = False
 
     @classmethod
     def create(cls, url: str, content: str) -> "FeedItem":

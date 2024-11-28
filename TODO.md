@@ -10,7 +10,6 @@
 - [x] Add refined articles also in db
 - [x] Keep a link to a previous version of an article
 - [x] Create separate topic files instead of having everything in one json file
-- [x] Allow for different LLM providers such as Ollama and OpenAI
 - [x] Store in the topic file a list of feed urls that have been used to update the article, and include a hash of the content of the article so we know when it has been updated
 - [x] Make sure the article does not update using already processed feed items
 - [x] Add a source feed to the article model
@@ -19,11 +18,12 @@
 - [ ] Create a Exchange email connector
 - [ ] Create a (gmail) email connector
 - [ ] Create a MS Teams connector
-- [ ] Use the initial generator to optionally only create a structure, not content
-- [ ] Add a relevance filter
+- [x] Use the initial generator to only create a structure, not content
+
+## AI Curator
+- [x] Allow for different LLM providers such as Ollama and OpenAI
+- [x] Add a relevance filter
 - [ ] Add a substance extractor
-- [x] Add a list of sources at the bottom of the article
-- [x] Add a page or modal to edit a topic
 
 ## Front-end
 
@@ -31,6 +31,11 @@
 - [x] Add a page for a list of topics
 - [x] Create navigation to previous versions of an article
 - [x] Create navigation to next version of an article
-- [ ] Create a artice page version that shows the origin of each part of the article similar to git blame.
+- [x] Add a list of sources at the bottom of the article
+- [x] Add a page or modal to edit a topic
 - [x] Styling update towards dpbtse.com
+- [ ] Create a artice page version that shows the origin of each part of the article similar to git blame.
 
+## Desktop
+
+- [x] Create a desktop wrapper app using Pywebview and Pyinstaller

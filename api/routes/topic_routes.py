@@ -1,31 +1,65 @@
 """Topic-related API routes."""
 from fastapi import APIRouter, HTTPException
 from uuid import uuid4
-from ..models.topic import Topic, TopicCreate, TopicUpdate
-from ..db.topic_db import load_topics, save_topics, mark_topic_deleted, update_topic
-from ..db.article_db import create_article, get_article, update_article
-from curator.topic_manager import create_new_topic, process_topic_updates
-from typing import List
+from api.models.topic import Topic, TopicCreate, TopicUpdate
+from api.models.feed_item import FeedItem
+from api.models.article import Article
+from api.db.topic_db import load_topics, save_topics, mark_topic_deleted, update_topic, get_topic, save_topic
+from api.db.article_db import create_article, get_article, update_article
+from curator.article_generator import generate_article
+from curator.article_refiner import refine_article
+from curator.article_relevance_filter import filter_relevance
+from typing import List, Tuple, Optional
+from curator.feeds.feed_processor import process_feeds
 
 router = APIRouter()
+
+def process_feed_item(
+    topic: Topic,
+    current_article: Article,
+    feed_content: str,
+    feed_item: FeedItem
+) -> Optional[Article]:
+    """Process a single feed item for a topic."""
+    # Skip if content not relevant
+    if not filter_relevance(topic.description, current_article.content, feed_content):
+        return None
+        
+    # Update article with new content
+    refined_content = refine_article(current_article.content, feed_content)
+    updated_article = update_article(
+        article_id=current_article.id,
+        content=refined_content,
+        feed_item=feed_item
+    )
+    
+    return updated_article
 
 @router.post("/topics/", response_model=Topic)
 async def create_topic_route(topic: TopicCreate):
     """Create a new topic and generate its initial article."""
     try:
-        topics = load_topics()
         topic_id = str(uuid4())
         
         # Create topic and initial article
-        article_id, topic_data = create_new_topic(
-            topic=topic,
-            create_article_fn=create_article,
-            topic_id=topic_id
+        content = generate_article(topic.description)
+            
+        article = create_article(
+            title=topic.name,
+            topic_id=topic_id,
+            content=content
         )
         
+        topic_data = Topic(
+            id=topic_id,
+            name=topic.name,
+            description=topic.description,
+            article=article.id,
+            feed_urls=topic.feed_urls
+        )
+            
         # Save to database
-        topics[topic_data.id] = topic_data
-        save_topics(topics)
+        save_topic(topic_data)
         
         return topic_data
         
@@ -65,29 +99,44 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
 async def update_topic_route(topic_id: str):
     """Update topic article based on feed content."""
     try:
-        # Load data
-        topics = load_topics()
-        if topic_id not in topics:
+        # Load topic
+        topic = get_topic(topic_id)
+        if not topic:
             raise HTTPException(status_code=404, detail="Topic not found")
         
-        topic = topics[topic_id]
         current_article = get_article(topic.article)
         if not current_article:
             raise HTTPException(status_code=404, detail="Article not found")
         
-        # Process updates
-        updated_article, new_feed_items = process_topic_updates(
-            topic=topic,
-            current_article=current_article,
-            update_article_fn=update_article
-        )
+        # Process feeds
+        feed_contents, feed_items = process_feeds(topic.feed_urls)
+        processed_items = {(item.url, item.content_hash): item for item in topic.processed_feeds}
         
-        if updated_article:
-            # Update topic with new data
-            topic.article = updated_article.id
-            topic.processed_feeds.extend(new_feed_items)
-            save_topics(topics)
+        # Process each feed item
+        for content, feed_item in zip(feed_contents, feed_items):
+            # Skip if already processed
+            if (feed_item.url, feed_item.content_hash) in processed_items:
+                continue
+            
+            # Process single feed item
+            updated_article = process_feed_item(
+                topic=topic,
+                current_article=current_article,
+                feed_content=content,
+                feed_item=feed_item,
+            )
+            
+            # Mark relevance and add to processed feeds
+            feed_item.is_relevant = updated_article is not None
+            topic.processed_feeds.append(feed_item)
+            
+            # Update current article if content was relevant
+            if updated_article:
+                current_article = updated_article
+                topic.article = updated_article.id
         
+            # Save updated topic
+            save_topic(topic)
         return topic
         
     except Exception as e:
