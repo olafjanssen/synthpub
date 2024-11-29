@@ -11,7 +11,7 @@ from shutil import move
 
 from api.models.feed_item import FeedItem
 
-DB_PATH = Path("db/topics")
+DB_PATH = Path("../db/topics")
 
 def ensure_db_exists():
     """Create the topics directory if it doesn't exist."""

@@ -9,7 +9,7 @@ import uuid
 from ..models.article import Article
 from ..models.feed_item import FeedItem
 
-DB_PATH = Path("db/articles")
+DB_PATH = Path("../db/articles")
 
 def ensure_db_exists():
     """Create the articles directory if it doesn't exist."""
