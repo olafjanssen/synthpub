@@ -102,5 +102,4 @@ def process_feeds(feed_urls: List[str]) -> Tuple[List[Dict[str, str]], List[Feed
         except Exception as e:
             print(f"Error processing feed {url}: {str(e)}")
 
-    print(all_content)     
     return all_content, feed_items

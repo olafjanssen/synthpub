@@ -4,8 +4,12 @@ YouTube Channel connector for fetching video URLs from a given channel or playli
 from googleapiclient.discovery import build
 from typing import List
 import os
+from dotenv import load_dotenv
 
+load_dotenv()  # Load environment variables from .env file
 API_KEY = os.getenv('YOUTUBE_API_KEY')  # Get the key from the .env file
+if not API_KEY:
+    raise ValueError("YOUTUBE_API_KEY environment variable not found. Please add it to your .env file.")
 
 def fetch_youtube_videos_playlist(playlist_id: str) -> List[str]:
     """

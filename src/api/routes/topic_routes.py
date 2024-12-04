@@ -8,33 +8,11 @@ from api.db.topic_db import load_topics, save_topics, mark_topic_deleted, update
 from api.db.article_db import create_article, get_article, update_article
 from curator.article_generator import generate_article
 from curator.article_refiner import refine_article
-from curator.article_relevance_filter import filter_relevance
 from typing import List, Tuple, Optional
 from curator.feeds.feed_processor import process_feeds
 from curator.topic_updater import update_topic
 
 router = APIRouter()
-
-def process_feed_item(
-    topic: Topic,
-    current_article: Article,
-    feed_content: str,
-    feed_item: FeedItem
-) -> Optional[Article]:
-    """Process a single feed item for a topic."""
-    # Skip if content not relevant
-    if not filter_relevance(topic.description, current_article.content, feed_content):
-        return None
-        
-    # Update article with new content
-    refined_content = refine_article(current_article.content, feed_content)
-    updated_article = update_article(
-        article_id=current_article.id,
-        content=refined_content,
-        feed_item=feed_item
-    )
-    
-    return updated_article
 
 @router.post("/topics/", response_model=Topic)
 async def create_topic_route(topic: TopicCreate):
