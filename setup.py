@@ -103,7 +103,7 @@ OPTIONS = {
         # Deprecated
         'pkg_resources',
     ],
-    'resources': ['frontend', 'db', 'api'],
+    'resources': ['frontend', 'db', 'src/api'],
     'iconfile': 'frontend/img/dpbtse_logo.icns',
     'plist': {
         'CFBundleName': 'SynthPub',

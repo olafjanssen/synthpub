@@ -14,16 +14,28 @@
 - [x] Make sure the article does not update using already processed feed items
 - [x] Add a source feed to the article model
 - [x] Refactor the code so that almost no logic is in the routes, but mostly in the curator package
-- [x] Create a Youtube transcript connector
+- [x] Use the initial generator to only create a structure, not content
+- [ ] Add a project model that contains a list of topics
+- [ ] Make the API calls async
+
+## Connectors
+
+- [x] Create a file system connector
 - [ ] Create a Exchange email connector
 - [ ] Create a (gmail) email connector
 - [ ] Create a MS Teams connector
-- [x] Use the initial generator to only create a structure, not content
+- [x] Create a Youtube transcript connector
 
 ## AI Curator
+
 - [x] Allow for different LLM providers such as Ollama and OpenAI
 - [x] Add a relevance filter
 - [ ] Add a substance extractor
+- [ ] Add a scheduler that will update the topics every X hours
+
+## Publisher
+
+- [ ] Create a function to publish the topics to a file system location
 
 ## Front-end
 
@@ -34,8 +46,10 @@
 - [x] Add a list of sources at the bottom of the article
 - [x] Add a page or modal to edit a topic
 - [x] Styling update towards dpbtse.com
+- [ ] Add a projects list page
 - [ ] Create a artice page version that shows the origin of each part of the article similar to git blame.
 
 ## Desktop
 
 - [x] Create a desktop wrapper app using Pywebview and Pyinstaller
+- [ ] Update the styling to reflect a desktop app more
