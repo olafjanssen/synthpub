@@ -15,8 +15,8 @@
 - [x] Add a source feed to the article model
 - [x] Refactor the code so that almost no logic is in the routes, but mostly in the curator package
 - [x] Use the initial generator to only create a structure, not content
-- [ ] Add a project model that contains a list of topics
-- [ ] Make the API calls async
+- [x] Add a project model that contains a list of topics
+- [x] Make the trigger API call async
 
 ## Connectors
 

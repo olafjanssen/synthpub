@@ -11,6 +11,7 @@ from curator.article_refiner import refine_article
 from curator.article_relevance_filter import filter_relevance
 from typing import List, Tuple, Optional
 from curator.feeds.feed_processor import process_feeds
+from curator.topic_updater import update_topic
 
 router = APIRouter()
 
@@ -95,53 +96,13 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
     
     return topic
 
-@router.post("/topics/{topic_id}/update", response_model=Topic)
+@router.post("/topics/{topic_id}/update", response_model=dict)
 async def update_topic_route(topic_id: str):
-    """Update topic article based on feed content."""
-    try:
-        # Load topic
-        topic = get_topic(topic_id)
-        if not topic:
-            raise HTTPException(status_code=404, detail="Topic not found")
-        
-        current_article = get_article(topic.article)
-        if not current_article:
-            raise HTTPException(status_code=404, detail="Article not found")
-        
-        # Process feeds
-        feed_contents, feed_items = process_feeds(topic.feed_urls)
-        processed_items = {(item.url, item.content_hash): item for item in topic.processed_feeds}
-        
-        # Process each feed item
-        for content, feed_item in zip(feed_contents, feed_items):
-            # Skip if already processed
-            if (feed_item.url, feed_item.content_hash) in processed_items:
-                continue
-            
-            # Process single feed item
-            updated_article = process_feed_item(
-                topic=topic,
-                current_article=current_article,
-                feed_content=content,
-                feed_item=feed_item,
-            )
-            
-            # Mark relevance and add to processed feeds
-            feed_item.is_relevant = updated_article is not None
-            topic.processed_feeds.append(feed_item)
-            
-            # Update current article if content was relevant
-            if updated_article:
-                current_article = updated_article
-                topic.article = updated_article.id
-        
-            # Save updated topic
-            save_topic(topic)
-        return topic
-        
-    except Exception as e:
-        print(f"Error updating topic: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    """Update topic article based on feed content in a separate thread."""
+    import threading
+    thread = threading.Thread(target=update_topic, args=(topic_id,))
+    thread.start()
+    return {"message": "Topic update started", "topic_id": topic_id}
 
 @router.delete("/topics/{topic_id}", response_model=dict)
 async def delete_topic_route(topic_id: str):
