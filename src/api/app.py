@@ -8,6 +8,7 @@ import os
 from .routes.topic_routes import router as topic_router
 from .routes.article_routes import router as article_router
 from .routes.health import router as health_router
+from .routes.project_routes import router as project_router
 
 app = FastAPI(title="SynthPub API")
 
@@ -28,3 +29,6 @@ app.include_router(article_router, tags=["articles"])
 
 # Include the health routes
 app.include_router(health_router, tags=["health"])
+
+# Include the project routes
+app.include_router(project_router, tags=["projects"])

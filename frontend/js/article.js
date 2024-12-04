@@ -106,10 +106,15 @@ function navigateToVersion(articleId) {
 }
 
 function init() {
-    // Get article ID from URL parameters
+    // Get both article ID and project ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const articleId = urlParams.get('id');
-    
+    const projectId = urlParams.get('project_id');
+
+    // Set up back button navigation
+    const backButton = document.getElementById('back-button');
+    backButton.href = projectId ? `project.html?project_id=${projectId}` : 'index.html';
+
     if (!articleId) {
         showError('No article ID provided');
         return;
