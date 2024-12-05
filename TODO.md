@@ -48,8 +48,11 @@
 - [x] Styling update towards dpbtse.com
 - [x] Add a projects list page
 - [ ] Create a article page version that shows the origin of each part of the article similar to git blame.
+- [ ] Show outline of the article on the left
+- [ ] Show article changes on the right
+- [ ] Show only relevant sources for the article version (not all sources)
 
 ## Desktop
 
 - [x] Create a desktop wrapper app using Pywebview and Pyinstaller
-- [ ] Update the styling to reflect a desktop app more
+- [x] Update the styling to reflect a desktop app more
