@@ -74,6 +74,26 @@ async function loadTopics(projectId) {
             
             topicsList.appendChild(topicElement);
         }
+        
+        // Add the new topic card at the end with the same layout as other cards
+        const newTopicCard = template.content.cloneNode(true);
+
+            // Fill in the template
+            newTopicCard.querySelector('.card-header').innerHTML = "&nbsp;";
+            newTopicCard.querySelector('.card-body').innerHTML = `
+            <i class="bi bi-plus-circle"></i>
+                <p class="card-text">Create New Topic</p>
+        `;
+        
+        const viewButton = newTopicCard.querySelector('.view-article');
+        viewButton.style.visibility = "hidden";
+
+        var card = newTopicCard.querySelector('.card');
+        card.classList.add('new-project-card');
+        card.dataset.bsToggle = 'modal';
+        card.dataset.bsTarget = '#createTopicModal';
+        topicsList.appendChild(newTopicCard);
+        
     } catch (error) {
         console.error('Error loading topics:', error);
         showError('Failed to load topics. Please try again later.');

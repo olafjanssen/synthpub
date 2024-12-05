@@ -169,3 +169,4 @@ db/articles/
 db/projects/
 db_test/
 
+.DS_Store

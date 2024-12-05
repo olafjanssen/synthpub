@@ -46,8 +46,8 @@
 - [x] Add a list of sources at the bottom of the article
 - [x] Add a page or modal to edit a topic
 - [x] Styling update towards dpbtse.com
-- [ ] Add a projects list page
-- [ ] Create a artice page version that shows the origin of each part of the article similar to git blame.
+- [x] Add a projects list page
+- [ ] Create a article page version that shows the origin of each part of the article similar to git blame.
 
 ## Desktop
 

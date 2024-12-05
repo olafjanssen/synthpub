@@ -8,24 +8,26 @@ function loadProjects() {
     fetch(`${API_URL}/projects/`)
         .then(response => response.json())
         .then(projects => {
-            const projectsList = document.getElementById("projects-list");
-            projectsList.innerHTML = "";
-            projects.forEach(project => {
-                const projectCard = document.createElement("div");
-                projectCard.className = "col";
-                projectCard.innerHTML = `
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">${project.title}</h5>
-                            <p class="card-text">${project.description}</p>
-                            <a href="project.html?project_id=${project.id}" class="btn btn-primary">View Topics</a>
-                        </div>
-                    </div>
-                `;
-                projectsList.appendChild(projectCard);
-            });
+            renderProjects(projects);
         })
         .catch(error => console.error("Error loading projects:", error));
+}
+
+function renderProjects(projects) {
+    const projectsList = document.getElementById('projects-list');
+    const newProjectCard = projectsList.querySelector('.new-project-card');
+    
+    // Clear existing projects but keep the new project card
+    projectsList.innerHTML = '';
+    
+    // Add all project cards
+    projects.forEach(project => {
+        const projectCard = createProjectCard(project);
+        projectsList.appendChild(projectCard);
+    });
+    
+    // Add the new project card at the end
+    projectsList.appendChild(newProjectCard);
 }
 
 function createProject() {
@@ -47,4 +49,38 @@ function createProject() {
         modal.hide();
     })
     .catch(error => console.error("Error creating project:", error));
+}
+
+function createProjectCard(project) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    
+    const cardBody = document.createElement('div');
+    cardBody.className = 'card-body';
+    
+    const cardTitle = document.createElement('h5');
+    cardTitle.className = 'card-title';
+    cardTitle.textContent = project.title;
+    
+    const cardText = document.createElement('p');
+    cardText.className = 'card-text';
+    cardText.textContent = project.description;
+    
+    const viewTopicsLink = document.createElement('a');
+    viewTopicsLink.href = `project.html?project_id=${project.id}`;
+    viewTopicsLink.className = 'btn btn-primary';
+    viewTopicsLink.textContent = 'View Topics';
+    
+    cardBody.appendChild(cardTitle);
+    cardBody.appendChild(cardText);
+    cardBody.appendChild(viewTopicsLink);
+    card.appendChild(cardBody);
+    
+    return card;
+}
+
+function viewTopics(projectId) {
+    // Implement the logic to view topics for the given projectId
+    console.log(`Viewing topics for project ID: ${projectId}`);
+    // You can redirect to a topics page or open a modal with topics
 } 

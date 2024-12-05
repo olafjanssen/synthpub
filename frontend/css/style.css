@@ -1,57 +1,74 @@
 /* Base styles */
 body {
-    background-image: url('/img/backdrop_schop.jpg');  /* Add your background image */
+    background-image: url('/img/backdrop_schop.jpg');
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
     background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Full-width container */
+.container {
+    width: 100%;
+    max-width: none;
+    padding: 0 2rem;
+    margin: 0 auto;
+}
+
+/* Fixed navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.8) !important;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar img {
+    max-height: 40px;
+    margin-right: 1rem;
+}
+
+.navbar h2 {
+    color: #f9ec31;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Projects grid container */
+#projects-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 1rem;
+    justify-content: flex-start;
+    width: 100%;
 }
 
 /* Card modifications */
 .card {
+    width: 350px;
     border: none;
-    border-radius: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    transform: none !important;
-    transition: none !important;
-}
-
-/* Alternating card background colors */
-#topics-list .col:nth-child(4n+1) .card {
-    background-color: #009FB6;  /* Blue */
-}
-
-#topics-list .col:nth-child(4n+2) .card {
-    background-color: #f9ec31;  /* Yellow */
-}
-
-#topics-list .col:nth-child(4n+3) .card {
-    background-color: #f1686f;  /* Red */
-}
-
-#topics-list .col:nth-child(4n+4) .card {
-    background-color: #1C9963;  /* Green */
-}
-
-.card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    background-color: rgba(255, 255, 255, 0.9);
+    flex: 0 0 auto;
 }
 
 .card-body {
-    background-color: rgba(255, 255, 255, 0);
-    border-radius: 0;
-    /* border-radius: 0.25rem 0.25rem 0 0; */
+    padding: 1.5rem;
 }
 
-.card-footer {
-    background-color: rgba(255, 255, 255, 0);
-    border-top: none;
-    border-radius: 0;
-    /* border-radius: 0 0 0.25rem 0.25rem; */
-}
-
-/* Ensure text remains readable on yellow background */
 .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
     color: rgba(0,0,0,.84);
 }
 
@@ -59,324 +76,118 @@ body {
     color: rgba(0,0,0,.7);
 }
 
-/* Text styling */
-.article-text {
-    padding: 2rem;
-    background-color: rgba(255, 255, 255, 0.95);
-    border-radius: 0.25rem;
-    color: rgba(0,0,0,.84);
+/* New Project Card */
+.new-project-card {
+    display: flex;
+    /* align-items: center; */
+    justify-content: center;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.7);
+    min-height: 200px; /* Match the height of regular project cards */
 }
 
-.article-metadata {
-    padding: 1rem;
-    background-color: rgba(248, 249, 250, 0.9);
-    border-radius: 0.25rem;
-    margin-bottom: 2rem;
-    font-size: 0.9rem;
-    color: rgba(0,0,0,.54);
+.new-project-card:hover {
+    background-color: rgba(255, 255, 255, 0.9);
 }
 
-/* Link styling */
-.article-metadata a {
-    color: rgba(0, 0, 0, 0.84);
-    text-decoration: none;
+.new-project-card i {
+    font-size: 3rem;
+    color: #6c757d;
 }
 
-.article-metadata a:hover {
-    text-decoration: underline;
-    color: rgba(0, 0, 0, 0.94);
+.new-project-card .card-body {
+    text-align: center;
 }
 
-/* Source feed styling */
-#source-feed-info {
-    font-size: 0.85rem;
-    background-color: rgba(248, 249, 250, 0.9);
-    padding: 0.5rem;
-    border-radius: 4px;
-    margin-top: 0.5rem;
-    color: rgba(0,0,0,.44);
+.new-project-card .card-text {
+    margin-top: 1rem;
+    color: #6c757d;
+    font-size: 1.1rem;
 }
 
 /* Button styling */
 .btn-primary {
-    background-color: rgba(0, 0, 0, 0.84) !important;
-    border-color: rgba(0, 0, 0, 0.84) !important;
+    background-color: #007bff !important;
+    border-color: #007bff !important;
     color: white !important;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 4px;
 }
 
 .btn-primary:hover {
-    background-color: rgba(0, 0, 0, 0.94) !important;
-    border-color: rgba(0, 0, 0, 0.94) !important;
+    background-color: #0056b3 !important;
+    border-color: #0056b3 !important;
 }
 
-.btn-outline-primary,
-.btn-outline-secondary {
-    background-color: white !important;  /* Force solid background for outlined buttons */
+/* Modal styling */
+.modal-content {
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.btn-outline-primary:hover,
-.btn-outline-secondary:hover {
-    background-color: #f8f9fa !important;  /* Light gray background on hover */
-}
-
-
-
-/* Toast modifications */
-.toast {
-    background-color: rgba(255, 255, 255, 0.95);
+.modal-header, .modal-footer {
     border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 1rem 1.5rem;
 }
 
-/* Version navigation */
-#version-nav {
-    margin-left: auto;
-}
-
-#version-nav button:disabled {
-    opacity: 0.6;
-}
-
-/* Custom styles */
-.feed-urls {
-    margin-top: 1rem;
-}
-
-.feed-list {
-    padding-left: 1.2rem;
-    margin-bottom: 0;
-}
-
-.feed-list li {
-    word-break: break-all;
-}
-
-.remove-feed {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-.feed-url {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-/* Add some spacing around the markdown content */
-.markdown-body {
-    padding: 1rem;
-}
-
-.toast-container {
-    z-index: 1050;
-}
-
-.btn-group {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* Navbar styling */
-.navbar {
-    background-color: transparent !important;
-    padding: 1rem 0;
-}
-
-.navbar-brand {
-    color: #f9ec31 !important;
+.modal-title {
+    font-size: 1.5rem;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
 }
 
-.navbar-brand:hover {
-    color: #e4d82c !important;
-}
-
-.navbar img {
-    max-height: 50px;
-    margin: 0 2rem;
-    width: auto;
-} 
-/* Article styling */
-#article-text {
-    font-family: Merriweather, Georgia, serif;
-    font-size: 1.1rem;
-    line-height: 1.84;
-    color: rgba(0, 0, 0, .8);
-}
-
-#article-text p,
-#article-text blockquote {
-    margin: 0 0 1.5rem 0;
-}
-
-#article-text h1,
-#article-text h2,
-#article-text h3,
-#article-text h4,
-#article-text h5,
-#article-text h6 {
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-}
-
-/* Blockquote styling */
-blockquote {
-    border-left: 4px solid #009FB6;
-    padding: 0 20px;
-    font-style: italic;
-    color: rgba(0, 0, 0, .5);
-    margin: 1.5rem 0;
-}
-
-/* List styling */
-#article-content ol,
-#article-content ul {
-    margin-bottom: 1.5rem;
-}
-
-#article-content ol ol,
-#article-content ul ul {
-    list-style: disc;
-    margin-bottom: 0;
-}
-
-/* Code block styling */
-pre {
-    box-sizing: border-box;
-    border: #E3EDF3 1px solid;
-    width: 100%;
-    padding: 7px;
-    font-family: monospace, sans-serif;
-    font-size: 14px;
-    white-space: pre;
-    overflow: auto;
-    background: #fff;
-    border-radius: 4px;
-    line-height: 1.6;
-    color: #333;
-    margin-bottom: 1.5rem;
-}
-
-/* Article metadata styling */
-.article-metadata {
-    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    font-size: 0.9rem;
-    color: rgba(0, 0, 0, .54);
-    padding: 1rem;
-    background-color: rgba(248, 249, 250, 0.9);
-    border-radius: 0.25rem;
-    margin-bottom: 2rem;
-}
-
-/* Link styling */
-.article-post a {
-    color: #009FB6;
-    transition: all 0.2s;
-}
-
-.article-post a:hover {
-    color: #007a8a;
-    text-decoration: none;
-}
-
-/* Image styling */
-.article-post img {
-    max-width: 100%;
-    height: auto;
-    margin: 1.5rem 0;
-}
-
-#article-content:hover {
-    transform: none;
-}
-
-/* Main content area */
-#article-content {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 0.25rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    margin: 0 auto;
-}
-
-#article-title {
-    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    font-weight: 700;
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
-    color: rgba(0, 0, 0, .84);
-}
-
-/* Article container width */
-.container.mt-4 {
-    max-width: 960px;
-    margin: 0 auto;
-}
-
-/* For smaller screens */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .container.mt-4 {
-        max-width: 100%;
-        padding: 0 15px;
+    .navbar {
+        padding: 0.5rem 1rem;
+    }
+
+    .navbar h2 {
+        font-size: 1.25rem;
+    }
+
+    .container {
+        padding: 0 1rem;
     }
 }
 
-/* Keep metadata aligned with content */
-.article-metadata {
-    max-width: 960px;
-    margin: 0 auto 2rem auto;
+/* Topics list container */
+#topics-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 1rem;
+    justify-content: flex-start;
+    width: 100%;
 }
 
-/* Sources section styling */
-.article-sources {
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(0, 0, 0, .1);
-    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    font-size: 0.9rem;
-    color: rgba(0, 0, 0, .54);
+/* Topic card specific styles */
+#topics-list .col {
+    width: 350px;
+    flex: 0 0 auto;
 }
 
-.article-sources h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: rgba(0, 0, 0, .84);
+#topics-list .card {
+    height: 100%;
 }
 
-.sources-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+/* Back button styling */
+.btn-outline-primary {
+    color: #007bff;
+    border-color: #007bff;
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
 }
 
-.sources-list li {
-    margin-bottom: 0.75rem;
-    line-height: 1.5;
+.btn-outline-primary:hover {
+    color: white;
+    background-color: #007bff;
+    border-color: #007bff;
 }
 
-.sources-list a {
-    color: #009FB6;
-    text-decoration: none;
-}
-
-.sources-list a:hover {
-    text-decoration: underline;
-}
-
-/* Add these styles to your existing CSS */
-.card-header {
-    background-color: rgba(255, 255, 255, 0.5) !important;  /* 50% opacity white */
-}
-
-/* Style the icon buttons */
-.card-header .btn-link {
-    color: rgba(0, 0, 0, 0.84) !important;  /* Black icons */
-}
-
-.card-header .btn-link:hover {
-    color: rgba(0, 0, 0, 1) !important;  /* Darker on hover */
+/* Create Topic Card */
+.new-project-card.small {
+    width: 200px;
+    min-height: 120px;
 }
 
