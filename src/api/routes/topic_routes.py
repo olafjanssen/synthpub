@@ -4,7 +4,7 @@ from uuid import uuid4
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from api.models.feed_item import FeedItem
 from api.models.article import Article
-from api.db.topic_db import load_topics, save_topics, mark_topic_deleted, update_topic, get_topic, save_topic
+from api.db.topic_db import load_topics, mark_topic_deleted, update_topic, get_topic, save_topic
 from api.db.article_db import create_article, get_article, update_article
 from curator.article_generator import generate_article
 from curator.article_refiner import refine_article
@@ -68,9 +68,9 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
     if topic_id not in topics:
         raise HTTPException(status_code=404, detail="Topic not found")
     
-    topic = topics[topic_id]
+    topic = get_topic(topic_id)
     topic.feed_urls = feed_urls
-    save_topics(topics)
+    save_topic(topic)
     
     return topic
 

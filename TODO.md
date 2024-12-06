@@ -17,6 +17,7 @@
 - [x] Use the initial generator to only create a structure, not content
 - [x] Add a project model that contains a list of topics
 - [x] Make the trigger API call async
+- [x] Create an in-memory cache for the topics
 
 ## Connectors
 
