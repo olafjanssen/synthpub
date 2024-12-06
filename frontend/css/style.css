@@ -1,4 +1,8 @@
 /* Base styles */
+html {
+    font-size: 0.8em; /* set base scale to 80% of default */
+}
+
 body {
     background-image: url('/img/backdrop_schop.jpg');
     background-size: cover;

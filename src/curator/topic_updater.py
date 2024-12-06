@@ -3,7 +3,7 @@ from api.models.topic import Topic
 from api.models.article import Article
 from api.db.topic_db import get_topic, save_topic
 from api.db.article_db import get_article, update_article
-from curator.feeds.feed_processor import process_feeds
+from news.feeds.feed_processor import process_feeds
 from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem

@@ -9,7 +9,7 @@ from api.db.article_db import create_article, get_article, update_article
 from curator.article_generator import generate_article
 from curator.article_refiner import refine_article
 from typing import List, Tuple, Optional
-from curator.feeds.feed_processor import process_feeds
+from news.feeds.feed_processor import process_feeds
 from curator.topic_updater import update_topic
 
 router = APIRouter()
