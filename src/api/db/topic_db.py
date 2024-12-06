@@ -8,21 +8,23 @@ import uuid
 from api.models import Topic
 from datetime import datetime
 from shutil import move
+import os
 
 from api.models.feed_item import FeedItem
 
-DB_PATH = Path("../db/topics")
+def DB_PATH():
+    return Path(os.getenv("DB_PATH", "../db")) / 'topics'
 
 def ensure_db_exists():
     """Create the topics directory if it doesn't exist."""
-    DB_PATH.mkdir(parents=True, exist_ok=True)
+    DB_PATH().mkdir(parents=True, exist_ok=True)
 
 def save_topic(topic: Topic) -> None:
     """Save topic to individual YAML file."""
     ensure_db_exists()
     
     # Generate filename from id
-    filename = DB_PATH / f"{topic.id}.yaml"
+    filename = DB_PATH() / f"{topic.id}.yaml"
     # Convert to dict and save
     topic_dict = topic.model_dump()
     # Convert datetime objects to ISO format
@@ -36,7 +38,7 @@ def save_topic(topic: Topic) -> None:
 
 def get_topic(topic_id: str) -> Optional[Topic]:
     """Retrieve topic by id."""
-    filename = DB_PATH / f"{topic_id}.yaml"
+    filename = DB_PATH() / f"{topic_id}.yaml"
     
     if not filename.exists():
         return None
@@ -51,7 +53,7 @@ def list_topics() -> List[Topic]:
     
     topics = []
     # Correctly exclude files that start with '_'
-    for file in DB_PATH.glob("*.yaml"):
+    for file in DB_PATH().glob("*.yaml"):
         if not file.name.startswith('_'):
             print(f"Loading topic from {file}")
             with open(file, "r", encoding="utf-8") as f:
@@ -93,12 +95,12 @@ def mark_topic_deleted(topic_id: str) -> bool:
     Mark a topic as deleted by prefixing its filename with '_'.
     Returns True if successful, False if topic not found.
     """
-    filename = DB_PATH / f"{topic_id}.yaml"
+    filename = DB_PATH() / f"{topic_id}.yaml"
     if not filename.exists():
         return False
         
     # New filename with '_' prefix
-    new_filename = DB_PATH / f"_{topic_id}.yaml"
+    new_filename = DB_PATH() / f"_{topic_id}.yaml"
     
     # Move/rename the file
     move(filename, new_filename)

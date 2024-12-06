@@ -34,7 +34,7 @@ def collect_packages():
             packages.append(item)
     return packages
 
-APP = ['desktop_app.py']
+APP = ['src/desktop_app.py']
 DATA_FILES = collect_data_files()
 local_packages = collect_packages()
 
@@ -104,7 +104,7 @@ OPTIONS = {
         'pkg_resources',
     ],
     'resources': ['frontend', 'db', 'src/api'],
-    'iconfile': 'frontend/img/dpbtse_logo.icns',
+    'iconfile': './frontend/img/dpbtse_logo.icns',
     'plist': {
         'CFBundleName': 'SynthPub',
         'CFBundleDisplayName': 'SynthPub',

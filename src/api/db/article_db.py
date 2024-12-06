@@ -5,15 +5,17 @@ import yaml
 from pathlib import Path
 from typing import List, Optional
 import uuid
+import os
 
 from ..models.article import Article
 from ..models.feed_item import FeedItem
 
-DB_PATH = Path("../db/articles")
+def DB_PATH():
+    return Path(os.getenv("DB_PATH", "../db")) / 'articles'
 
 def ensure_db_exists():
     """Create the articles directory if it doesn't exist."""
-    DB_PATH.mkdir(parents=True, exist_ok=True)
+    DB_PATH().mkdir(parents=True, exist_ok=True)
 def article_to_markdown(article: Article) -> str:
     """Convert article to markdown with YAML front matter."""
     metadata = {
@@ -61,7 +63,7 @@ def save_article(article: Article) -> None:
     ensure_db_exists()
     
     # Generate filename from id
-    filename = DB_PATH / f"{article.id}.md"
+    filename = DB_PATH() / f"{article.id}.md"
     
     # Convert to markdown and save
     markdown = article_to_markdown(article)
@@ -70,7 +72,7 @@ def save_article(article: Article) -> None:
 
 def get_article(article_id: str) -> Optional[Article]:
     """Retrieve article by id."""
-    filename = DB_PATH / f"{article_id}.md"
+    filename = DB_PATH() / f"{article_id}.md"
     
     if not filename.exists():
         return None
@@ -85,7 +87,7 @@ def list_articles() -> List[Article]:
     ensure_db_exists()
     
     articles = []
-    for file in DB_PATH.glob("*.md"):
+    for file in DB_PATH().glob("*.md"):
         with open(file, "r", encoding="utf-8") as f:
             articles.append(markdown_to_article(f.read()))
             

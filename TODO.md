@@ -35,7 +35,9 @@
 
 ## Publisher
 
-- [ ] Create a function to publish the topics to a file system location
+- [ ] Create a function to publish the articles to a file system location
+- [ ] Create a function to publish the articles as a podcast
+- [ ] Create a function to publish the articles to a GitLab repository
 
 ## Front-end
 

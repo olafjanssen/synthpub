@@ -3,6 +3,8 @@ Desktop application wrapper for SynthPub using PyWebView.
 """
 import os
 import sys
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 import time
 import webview
 import threading
@@ -91,7 +93,8 @@ class SynthPubApp:
             'http://127.0.0.1:8080',
             width=1200,
             height=800,
-            min_size=(800, 600)
+            min_size=(800, 600),
+            zoomable=True
         )
 
     def run(self):
@@ -105,6 +108,8 @@ class SynthPubApp:
             os.environ['FRONTEND_PATH'] = frontend_path
             os.environ['DB_PATH'] = db_path
 
+            print(f"DB_PATH: {db_path}")
+            
             # Create and show the window
             self.create_window()
             
