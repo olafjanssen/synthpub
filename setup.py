@@ -31,6 +31,7 @@ def collect_packages():
     packages = []
     for item in os.listdir('.'):
         if os.path.isdir(item) and os.path.exists(os.path.join(item, '__init__.py')):
+            print(f"Collecting package: {item}")
             packages.append(item)
     return packages
 
@@ -103,7 +104,7 @@ OPTIONS = {
         # Deprecated
         'pkg_resources',
     ],
-    'resources': ['frontend', 'db', 'src/api'],
+    'resources': ['frontend', 'db', 'src/api','src/news','src/publisher','src/curator'],
     'iconfile': './frontend/img/dpbtse_logo.icns',
     'plist': {
         'CFBundleName': 'SynthPub',

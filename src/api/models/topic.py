@@ -9,6 +9,7 @@ class TopicBase(BaseModel):
     name: str
     description: str
     feed_urls: List[str]
+    publish_urls: List[str] = []
 
 class TopicCreate(TopicBase):
     """Topic creation model."""
@@ -19,6 +20,7 @@ class TopicUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     feed_urls: Optional[List[str]] = None
+    publish_urls: Optional[List[str]] = None
 
 class Topic(TopicBase):
     """Complete topic model."""

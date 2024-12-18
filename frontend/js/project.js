@@ -118,9 +118,12 @@ function removeFeedInput(button) {
 async function createTopic() {
     const name = document.getElementById('topicName').value;
     const description = document.getElementById('topicDescription').value;
-    const feedUrls = Array.from(document.querySelectorAll('.feed-url')).map(input => input.value);
-    const urlParams = new URLSearchParams(window.location.search);
-    const projectId = urlParams.get("project_id");
+    const feedUrls = Array.from(document.querySelectorAll('.feed-url'))
+        .map(input => input.value)
+        .filter(url => url.trim() !== '');
+    const publishUrls = Array.from(document.querySelectorAll('.publish-url'))
+        .map(input => input.value)
+        .filter(url => url.trim() !== '');
 
     try {
         const response = await fetch(`${API_URL}/topics/`, {
@@ -128,7 +131,7 @@ async function createTopic() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name, description, feed_urls: feedUrls })
+            body: JSON.stringify({ name, description, feed_urls: feedUrls, publish_urls: publishUrls })
         });
         
         if (!response.ok) {
@@ -223,10 +226,15 @@ async function updateTopic() {
     const name = document.getElementById('editTopicName').value;
     const description = document.getElementById('editTopicDescription').value;
     const feedInputs = document.querySelectorAll('#editFeedUrlsContainer .feed-url');
+    const publishInputs = document.querySelectorAll('#editPublishUrlsContainer .edit-publish-url');
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get("project_id");
 
     const feed_urls = Array.from(feedInputs)
+        .map(input => input.value.trim())
+        .filter(url => url !== '');
+
+    const publish_urls = Array.from(publishInputs)
         .map(input => input.value.trim())
         .filter(url => url !== '');
 
@@ -236,7 +244,7 @@ async function updateTopic() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name, description, feed_urls })
+            body: JSON.stringify({ name, description, feed_urls, publish_urls })
         });
 
         if (!response.ok) {
@@ -278,4 +286,19 @@ async function removeTopic(topicId) {
 
 function showError(message) {
     alert(message);
+}
+
+function addPublishInput() {
+    const container = document.getElementById('publishUrlsContainer');
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="url" class="form-control publish-url" placeholder="https://example.com/publish">
+        <button type="button" class="btn btn-outline-danger remove-publish" onclick="removePublishInput(this)">×</button>
+    `;
+    container.appendChild(div);
+}
+
+function removePublishInput(button) {
+    button.closest('.input-group').remove();
 } 
