@@ -116,6 +116,15 @@ function removeFeedInput(button) {
 }
 
 async function createTopic() {
+    // Get the project ID from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get("project_id");
+    
+    if (!projectId) {
+        showError('Project ID not found in URL');
+        return;
+    }
+
     const name = document.getElementById('topicName').value;
     const description = document.getElementById('topicDescription').value;
     const feedUrls = Array.from(document.querySelectorAll('.feed-url'))
@@ -141,9 +150,13 @@ async function createTopic() {
         const topic = await response.json();
         
         // Add topic to project
-        await fetch(`${API_URL}/projects/${projectId}/topics/${topic.id}`, {
+        const projectResponse = await fetch(`${API_URL}/projects/${projectId}/topics/${topic.id}`, {
             method: 'POST'
         });
+
+        if (!projectResponse.ok) {
+            throw new Error(`Failed to add topic to project: ${projectResponse.status}`);
+        }
         
         // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('createTopicModal'));

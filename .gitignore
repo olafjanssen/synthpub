@@ -169,4 +169,7 @@ db/articles/
 db/projects/
 db_test/
 
+# Keys and credentials
+creds/
+
 .DS_Store

@@ -7,6 +7,7 @@ from .youtube_connector import fetch_youtube_transcript
 from .youtube_channel_connector import fetch_youtube_videos_playlist, fetch_youtube_videos_handle
 from api.models.feed_item import FeedItem
 from .file_connector import fetch_files
+from .gmail_connector import fetch_gmail_content
 
 def process_feeds(feed_urls: List[str]) -> Tuple[List[Dict[str, str]], List[FeedItem]]:
     """
@@ -27,7 +28,17 @@ def process_feeds(feed_urls: List[str]) -> Tuple[List[Dict[str, str]], List[Feed
             
             print(parsed_url)
 
-            if parsed_url.scheme == 'file':
+            if parsed_url.scheme == 'gmail':
+                # Handle Gmail content
+                email_contents = fetch_gmail_content()
+                for content in email_contents:
+                    all_content.append(content)
+                    feed_items.append(FeedItem.create(
+                        url=content['url'],
+                        content=content['content']
+                    ))
+                    
+            elif parsed_url.scheme == 'file':
                 # Handle local files
                 file_contents = fetch_files(url)
                 for content in file_contents:
