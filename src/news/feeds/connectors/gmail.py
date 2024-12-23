@@ -12,7 +12,7 @@ from googleapiclient.discovery import build
 from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import urlparse
-from .connectors.feed_connector import FeedConnector
+from .feed_connector import FeedConnector
 
 # Gmail API configuration
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']

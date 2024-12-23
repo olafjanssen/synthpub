@@ -3,7 +3,7 @@ YouTube Channel connector for fetching video URLs from a given channel or playli
 """
 from urllib.parse import urlparse
 from typing import List, Dict
-from .connectors.feed_connector import FeedConnector
+from .feed_connector import FeedConnector
 from googleapiclient.discovery import build
 from typing import List
 import os

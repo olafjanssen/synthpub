@@ -3,7 +3,7 @@ Web connector for fetching and parsing webpage content.
 """
 from urllib.parse import urlparse
 from typing import Dict, List
-from .connectors.feed_connector import FeedConnector
+from .feed_connector import FeedConnector
 
 # Chrome user agent string
 HEADERS = {

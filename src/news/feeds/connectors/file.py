@@ -6,7 +6,7 @@ from typing import Dict, List
 from urllib.parse import unquote, urlparse
 import mimetypes
 import glob
-from .connectors.feed_connector import FeedConnector
+from .feed_connector import FeedConnector
 
 def parse_file_url(url: str) -> str:
     """

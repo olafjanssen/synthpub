@@ -3,7 +3,7 @@ YouTube connector for fetching transcripts from YouTube videos.
 """
 from urllib.parse import urlparse, parse_qs
 from typing import List, Dict
-from .connectors.feed_connector import FeedConnector
+from .feed_connector import FeedConnector
 from youtube_transcript_api import YouTubeTranscriptApi
 
 class YouTubeConnector(FeedConnector):

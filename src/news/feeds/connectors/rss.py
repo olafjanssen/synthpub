@@ -7,7 +7,7 @@ from typing import List, Dict
 from datetime import datetime
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlparse
-from .connectors.feed_connector import FeedConnector
+from .feed_connector import FeedConnector
 
 def get_pub_date(entry) -> datetime:
     """Extract publication date from entry, handling multiple formats."""

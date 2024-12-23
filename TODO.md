@@ -18,12 +18,13 @@
 - [x] Add a project model that contains a list of topics
 - [x] Make the trigger API call async
 - [x] Create an in-memory cache for the topics
+- [ ] Make the feed system more generic
 
 ## Connectors
 
 - [x] Create a file system connector
 - [ ] Create a Exchange email connector
-- [ ] Create a (gmail) email connector
+- [x] Create a (gmail) email connector
 - [ ] Create a MS Teams connector
 - [x] Create a Youtube transcript connector
 
@@ -32,7 +33,8 @@
 - [x] Allow for different LLM providers such as Ollama and OpenAI
 - [x] Add a relevance filter
 - [ ] Add a substance extractor
-- [ ] Add a scheduler that will update the topics every X hours
+- [x] Add a scheduler that will update the topics every X hours
+- [ ] Add relevance reason to topic source feed
 
 ## Publisher
 

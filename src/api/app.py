@@ -21,14 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the topic routes
+# Include the various routes
 app.include_router(topic_router, tags=["topics"])
-
-# Include the article routes
 app.include_router(article_router, tags=["articles"])
-
-# Include the health routes
 app.include_router(health_router, tags=["health"])
-
-# Include the project routes
 app.include_router(project_router, tags=["projects"])
