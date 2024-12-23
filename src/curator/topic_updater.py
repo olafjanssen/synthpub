@@ -8,6 +8,37 @@ from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem
 from typing import Optional
+from api.signals import topic_update_requested
+import threading
+from queue import Queue
+
+# Add queue for handling updates
+update_queue = Queue()
+
+def handle_topic_update(sender, topic_id):
+    """Signal handler for topic update requests."""
+    update_queue.put(topic_id)
+    print(f"Queued update request for topic {topic_id} from {sender}")
+
+def process_update_queue():
+    """Process queued topic updates."""
+    while True:
+        try:
+            topic_id = update_queue.get()
+            print(f"Processing update for topic {topic_id}")
+            update_topic(topic_id)
+        except Exception as e:
+            print(f"Error processing topic update: {str(e)}")
+
+def start_update_processor():
+    """Start the update processor thread."""
+    # Connect signal handler
+    topic_update_requested.connect(handle_topic_update)
+    
+    # Start queue processor thread
+    processor_thread = threading.Thread(target=process_update_queue, daemon=True)
+    processor_thread.start()
+    print("Topic update processor started")
 
 def process_feed_item(
     topic: Topic,

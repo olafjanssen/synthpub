@@ -7,7 +7,7 @@ from api.db.topic_db import list_topics
 from api.models.topic import Topic
 import os
 from dotenv import load_dotenv
-from curator.topic_updater import update_topic
+from api.signals import topic_update_requested
 
 # Load environment variables
 load_dotenv()
@@ -45,7 +45,7 @@ def check_and_update_topics():
         for topic in topics:
             if should_update_topic(topic):
                 logger.info(f"Updating topic {topic.id}")
-                update_topic(topic.id)
+                topic_update_requested.send('news_scheduler', topic_id=topic.id)
             
     except Exception as e:
         logger.error(f"Error in check_and_update_topics: {str(e)}")

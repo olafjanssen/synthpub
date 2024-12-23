@@ -11,6 +11,7 @@ from curator.article_refiner import refine_article
 from typing import List, Tuple, Optional
 from news.feeds.feed_processor import process_feeds
 from curator.topic_updater import update_topic
+from api.signals import topic_update_requested
 
 router = APIRouter()
 
@@ -76,11 +77,11 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
 
 @router.post("/topics/{topic_id}/update", response_model=dict)
 async def update_topic_route(topic_id: str):
-    """Update topic article based on feed content in a separate thread."""
-    import threading
-    thread = threading.Thread(target=update_topic, args=(topic_id,))
-    thread.start()
-    return {"message": "Topic update started", "topic_id": topic_id}
+    """Request topic update via signal."""
+    # Send signal instead of directly spawning thread
+    print(f"Sending signal for topic {topic_id}")
+    topic_update_requested.send('api', topic_id=topic_id)
+    return {"message": "Topic update requested", "topic_id": topic_id}
 
 @router.delete("/topics/{topic_id}", response_model=dict)
 async def delete_topic_route(topic_id: str):
