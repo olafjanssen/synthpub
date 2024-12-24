@@ -5,6 +5,7 @@ from urllib.parse import urlparse, parse_qs
 from typing import List, Dict
 from .feed_connector import FeedConnector
 from youtube_transcript_api import YouTubeTranscriptApi
+from api.signals import news_feed_update_requested, news_feed_item_found
 
 class YouTubeConnector(FeedConnector):
     @staticmethod
@@ -61,3 +62,5 @@ def fetch_youtube_transcript(video_id: str) -> str:
     except Exception as e:
         print(f"Error fetching transcript for video ID {video_id}: {str(e)}")
         return "" 
+
+YouTubeConnector.connect_signals() 

@@ -7,6 +7,7 @@ from urllib.parse import unquote, urlparse
 import mimetypes
 import glob
 from .feed_connector import FeedConnector
+from api.signals import news_feed_update_requested, news_feed_item_found
 
 def parse_file_url(url: str) -> str:
     """
@@ -104,3 +105,5 @@ class FileConnector(FeedConnector):
         except Exception as e:
             print(f"Error processing file URL {url}: {str(e)}")
             return []
+
+FileConnector.connect_signals()

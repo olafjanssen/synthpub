@@ -8,6 +8,7 @@ from googleapiclient.discovery import build
 import os
 from dotenv import load_dotenv
 from urllib.parse import parse_qs
+from api.signals import news_feed_update_requested, news_feed_item_found
 
 load_dotenv()  # Load environment variables from .env file
 API_KEY = os.getenv('YOUTUBE_API_KEY')  # Get the key from the .env file
@@ -85,9 +86,9 @@ class YouTubeChannelConnector(FeedConnector):
         return (
             parsed.netloc in ('www.youtube.com', 'youtube.com') and
             (
-                '@' in parsed.path or  # Handle
-                'channel' in parsed.path or  # Channel
-                'playlist' in parsed.path  # Playlist
+                '@' in parsed.path or
+                'channel' in parsed.path or
+                'playlist' in parsed.path
             )
         )
     
@@ -129,3 +130,5 @@ class YouTubeChannelConnector(FeedConnector):
         except Exception as e:
             print(f"Error fetching YouTube channel/playlist {url}: {str(e)}")
             return []
+
+YouTubeChannelConnector.connect_signals()

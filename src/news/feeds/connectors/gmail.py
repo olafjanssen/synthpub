@@ -13,6 +13,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import urlparse
 from .feed_connector import FeedConnector
+from api.signals import news_feed_update_requested, news_feed_item_found
 
 # Gmail API configuration
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
@@ -131,9 +132,9 @@ class GmailConnector(FeedConnector):
     @staticmethod
     def fetch_content(url: str) -> List[Dict[str, str]]:
         try:
-            # Gmail connector is special as it doesn't use the URL directly
-            # but rather fetches recent emails
             return fetch_gmail_content()
         except Exception as e:
             print(f"Error fetching Gmail content: {str(e)}")
             return []
+
+GmailConnector.connect_signals()

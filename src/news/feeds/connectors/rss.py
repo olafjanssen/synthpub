@@ -8,6 +8,7 @@ from datetime import datetime
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlparse
 from .feed_connector import FeedConnector
+from api.signals import news_feed_update_requested, news_feed_item_found
 
 def get_pub_date(entry) -> datetime:
     """Extract publication date from entry, handling multiple formats."""
@@ -86,3 +87,5 @@ class RSSConnector(FeedConnector):
         except Exception as e:
             print(f"Error fetching RSS feed {url}: {str(e)}")
             return []
+
+RSSConnector.connect_signals()

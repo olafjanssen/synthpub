@@ -8,9 +8,11 @@ from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem
 from typing import Optional
-from api.signals import topic_update_requested, topic_updated
+from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found
 import threading
+from typing import Dict
 from queue import Queue
+
 
 # Add queue for handling updates
 update_queue = Queue()
@@ -30,10 +32,47 @@ def process_update_queue():
         except Exception as e:
             print(f"Error processing topic update: {str(e)}")
 
+def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
+    """Signal handler for feed item found."""
+    print(f"Feed item found for {feed_url}: {feed_item.url}")
+
+    topic = sender
+    processed_items = {(item.url, item.content_hash): item for item in topic.processed_feeds}
+
+    # Skip if already processed
+    if (feed_item.url, feed_item.content_hash) in processed_items:
+        print(f"Skipping feed item {feed_item.url} as it has already been processed")
+        return
+
+    current_article = get_article(topic.article)
+    if not current_article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Process single feed item
+    updated_article = process_feed_item(
+        topic=topic,
+        current_article=current_article,
+        feed_content=content,
+        feed_item=feed_item,
+    )
+    
+    # Mark relevance and add to processed feeds
+    feed_item.is_relevant = updated_article is not None
+    topic.processed_feeds.append(feed_item)
+    
+    # Update current article if content was relevant
+    if updated_article:
+        topic.article = updated_article.id
+
+    # Save updated topic
+    topic_updated.send(topic)
+
+
 def start_update_processor():
     """Start the update processor thread."""
     # Connect signal handler
     topic_update_requested.connect(handle_topic_update)
+    news_feed_item_found.connect(handle_feed_item)
     
     # Start queue processor thread
     processor_thread = threading.Thread(target=process_update_queue, daemon=True)
@@ -61,6 +100,9 @@ def process_feed_item(
     
     return updated_article
 
+
+
+
 def update_topic(topic_id: str) -> Optional[Topic]:
     """Update topic article based on feed content."""
     try:
@@ -68,41 +110,10 @@ def update_topic(topic_id: str) -> Optional[Topic]:
         topic = get_topic(topic_id)
         if not topic:
             raise HTTPException(status_code=404, detail="Topic not found")
-        
-        current_article = get_article(topic.article)
-        if not current_article:
-            raise HTTPException(status_code=404, detail="Article not found")
-        
+                
         # Process feeds
-        feed_contents, feed_items = process_feeds(topic.feed_urls)
-        processed_items = {(item.url, item.content_hash): item for item in topic.processed_feeds}
-        
-        # Process each feed item
-        for content, feed_item in zip(feed_contents, feed_items):
-            # Skip if already processed
-            if (feed_item.url, feed_item.content_hash) in processed_items:
-                print(f"Skipping feed item {feed_item.url} as it has already been processed")
-                continue
-            
-            # Process single feed item
-            updated_article = process_feed_item(
-                topic=topic,
-                current_article=current_article,
-                feed_content=content,
-                feed_item=feed_item,
-            )
-            
-            # Mark relevance and add to processed feeds
-            feed_item.is_relevant = updated_article is not None
-            topic.processed_feeds.append(feed_item)
-            
-            # Update current article if content was relevant
-            if updated_article:
-                current_article = updated_article
-                topic.article = updated_article.id
-        
-            # Save updated topic
-            topic_updated.send(topic)
+        for feed_url in topic.feed_urls:
+            news_feed_update_requested.send(topic, feed_url=feed_url)
         return topic
         
     except Exception as e:
