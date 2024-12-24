@@ -9,7 +9,7 @@ from datetime import datetime
 from shutil import move
 import os
 from functools import wraps
-
+from api.signals import topic_updated, topic_saved
 from api.models import Topic
 from api.models.feed_item import FeedItem
 
@@ -65,6 +65,8 @@ def save_topic(topic: Topic) -> None:
     
     # Update cache
     _topic_cache[topic.id] = topic
+
+    topic_saved.send(topic)
 
 def get_topic(topic_id: str) -> Optional[Topic]:
     """Retrieve topic by id from cache or disk."""
@@ -124,3 +126,5 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
         except Exception as e:
             print(f"Error parsing feed item: {e}")
     return feed_items
+
+topic_updated.connect(save_topic)

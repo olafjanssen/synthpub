@@ -5,9 +5,9 @@ from urllib.parse import urlparse
 from typing import List, Dict
 from .feed_connector import FeedConnector
 from googleapiclient.discovery import build
-from typing import List
 import os
 from dotenv import load_dotenv
+from urllib.parse import parse_qs
 
 load_dotenv()  # Load environment variables from .env file
 API_KEY = os.getenv('YOUTUBE_API_KEY')  # Get the key from the .env file
@@ -31,7 +31,7 @@ def fetch_youtube_videos_playlist(playlist_id: str) -> List[str]:
     playlist_response = youtube.playlistItems().list(
         part='snippet',
         playlistId=playlist_id,
-        maxResults=50  # Adjust as needed
+        maxResults=50
     ).execute()
 
     for item in playlist_response['items']:
@@ -59,21 +59,22 @@ def fetch_youtube_videos_handle(handle: str) -> List[str]:
         forHandle=handle
     ).execute()
 
-    print(channel_response)
+    if not channel_response.get('items'):
+        return []
 
-    if channel_response['items']:
-        channel_id = channel_response['items'][0]['id']
-        # Fetch videos from the channel
-        search_response = youtube.search().list(
-            part='id,snippet',
-            channelId=channel_id,
-            maxResults=50  # Adjust as needed
-        ).execute()
+    channel_id = channel_response['items'][0]['id']
+    
+    # Fetch videos from the channel
+    search_response = youtube.search().list(
+        part='id,snippet',
+        channelId=channel_id,
+        maxResults=50,
+        type='video'  # Only fetch videos
+    ).execute()
 
-        for item in search_response['items']:
-            if item['id']['kind'] == 'youtube#video':
-                video_id = item['id']['videoId']
-                video_urls.append(f"https://www.youtube.com/watch?v={video_id}")
+    for item in search_response['items']:
+        video_id = item['id']['videoId']
+        video_urls.append(f"https://www.youtube.com/watch?v={video_id}")
 
     return video_urls
 
@@ -81,7 +82,6 @@ class YouTubeChannelConnector(FeedConnector):
     @staticmethod
     def can_handle(url: str) -> bool:
         parsed = urlparse(url)
-        path_parts = parsed.path.split('/')
         return (
             parsed.netloc in ('www.youtube.com', 'youtube.com') and
             (
@@ -95,25 +95,36 @@ class YouTubeChannelConnector(FeedConnector):
     def fetch_content(url: str) -> List[Dict[str, str]]:
         try:
             parsed = urlparse(url)
-            path_parts = parsed.path.split('/')
+            path_parts = [p for p in parsed.path.split('/') if p]
             
+            if not path_parts:
+                return []
+
             video_urls = []
+            title = "YouTube Channel/Playlist"
+            
             if 'playlist' in parsed.path:
                 playlist_id = parse_qs(parsed.query).get('list', [''])[0]
                 if playlist_id:
                     video_urls = fetch_youtube_videos_playlist(playlist_id)
+                    title = f"YouTube Playlist: {playlist_id}"
             else:
-                # Extract handle (remove @ if present)
-                handle = next(part for part in path_parts if part)
+                handle = path_parts[0]
                 if handle.startswith('@'):
                     handle = handle[1:]
                 video_urls = fetch_youtube_videos_handle(handle)
+                title = f"YouTube Channel: {handle}"
+            
+            print(video_urls)
+
+            if not video_urls:
+                return []
             
             return [{
                 'url': url,
-                'content': f'YouTube Channel/Playlist Videos:\n' + '\n'.join(video_urls),
-                'title': f'YouTube Channel: {handle}'
-            }] if video_urls else []
+                'content': 'YouTube Channel/Playlist Videos:\n' + '\n'.join(video_urls),
+                'title': title
+            }]
             
         except Exception as e:
             print(f"Error fetching YouTube channel/playlist {url}: {str(e)}")

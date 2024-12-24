@@ -8,7 +8,7 @@ from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem
 from typing import Optional
-from api.signals import topic_update_requested
+from api.signals import topic_update_requested, topic_updated
 import threading
 from queue import Queue
 
@@ -102,7 +102,7 @@ def update_topic(topic_id: str) -> Optional[Topic]:
                 topic.article = updated_article.id
         
             # Save updated topic
-            save_topic(topic)
+            topic_updated.send(topic)
         return topic
         
     except Exception as e:

@@ -4,7 +4,8 @@ Web connector for fetching and parsing webpage content.
 from urllib.parse import urlparse
 from typing import Dict, List
 from .feed_connector import FeedConnector
-
+import requests
+from bs4 import BeautifulSoup
 # Chrome user agent string
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
