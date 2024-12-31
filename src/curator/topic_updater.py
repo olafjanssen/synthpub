@@ -1,17 +1,16 @@
 from fastapi import HTTPException
 from api.models.topic import Topic
 from api.models.article import Article
-from api.db.topic_db import get_topic, save_topic
+from api.db.topic_db import get_topic
 from api.db.article_db import get_article, update_article
-from news.feeds.feed_processor import process_feeds
 from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem
 from typing import Optional
 from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found
 import threading
-from typing import Dict
 from queue import Queue
+import news.feeds
 
 
 # Add queue for handling updates
@@ -99,9 +98,6 @@ def process_feed_item(
     )
     
     return updated_article
-
-
-
 
 def update_topic(topic_id: str) -> Optional[Topic]:
     """Update topic article based on feed content."""

@@ -2,14 +2,10 @@
 from fastapi import APIRouter, HTTPException
 from uuid import uuid4
 from api.models.topic import Topic, TopicCreate, TopicUpdate
-from api.models.feed_item import FeedItem
-from api.models.article import Article
 from api.db.topic_db import load_topics, mark_topic_deleted, update_topic, get_topic, save_topic
-from api.db.article_db import create_article, get_article, update_article
+from api.db.article_db import create_article
 from curator.article_generator import generate_article
-from curator.article_refiner import refine_article
-from typing import List, Tuple, Optional
-from news.feeds.feed_processor import process_feeds
+from typing import List
 from curator.topic_updater import update_topic
 from api.signals import topic_update_requested
 
