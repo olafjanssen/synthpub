@@ -86,11 +86,11 @@ def process_feed_item(
 ) -> Optional[Article]:
     """Process a single feed item for a topic."""
     # Skip if content not relevant
-    if not filter_relevance(topic.description, current_article.content, feed_content):
+    if not filter_relevance(topic.name, topic.description, current_article.content, feed_content):
         return None
         
     # Update article with new content
-    refined_content = refine_article(current_article.content, feed_content)
+    refined_content = refine_article(topic.name, topic.description, current_article.content, feed_content)
     updated_article = update_article(
         article_id=current_article.id,
         content=refined_content,

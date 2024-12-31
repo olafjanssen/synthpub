@@ -6,7 +6,6 @@ from api.db.topic_db import load_topics, mark_topic_deleted, update_topic, get_t
 from api.db.article_db import create_article
 from curator.article_generator import generate_article
 from typing import List
-from curator.topic_updater import update_topic
 from api.signals import topic_update_requested
 
 router = APIRouter()
@@ -18,7 +17,7 @@ async def create_topic_route(topic: TopicCreate):
         topic_id = str(uuid4())
         
         # Create topic and initial article
-        content = generate_article(topic.description)
+        content = generate_article(topic.name, topic.description)
             
         article = create_article(
             title=topic.name,

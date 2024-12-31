@@ -18,7 +18,7 @@
 - [x] Add a project model that contains a list of topics
 - [x] Make the trigger API call async
 - [x] Create an in-memory cache for the topics
-- [ ] Make the feed system more generic
+- [x] Make the feed system more generic
 
 ## Connectors
 
@@ -31,8 +31,10 @@
 ## AI Curator
 
 - [x] Allow for different LLM providers such as Ollama and OpenAI
+- [x] Give prompts proper topic title and description
 - [x] Add a relevance filter
 - [ ] Add a substance extractor
+- [ ] Extract knowledge graph information from the article
 - [x] Add a scheduler that will update the topics every X hours
 - [ ] Add relevance reason to topic source feed
 
@@ -56,6 +58,7 @@
 - [ ] Show outline of the article on the left
 - [ ] Show article changes on the right
 - [ ] Show only relevant sources for the article version (not all sources)
+- [ ] Show an update feed on the main page
 
 ## Desktop
 
