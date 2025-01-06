@@ -62,6 +62,14 @@ async function loadTopics(projectId) {
                 feedList.appendChild(li);
             });
             
+            // Add publish URLs
+            const publishList = topicElement.querySelector('.publish-list');
+            (topic.publish_urls || []).forEach(url => {
+                const li = document.createElement('li');
+                li.textContent = url;
+                publishList.appendChild(li);
+            });
+            
             // Add data attributes and event listeners for other buttons
             const updateButton = topicElement.querySelector('.update-article');
             const editButton = topicElement.querySelector('.edit-article');
@@ -227,11 +235,62 @@ function editTopic(topicId) {
                 `;
                 editFeedUrlsContainer.appendChild(inputGroup);
             });
+
+            // Add "Add Feed URL" button
+            const addFeedButton = document.createElement('button');
+            addFeedButton.type = 'button';
+            addFeedButton.className = 'btn btn-outline-secondary btn-sm';
+            addFeedButton.onclick = () => addEditFeedInput();
+            addFeedButton.textContent = 'Add Feed URL';
+            editFeedUrlsContainer.appendChild(addFeedButton);
+
+            // Clear existing publish URLs
+            const editPublishUrlsContainer = document.getElementById('editPublishUrlsContainer');
+            editPublishUrlsContainer.innerHTML = '';
+            (topic.publish_urls || []).forEach(url => {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'input-group mb-2';
+                inputGroup.innerHTML = `
+                    <input type="url" class="form-control edit-publish-url" value="${url}">
+                    <button type="button" class="btn btn-outline-danger remove-publish" onclick="removePublishInput(this)">×</button>
+                `;
+                editPublishUrlsContainer.appendChild(inputGroup);
+            });
+
+            // Add "Add Publish URL" button
+            const addPublishButton = document.createElement('button');
+            addPublishButton.type = 'button';
+            addPublishButton.className = 'btn btn-outline-secondary btn-sm';
+            addPublishButton.onclick = () => addEditPublishInput();
+            addPublishButton.textContent = 'Add Publish URL';
+            editPublishUrlsContainer.appendChild(addPublishButton);
         })
         .catch(error => {
             console.error('Error fetching topic:', error);
             showError('Failed to load topic details. Please try again later.');
         });
+}
+
+function addEditFeedInput() {
+    const container = document.getElementById('editFeedUrlsContainer');
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    inputGroup.innerHTML = `
+        <input type="url" class="form-control feed-url" placeholder="https://example.com/feed">
+        <button type="button" class="btn btn-outline-danger remove-feed" onclick="removeFeedInput(this)">×</button>
+    `;
+    container.insertBefore(inputGroup, container.lastChild);
+}
+
+function addEditPublishInput() {
+    const container = document.getElementById('editPublishUrlsContainer');
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    inputGroup.innerHTML = `
+        <input type="url" class="form-control edit-publish-url" placeholder="https://example.com/publish">
+        <button type="button" class="btn btn-outline-danger remove-publish" onclick="removePublishInput(this)">×</button>
+    `;
+    container.insertBefore(inputGroup, container.lastChild);
 }
 
 async function updateTopic() {

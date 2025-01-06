@@ -7,10 +7,11 @@ from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem
 from typing import Optional
-from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found
+from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested
 import threading
 from queue import Queue
 import news.feeds
+import news.publishers
 
 
 # Add queue for handling updates
@@ -20,6 +21,16 @@ def handle_topic_update(sender, topic_id):
     """Signal handler for topic update requests."""
     update_queue.put(topic_id)
     print(f"Queued update request for topic {topic_id} from {sender}")
+
+def handle_topic_publishing(sender):
+    """Signal handler for topic publishing requests."""
+    print(f"Publishing topic {sender}")
+    
+    # Process feeds
+    topic = sender
+    for publish_url in topic.publish_urls:
+        publish_requested.send(topic, publish_url=publish_url)
+
 
 def process_update_queue():
     """Process queued topic updates."""
@@ -72,6 +83,7 @@ def start_update_processor():
     # Connect signal handler
     topic_update_requested.connect(handle_topic_update)
     news_feed_item_found.connect(handle_feed_item)
+    topic_updated.connect(handle_topic_publishing)
     
     # Start queue processor thread
     processor_thread = threading.Thread(target=process_update_queue, daemon=True)
@@ -115,3 +127,5 @@ def update_topic(topic_id: str) -> Optional[Topic]:
     except Exception as e:
         print(f"Error updating topic: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") 
+    
+    

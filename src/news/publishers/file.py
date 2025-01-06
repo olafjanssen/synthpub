@@ -3,6 +3,8 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 from typing import Dict
 from .publisher_interface import Publisher
+from api.db.article_db import get_article
+from api.models.topic import Topic
 
 def parse_file_url(url: str) -> Path:
     """Parse a file:// URL and return the filesystem path."""
@@ -19,18 +21,19 @@ class FilePublisher(Publisher):
         return parsed.scheme == 'file'
     
     @staticmethod
-    def publish_content(url: str, content: Dict[str, str]) -> bool:
+    def publish_content(url: str, topic: Topic) -> bool:
         try:
             path = parse_file_url(url)
             
             # Create parent directories if they don't exist
             path.parent.mkdir(parents=True, exist_ok=True)
             
+            # Get the specific article
+            article = get_article(topic.article)
+
             # Write content to file
             with open(path, 'w', encoding='utf-8') as f:
-                if 'title' in content:
-                    f.write(f"# {content['title']}\n\n")
-                f.write(content['content'])
+                f.write(article.content)
                 
             return True
             
