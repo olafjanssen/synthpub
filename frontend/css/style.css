@@ -105,6 +105,7 @@ body {
 }
 
 .card-body {
+    position: relative;
     padding: 0.5rem;
     height: 2.5rem;
 }
@@ -138,6 +139,7 @@ h5.card-title {
     font-weight: normal;
     color: #f66e6d;
     text-transform: uppercase;
+    width: 12rem;
 }
 
 h5.card-title:after {
@@ -148,6 +150,17 @@ h5.card-title:after {
     position: absolute;
     right: 0.75rem;
     transform: scale(1.25);
+    top: 0.5rem;
+}
+
+.topic-card h5.card-title:after { 
+    content: 'x';
+    transform: rotate(90deg) scale(1);
+    font-weight: bold;
+}
+
+.new-project-card.topic-card h5.card-title:after {
+    transform: rotate(90deg) scale(3);
 }
 
 .top-card h5.card-title {
@@ -156,9 +169,11 @@ h5.card-title:after {
     color: #b3d9bb;
     text-transform: uppercase;
     line-height: 1rem;
+    width: 10rem;
 }
 
 .new-project-card .card-title:after {
+    top: 1rem;
     right: 1.75rem;
     transform: scale(3.5);
 }
@@ -245,20 +260,20 @@ div.card-img-top {
 #topics-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 2rem;
-    padding: 1rem;
+    gap: 0.8rem 2px;
+    padding: 0.8rem 1rem;
     justify-content: flex-start;
     width: 100%;
 }
 
-/* Topic card specific styles */
-#topics-list .col {
-    width: 350px;
-    flex: 0 0 auto;
+#topics-list .stretched-link::after {
+    top: 2rem;
 }
 
-#topics-list .card {
-    height: 100%;
+.card-header-buttons {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
 }
 
 /* Back button styling */

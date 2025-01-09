@@ -66,7 +66,7 @@ function createProjectCard(project) {
 
     const cardImg = document.createElement('img');
     cardImg.className = 'card-img-top';
-    cardImg.src = `/img/bg/bg-${(cardIndex++ % 6) + 1}.png`;
+    cardImg.src = `/img/bg/bg-${(cardIndex++ % 5) + 1}.png`;
     cardImg.alt = 'Card image cap';
     
     const cardBody = document.createElement('div');
@@ -91,10 +91,10 @@ function createProjectCard(project) {
     card.appendChild(cardHeader);
     
     cardBody.appendChild(cardTitle);
-    cardBody.appendChild(viewTopicsLink);
     card.appendChild(cardBody);
 
     cardFooter.appendChild(cardText);
+    cardFooter.appendChild(viewTopicsLink);
     card.appendChild(cardFooter);
     
     return card;

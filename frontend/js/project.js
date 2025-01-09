@@ -22,18 +22,21 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+var cardIndex = 2;
+
 async function loadTopics(projectId) {
     try {
         const response = await fetch(`${API_URL}/projects/${projectId}`);
         const project = await response.json();
         
         // Update the project title
-        document.getElementById('project-title').textContent = `Topics for ${project.title}`;
+        document.getElementById('project-title').innerHTML = `Project<br>${project.title}`;
         
         const topicsList = document.getElementById('topics-list');
         topicsList.innerHTML = '';
         
         const template = document.getElementById('topic-template');
+        const emptyTemplate = document.getElementById('empty-topic-template');
         
         for (const topicId of project.topic_ids) {
             const topicResponse = await fetch(`${API_URL}/topics/${topicId}`);
@@ -44,7 +47,8 @@ async function loadTopics(projectId) {
             // Fill in the template
             topicElement.querySelector('.topic-name').textContent = topic.name;
             topicElement.querySelector('.description').textContent = topic.description;
-            
+            topicElement.querySelector('.topic-img').src = `/img/bg/bg-${(cardIndex++ % 5) + 1}.png`;
+
             // Set up view article button
             const viewButton = topicElement.querySelector('.view-article');
             viewButton.dataset.topicId = topic.id;
@@ -53,23 +57,7 @@ async function loadTopics(projectId) {
                 const projectId = urlParams.get("project_id");
                 window.location.href = `article.html?id=${topic.article}&project_id=${projectId}`;
             });
-            
-            // Add feed URLs
-            const feedList = topicElement.querySelector('.feed-list');
-            topic.feed_urls.forEach(url => {
-                const li = document.createElement('li');
-                li.textContent = url;
-                feedList.appendChild(li);
-            });
-            
-            // Add publish URLs
-            const publishList = topicElement.querySelector('.publish-list');
-            (topic.publish_urls || []).forEach(url => {
-                const li = document.createElement('li');
-                li.textContent = url;
-                publishList.appendChild(li);
-            });
-            
+                        
             // Add data attributes and event listeners for other buttons
             const updateButton = topicElement.querySelector('.update-article');
             const editButton = topicElement.querySelector('.edit-article');
@@ -82,26 +70,16 @@ async function loadTopics(projectId) {
             
             topicsList.appendChild(topicElement);
         }
-        
-        // Add the new topic card at the end with the same layout as other cards
-        const newTopicCard = template.content.cloneNode(true);
 
-            // Fill in the template
-            newTopicCard.querySelector('.card-header').innerHTML = "&nbsp;";
-            newTopicCard.querySelector('.card-body').innerHTML = `
-            <i class="bi bi-plus-circle"></i>
-                <p class="card-text">Create New Topic</p>
-        `;
+        // Add empty cards until we have at least 30 total
+        const totalCards = project.topic_ids.length;
+        const emptyCardsNeeded = Math.max(0, 30 - totalCards);
         
-        const viewButton = newTopicCard.querySelector('.view-article');
-        viewButton.style.visibility = "hidden";
+        for (let i = 0; i < emptyCardsNeeded; i++) {
+            topicsList.appendChild(emptyTemplate.content.cloneNode(true));
+        }
 
-        var card = newTopicCard.querySelector('.card');
-        card.classList.add('new-project-card');
-        card.dataset.bsToggle = 'modal';
-        card.dataset.bsTarget = '#createTopicModal';
-        topicsList.appendChild(newTopicCard);
-        
+                
     } catch (error) {
         console.error('Error loading topics:', error);
         showError('Failed to load topics. Please try again later.');
