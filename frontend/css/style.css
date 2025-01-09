@@ -100,6 +100,10 @@ body {
     border-top: 2px solid #b3d9bb88;
 }
 
+.empty-card .card-footer p {
+    border-top: 2px solid transparent;
+}
+
 .card-body {
     padding: 0.5rem;
     height: 2.5rem;
@@ -157,6 +161,10 @@ h5.card-title:after {
 .new-project-card .card-title:after {
     right: 1.75rem;
     transform: scale(3.5);
+}
+
+.empty-card .card-title:after {
+    content: '';
 }
 
 .card-text {
@@ -273,7 +281,7 @@ div.card-img-top {
     min-height: 120px;
 }
 
-.card:hover {
+.card:not(.empty-card):hover {
     filter: grayscale(1);
     cursor: pointer;
 }

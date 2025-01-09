@@ -12,11 +12,10 @@ function loadProjects() {
         })
         .catch(error => console.error("Error loading projects:", error));
 }
-
 function renderProjects(projects) {
     const projectsList = document.getElementById('projects-list');
-    const newProjectCard = projectsList.querySelector('.new-project-card');
-    
+    const emptyCard = document.getElementById('projects-list').querySelector('.empty-card');
+
     // Clear existing projects but keep the new project card
     projectsList.innerHTML = '';
     
@@ -25,9 +24,14 @@ function renderProjects(projects) {
         const projectCard = createProjectCard(project);
         projectsList.appendChild(projectCard);
     });
+
+    // Add empty cards until we have at least 30 total
+    const totalCards = projects.length;
+    const emptyCardsNeeded = Math.max(0, 30 - totalCards);
     
-    // Add the new project card at the end
-    projectsList.appendChild(newProjectCard);
+    for (let i = 0; i < emptyCardsNeeded; i++) {
+        projectsList.appendChild(emptyCard.cloneNode(true));
+    }
 }
 
 function createProject() {
