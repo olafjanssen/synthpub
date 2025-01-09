@@ -51,9 +51,19 @@ function createProject() {
     .catch(error => console.error("Error creating project:", error));
 }
 
+var cardIndex = 0;
+
 function createProjectCard(project) {
     const card = document.createElement('div');
     card.className = 'card';
+
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'card-header';
+
+    const cardImg = document.createElement('img');
+    cardImg.className = 'card-img-top';
+    cardImg.src = `/img/bg/bg-${(cardIndex++ % 6) + 1}.png`;
+    cardImg.alt = 'Card image cap';
     
     const cardBody = document.createElement('div');
     cardBody.className = 'card-body';
@@ -62,19 +72,26 @@ function createProjectCard(project) {
     cardTitle.className = 'card-title';
     cardTitle.textContent = project.title;
     
+    const cardFooter = document.createElement('div');
+    cardFooter.className = 'card-footer';
+
     const cardText = document.createElement('p');
     cardText.className = 'card-text';
     cardText.textContent = project.description;
     
     const viewTopicsLink = document.createElement('a');
     viewTopicsLink.href = `project.html?project_id=${project.id}`;
-    viewTopicsLink.className = 'btn btn-primary';
-    viewTopicsLink.textContent = 'View Topics';
+    viewTopicsLink.className = 'stretched-link';
+    
+    cardHeader.appendChild(cardImg);
+    card.appendChild(cardHeader);
     
     cardBody.appendChild(cardTitle);
-    cardBody.appendChild(cardText);
     cardBody.appendChild(viewTopicsLink);
     card.appendChild(cardBody);
+
+    cardFooter.appendChild(cardText);
+    card.appendChild(cardFooter);
     
     return card;
 }

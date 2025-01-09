@@ -37,12 +37,14 @@
 - [ ] Extract knowledge graph information from the article
 - [x] Add a scheduler that will update the topics every X hours
 - [ ] Add relevance reason to topic source feed
+- [ ] Add Mistral LLM provider
 
 ## Publisher
 
-- [ ] Create a function to publish the articles to a file system location
+- [x] Create a function to publish the articles to a file system location
 - [ ] Create a function to publish the articles as a podcast
 - [ ] Create a function to publish the articles to a GitLab repository
+- [ ] Create a function to publish the articles to a GitHub repository
 
 ## Front-end
 
@@ -64,3 +66,5 @@
 
 - [x] Create a desktop wrapper app using Pywebview and Pyinstaller
 - [x] Update the styling to reflect a desktop app more
+- [ ] Apply recent design ideas of John
+- 
