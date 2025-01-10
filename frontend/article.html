@@ -10,32 +10,73 @@
     <!-- GitHub Markdown CSS -->
     <link href="css/github-markdown.css" rel="stylesheet">
     <!-- Article-specific CSS -->
+    <link href="css/style.css" rel="stylesheet">
     <link href="css/article.css" rel="stylesheet">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <a href="/"><img src="img/dpbtse_logo.png" alt="SynthPub Logo"></a>
-        <h2>Article</h2>
-    </nav>
-
-    <div class="container mt-5 pt-5 article-container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <a href="#" class="btn btn-outline-primary" id="back-button">← Back to Project Topics</a>
-            <div class="btn-group" id="version-nav">
-                <button class="btn btn-outline-secondary" id="prev-version" disabled>
-                    ← Previous Version
-                </button>
-                <button class="btn btn-outline-secondary" disabled>
-                    Version <span id="current-version">1</span>
-                </button>
-                <button class="btn btn-outline-secondary" id="next-version" disabled>
-                    Next Version →
-                </button>
+    <div class="container mt-3 pt-3 article-container">
+        <div id="top-cards">
+            <div class="card top-card">
+                <div class="card-header">
+                    <img src="img/dpbtse_logo.png" alt="Card cap" class="card-img-top">
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title"><span>S</span><span>Y</span><span>N</span><span>T</span><span>H</span><span>P</span><span>U</span><span>B</span></h4>
+                    <h6 class="card-title"><span>I</span><span>N</span><span>F</span><span>O</span><span>R</span><span>M</span><span>A</span><span>T</span><span>I</span><span>O</span><span>N</span><span>&nbsp;</span><span>C</span><span>U</span><span>L</span><span>T</span><span>U</span><span>R</span><span>E</span></h6>
+                </div>
+                <div class="card-footer">
+                    <p class="card-text">&nbsp;</p>
+                    <a href="/" class="stretched-link">&nbsp;</a>
+                </div>
+            </div>
+            <div class="card top-card new-project-card">
+                <div class="card-header">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title" id="project-title">Project Title</h5>
+                </div>
+                <div class="card-footer">
+                    <p class="card-text">&nbsp;</p>
+                    <a href="#" class="stretched-link" id="back-button">&nbsp;</a>
+                </div>
+            </div>
+            <!-- New Topic Card -->
+            <div class="card top-card topic-card new-project-card">
+                <div class="card-header">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title"><span id="article-title">Topic Title</span><br> Version <span id="current-version">1</h5>                    
+                </div>
+                <div class="card-footer">
+                    <p class="card-text">&nbsp;</p>
+                </div>
+            </div>
+            <div class="card top-card article-card new-project-card">
+                <div class="card-header">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">← Older Version</h5>
+                </div>
+                <div class="card-footer">
+                    <p class="card-text">&nbsp;</p>
+                    <button class="stretched-link" style="opacity: 0;" id="prev-version" disabled>&nbsp;</button>
+                </div>
+            </div>
+            <div class="card top-card article-card new-project-card">
+                <div class="card-header">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Newer Version →</h5>
+                </div>
+                <div class="card-footer">
+                    <p class="card-text">&nbsp;</p>
+                    <button class="stretched-link" style="opacity: 0;" id="next-version" disabled>&nbsp;</button>
+                </div>
             </div>
         </div>
         
         <div id="article-content">
-            <h1 id="article-title"></h1>
+            <!-- <h1 id="article-title"></h1> -->
             <div class="article-metadata">
                 <div>Version: <span id="article-version"></span></div>
                 <div>Created: <span id="article-created"></span></div>

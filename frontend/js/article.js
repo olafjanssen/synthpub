@@ -105,7 +105,7 @@ function navigateToVersion(articleId) {
     fetchArticle(articleId);
 }
 
-function init() {
+async function init() {
     // Get both article ID and project ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const articleId = urlParams.get('id');
@@ -121,6 +121,16 @@ function init() {
     }
     
     fetchArticle(articleId);
+
+    try {
+        const response = await fetch(`${API_URL}/projects/${projectId}`);
+        const project = await response.json();
+        
+        // Update the project title
+        document.getElementById('project-title').innerHTML = `Project<br>${project.title}`;
+    } catch (error) {
+        console.error('Error fetching project:', error);
+    }
 }
 
 // Handle browser back/forward buttons

@@ -163,6 +163,16 @@ h5.card-title:after {
     transform: rotate(90deg) scale(3);
 }
 
+.article-card h5.card-title:after { 
+    content: '|';
+    transform: scale(1);
+    font-weight: bold;
+}
+
+.new-project-card.article-card h5.card-title:after {
+    transform: scale(3);
+}
+
 .top-card h5.card-title {
     font-size: 1rem;
     font-weight: normal;

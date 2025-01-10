@@ -1,6 +1,5 @@
 /* Base styles for the article page */
 body {
-    background-color: #f8f9fa; /* Light background for the entire page */
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -8,11 +7,12 @@ body {
 }
 
 /* Full-width container */
-.container {
+#article-content {
+    background-color: #f8f9fa; /* Light background for the entire page */
     width: 100%;
-    max-width: 900px; /* Limit the width for readability */
-    padding: 0 2rem;
-    margin: 0 auto;
+    max-width: 800px; /* Limit the width for readability */
+    padding: 2rem 2rem;
+    margin: 2rem auto;
 }
 
 /* Fixed navbar */
@@ -39,17 +39,13 @@ body {
 }
 
 /* Article page specific styles */
-.article-container {
-    margin-top: 5rem; /* Space for the fixed navbar */
-    padding: 2rem 0;
-}
 
-#article-title {
+/* #article-title {
     font-size: 2.5rem;
     font-weight: 600;
     color: #333;
     margin-bottom: 1.5rem;
-}
+} */
 
 .article-metadata {
     font-size: 0.9rem;
