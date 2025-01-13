@@ -25,7 +25,9 @@ class FeedConnector(Protocol):
     @classmethod
     def handle_feed_update(cls, sender, feed_url: str):
         """Handle feed update request signal."""
+        print(f"Trying to handle feed update for {feed_url} as {cls.__name__}")
         if cls.can_handle(feed_url):
+            print(f"Can handle feed update for {feed_url} as {cls.__name__}")
             try:
                 items = cls.fetch_content(feed_url)
                 for item in items:

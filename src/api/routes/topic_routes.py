@@ -7,6 +7,7 @@ from api.db.article_db import create_article
 from curator.article_generator import generate_article
 from typing import List
 from api.signals import topic_update_requested
+from curator.topic_updater import handle_topic_publishing
 
 router = APIRouter()
 
@@ -116,4 +117,23 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
         
     except Exception as e:
         print(f"Error updating topic: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@router.post("/topics/{topic_id}/publish", response_model=dict)
+async def publish_topic_route(topic_id: str):
+    """Request topic publish via signal."""
+    try:
+        # Check if topic exists
+        topics = load_topics()
+        if topic_id not in topics:
+            raise HTTPException(status_code=404, detail="Topic not found")
+        
+        # Publish topic
+        topic = get_topic(topic_id)
+        handle_topic_publishing(topic)
+
+        return {"message": "Topic published", "topic_id": topic_id}
+        
+    except Exception as e:
+        print(f"Error publishing topic: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

@@ -61,12 +61,21 @@ async function loadTopics(projectId) {
             // Add data attributes and event listeners for other buttons
             const updateButton = topicElement.querySelector('.update-article');
             const editButton = topicElement.querySelector('.edit-article');
+            const publishButton = topicElement.querySelector('.publish-article');
             
             updateButton.dataset.topicId = topic.id;
             editButton.dataset.topicId = topic.id;
+            publishButton.dataset.topicId = topic.id;
             
             updateButton.addEventListener('click', () => updateArticle(topic.id));
             editButton.addEventListener('click', () => editTopic(topic.id));
+            publishButton.addEventListener('click', () => publishArticle(topic.id));
+            
+            // Only enable publish button if there are publish URLs
+            if (!topic.publish_urls || topic.publish_urls.length === 0) {
+                publishButton.disabled = true;
+                publishButton.title = 'No publish URLs configured';
+            }
             
             topicsList.appendChild(topicElement);
         }
@@ -351,4 +360,37 @@ function addPublishInput() {
 
 function removePublishInput(button) {
     button.closest('.input-group').remove();
+}
+
+async function publishArticle(topicId) {
+    try {
+        const button = document.querySelector(`[data-topic-id="${topicId}"].publish-article`);
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="bi bi-cloud-upload"></i>';
+        
+        const response = await fetch(`${API_URL}/topics/${topicId}/publish`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Reset button after short delay
+        setTimeout(() => {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error publishing article:', error);
+        showError('Failed to publish article. Please try again later.');
+        const button = document.querySelector(`[data-topic-id="${topicId}"].publish-article`);
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-cloud-upload"></i>';
+    }
 } 

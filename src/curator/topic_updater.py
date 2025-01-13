@@ -7,7 +7,7 @@ from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem
 from typing import Optional
-from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested
+from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated
 import threading
 from queue import Queue
 import news.feeds
@@ -24,11 +24,12 @@ def handle_topic_update(sender, topic_id):
 
 def handle_topic_publishing(sender):
     """Signal handler for topic publishing requests."""
-    print(f"Publishing topic {sender}")
+    print(f"Publishing topic {sender.id}")
     
     # Process feeds
     topic = sender
     for publish_url in topic.publish_urls:
+        print(f"Publishing to {publish_url}")
         publish_requested.send(topic, publish_url=publish_url)
 
 
@@ -77,13 +78,16 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     # Save updated topic
     topic_updated.send(topic)
 
+    # Publish updated article
+    if updated_article:
+        article_updated.send(topic)
 
 def start_update_processor():
     """Start the update processor thread."""
     # Connect signal handler
     topic_update_requested.connect(handle_topic_update)
     news_feed_item_found.connect(handle_feed_item)
-    topic_updated.connect(handle_topic_publishing)
+    article_updated.connect(handle_topic_publishing)
     
     # Start queue processor thread
     processor_thread = threading.Thread(target=process_update_queue, daemon=True)
@@ -121,6 +125,7 @@ def update_topic(topic_id: str) -> Optional[Topic]:
                 
         # Process feeds
         for feed_url in topic.feed_urls:
+            print(f"Processing feed {feed_url}")
             news_feed_update_requested.send(topic, feed_url=feed_url)
         return topic
         

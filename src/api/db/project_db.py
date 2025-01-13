@@ -11,18 +11,19 @@ import os
 
 from api.models.project import Project
 
-DB_PATH = Path(os.getenv("DB_PATH", "../db")).resolve() / 'projects'
+def DB_PATH():
+    return Path(os.getenv("DB_PATH", "../db")) / 'projects'
 
 def ensure_db_exists():
     """Create the projects directory if it doesn't exist."""
-    DB_PATH.mkdir(parents=True, exist_ok=True)
+    DB_PATH().mkdir(parents=True, exist_ok=True)
 
 def save_project(project: Project) -> None:
     """Save project to individual YAML file."""
     ensure_db_exists()
     
     # Generate filename from id
-    filename = DB_PATH / f"{project.id}.yaml"
+    filename = DB_PATH() / f"{project.id}.yaml"
     
     # Convert to dict and save
     project_dict = project.model_dump()
@@ -37,7 +38,7 @@ def save_project(project: Project) -> None:
 
 def get_project(project_id: str) -> Optional[Project]:
     """Retrieve project by id."""
-    filename = DB_PATH / f"{project_id}.yaml"
+    filename = DB_PATH() / f"{project_id}.yaml"
     
     if not filename.exists():
         return None
@@ -56,7 +57,7 @@ def list_projects() -> List[Project]:
     
     projects = []
     # Correctly exclude files that start with '_'
-    for file in DB_PATH.glob("*.yaml"):
+    for file in DB_PATH().glob("*.yaml"):
         if not file.name.startswith('_'):
             with open(file, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)

@@ -30,7 +30,9 @@ class Publisher(Protocol):
     @classmethod
     def handle_publish_requested(cls, sender, publish_url: str):
         """Handle feed update request signal."""
+        print(f"Trying handling publish request for {publish_url} as {cls.__name__}")
         if cls.can_handle(publish_url):
+            print(f"Can handle publish request for {publish_url} as {cls.__name__}")
             try:
                 cls.publish_content(publish_url, sender)
                 topic_published.send(sender, publish_url=publish_url)
