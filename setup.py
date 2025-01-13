@@ -64,6 +64,7 @@ OPTIONS = {
         
         # Google API
         'googleapiclient',
+        'google_auth_oauthlib',
         'httplib2',
         
         # Utilities
@@ -104,7 +105,7 @@ OPTIONS = {
         # Deprecated
         'pkg_resources',
     ],
-    'resources': ['frontend', 'db', 'src/api','src/news','src/publisher','src/curator'],
+    'resources': ['frontend', 'db', 'src/api','src/news','src/curator'],
     'iconfile': './frontend/img/dpbtse_logo.icns',
     'plist': {
         'CFBundleName': 'SynthPub',
@@ -137,6 +138,7 @@ setup(
         'langchain_core',
         'langchain_text_splitters',
         'google-api-python-client',
+        'google_auth_oauthlib',
         'python-dotenv',
         'certifi',
         'tqdm',
