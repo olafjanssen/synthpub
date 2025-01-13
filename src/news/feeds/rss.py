@@ -69,7 +69,7 @@ class RSSConnector(FeedConnector):
     @staticmethod
     def can_handle(url: str) -> bool:
         parsed = urlparse(url)
-        return parsed.scheme in ('http', 'https') and (
+        return parsed.scheme in ('http', 'https', 'feed') and (
             url.endswith('.xml') or 
             url.endswith('.rss') or 
             'feed' in url.lower()
