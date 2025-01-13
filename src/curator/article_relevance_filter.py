@@ -29,7 +29,7 @@ def filter_relevance(topic_title: str, topic_description: str, article: str, new
         New content to evaluate:
         {new_context}
 
-        Answer starting with YES or NO: Is the new content relevant to the main topic and themes of the existing article? and then a short explanation.""",
+        Answer starting with YES or NO (without extra formatting): Is the new content relevant according to the topic description or the existing article? and then a short explanation.""",
         input_variables=["topic_title", "topic_description", "article", "new_context"]
     )
     
