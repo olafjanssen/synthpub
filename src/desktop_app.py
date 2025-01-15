@@ -12,6 +12,19 @@ import uvicorn
 import requests
 from api.app import app
 import http.server
+import tomli
+
+def load_environment():
+    """Load environment variables from settings.toml"""
+    if os.path.exists("settings.toml"):
+        with open("settings.toml", 'rb') as f:
+            settings = tomli.load(f)
+            env_vars = settings.get("env_vars", {})
+            for key, value in env_vars.items():
+                os.environ[key] = value
+
+# Load environment variables before starting the app
+load_environment()
 
 class SynthPubApp:
     def __init__(self):

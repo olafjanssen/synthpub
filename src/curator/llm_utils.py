@@ -2,11 +2,6 @@ from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 from .config import config
 import os
-from dotenv import load_dotenv
-from pathlib import Path
-
-# Load environment variables from .env file
-load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 def get_llm(task: str):
     """

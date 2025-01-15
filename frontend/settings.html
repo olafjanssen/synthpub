@@ -28,10 +28,24 @@
             </div>
     </div>
 
-    <div class="container mt-5"></div>
-        <h2>Select Database Folder</h2>
-        <button onclick="selectFolder()" class="btn btn-primary">Choose Database Location</button>
-        <div id="currentPath" class="mt-3"></div>
+    <div class="container mt-5" id="settings-container">
+        <h2>Settings</h2>
+        
+        <div class="mb-5">
+            <h3 class="h5 mb-3">Database Location</h3>
+            <div id="currentPath" class="mt-3"></div>
+            <button onclick="selectFolder()" class="btn btn-primary">Choose Database Location</button>
+        </div>
+
+        <div class="mb-5">
+            <h3 class="h5 mb-3">Environment Variables</h3>
+            <form id="envVarsForm">
+                <div id="envVarsContainer">
+                    <!-- Environment variables will be dynamically added here -->
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Save Environment Variables</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -57,13 +71,70 @@
         }
     }
 
-    // Load current path on page load
-    fetch(`${API_URL}/api/settings/db-path`)
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('currentPath').textContent = 
-                `Current database path: ${data.path || 'Not set'}`;
+    // Load and display environment variables
+    async function loadEnvVars() {
+        try {
+            const response = await fetch(`${API_URL}/api/settings/env-vars`);
+            const data = await response.json();
+            const container = document.getElementById('envVarsContainer');
+            container.innerHTML = '';
+
+            Object.entries(data.variables).forEach(([key, value]) => {
+                container.innerHTML += `
+                    <div class="mb-3">
+                        <label class="form-label">${key}</label>
+                        <input type="text" class="form-control" name="${key}" value="${value}">
+                    </div>
+                `;
+            });
+        } catch (error) {
+            console.error('Error loading environment variables:', error);
+            alert('Failed to load environment variables');
+        }
+    }
+
+    // Handle form submission
+    document.getElementById('envVarsForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const variables = {};
+        
+        formData.forEach((value, key) => {
+            variables[key] = value;
         });
+
+        try {
+            const response = await fetch(`${API_URL}/api/settings/env-vars`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ variables }),
+            });
+
+            if (response.ok) {
+                alert('Environment variables updated successfully');
+            } else {
+                alert('Failed to update environment variables');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to update environment variables');
+        }
+    });
+
+    // Initialize page
+    window.addEventListener('load', () => {
+        loadEnvVars();
+        
+        // Load current database path
+        fetch(`${API_URL}/api/settings/db-path`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('currentPath').textContent = 
+                    `${data.path || 'Not set'}`;
+            });
+    });
     </script>
 
     <!-- Bootstrap JS -->

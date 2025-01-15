@@ -7,14 +7,14 @@ from .feed_connector import FeedConnector
 from youtube_transcript_api import YouTubeTranscriptApi
 from googleapiclient.discovery import build
 import os
-from dotenv import load_dotenv
 from api.signals import news_feed_update_requested, news_feed_item_found
 
-# ... existing environment setup code ...
-load_dotenv()
-API_KEY = os.getenv('YOUTUBE_API_KEY')
-if not API_KEY:
-    raise ValueError("YOUTUBE_API_KEY environment variable not found. Please add it to your .env file.")
+def get_api_key():
+    """Get YouTube API key from environment variables"""
+    api_key = os.getenv('YOUTUBE_API_KEY')
+    if not api_key:
+        raise ValueError("YOUTUBE_API_KEY environment variable not found in settings")
+    return api_key
 
 def fetch_youtube_transcript(video_id: str) -> str:
     """Fetch transcript for a single video ID"""
@@ -27,7 +27,7 @@ def fetch_youtube_transcript(video_id: str) -> str:
 
 def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, str]]:
     """Fetch transcripts from all videos in a playlist"""
-    youtube = build('youtube', 'v3', developerKey=API_KEY)
+    youtube = build('youtube', 'v3', developerKey=get_api_key())
     items = []
 
     try:
@@ -55,7 +55,7 @@ def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, str]]:
 
 def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
     """Fetch transcripts from all videos in a channel"""
-    youtube = build('youtube', 'v3', developerKey=API_KEY)
+    youtube = build('youtube', 'v3', developerKey=get_api_key())
     items = []
 
     try:
@@ -140,4 +140,4 @@ class YouTubeConnector(FeedConnector):
             print(f"Error fetching YouTube content {url}: {str(e)}")
             return []
 
-YouTubeConnector.connect_signals() 
+YouTubeConnector.connect_signals()

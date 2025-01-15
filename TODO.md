@@ -19,7 +19,7 @@
 - [x] Make the trigger API call async
 - [x] Create an in-memory cache for the topics
 - [x] Make the feed system more generic
-- [ ] Create an endpoint for application settings
+- [x] Create an endpoint for application settings
 - [ ] Create an endpoint for project settings
 
 ## Connectors
@@ -77,7 +77,9 @@
 - [ ] Show only relevant sources for the article version (not all sources)
 - [ ] Show an update feed on the main page
 - [ ] Create a sidebar to chat with the application
-- [ ] Add a application settings page
+- [x] Add a application settings page
+- [x] Add all environment variables to the application settings page
+- [ ] Add LLM options to the application settings page
 - [ ] Add a project settings page/modal
 
 ## Desktop
@@ -87,5 +89,5 @@
 - [x] Apply compact card design idea
 - [ ] Adjust the window title to that of the project/article
 - [ ] Add a system tray icon and option
-- [ ] Allow for opening a new folder as database
+- [x] Allow for opening a new folder as database
 

@@ -6,7 +6,14 @@ import requests
 from .publisher_interface import Publisher
 from api.models.topic import Topic
 from api.db.article_db import get_article
-from dotenv import load_dotenv
+
+def get_api_key():
+    """Get Gitlab token API key from environment variables"""
+    api_key = os.getenv('GITLAB_TOKEN')
+    if not api_key:
+        raise ValueError("GITLAB_TOKEN environment variable not found in settings")
+    return api_key
+
 
 def parse_gitlab_url(url: str) -> tuple[str, str, str]:
     """
@@ -35,19 +42,13 @@ class GitLabPublisher(Publisher):
     def API_BASE(host):
         return f"https://{host}/api/v4"
     
-    load_dotenv()
-    TOKEN = os.getenv('GITLAB_TOKEN')
-    if not TOKEN:
-        raise ValueError("GITLAB_TOKEN environment variable not found. Please add it to your .env file.")
-
     @staticmethod
     def can_handle(url: str) -> bool:
         return url.startswith("gitlab://")
     
     @staticmethod
     def publish_content(url: str, topic: Topic) -> bool:
-        if not GitLabPublisher.TOKEN:
-            raise ValueError("GITLAB_TOKEN environment variable not set")
+        TOKEN = get_api_key()
             
         try:
             # Parse the GitLab URL components
@@ -62,7 +63,7 @@ class GitLabPublisher(Publisher):
             
             # Prepare the API request
             headers = {
-                "Authorization": f"Bearer {GitLabPublisher.TOKEN}",
+                "Authorization": f"Bearer {TOKEN}",
                 "Content-Type": "application/json"
             }
             # URL encode the file path for GitLab API

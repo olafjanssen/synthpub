@@ -310,3 +310,9 @@ div.card-img-top {
     filter: grayscale(1);
     cursor: pointer;
 }
+
+#settings-container {
+    background-color: white;
+    padding: 1rem;
+    max-width: 40rem;
+}
