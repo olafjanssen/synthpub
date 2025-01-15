@@ -9,9 +9,10 @@ import os
 
 from ..models.article import Article
 from ..models.feed_item import FeedItem
+from .common import get_db_path
 
 def DB_PATH():
-    return Path(os.getenv("DB_PATH", "../db")) / 'articles'
+    return get_db_path('articles')
 
 def ensure_db_exists():
     """Create the articles directory if it doesn't exist."""

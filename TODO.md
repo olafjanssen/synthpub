@@ -19,14 +19,20 @@
 - [x] Make the trigger API call async
 - [x] Create an in-memory cache for the topics
 - [x] Make the feed system more generic
+- [ ] Create an endpoint for application settings
+- [ ] Create an endpoint for project settings
 
 ## Connectors
 
+- [x] Create a RSS feed connector
+- [x] Create a general web page connector
 - [x] Create a file system connector
-- [ ] Create a Exchange email connector
 - [x] Create a (gmail) email connector
-- [ ] Create a MS Teams connector
 - [x] Create a Youtube transcript connector
+- [ ] Create an Arxiv connector
+- [ ] Create a general scientific paper connector
+- [ ] Create a MS Teams connector
+- [ ] Create a Exchange email connector
 
 ## AI Curator
 
@@ -38,13 +44,22 @@
 - [x] Add a scheduler that will update the topics every X hours
 - [ ] Add relevance reason to topic source feed
 - [ ] Add Mistral LLM provider
+- [ ] Compute substance score or information density per article
+- [ ] Keep track of the LLM calls and token usage
+
+## Transformer
+
+- [ ] Create a transformer architecture for transforming the article into other formats
+- [ ] Create a Markdown transformer with front-matter
+- [ ] Create an mp3 transformer
+- [ ] Create a podcast transformer
 
 ## Publisher
 
 - [x] Create a function to publish the articles to a file system location
 - [ ] Create a function to publish the articles as a podcast
 - [ ] Create a function to publish the articles to a GitLab repository
-- [ ] Create a function to publish the articles to a GitHub repository
+- [x] Create a function to publish the articles to a GitHub repository
 
 ## Front-end
 
@@ -61,10 +76,16 @@
 - [ ] Show article changes on the right
 - [ ] Show only relevant sources for the article version (not all sources)
 - [ ] Show an update feed on the main page
+- [ ] Create a sidebar to chat with the application
+- [ ] Add a application settings page
+- [ ] Add a project settings page/modal
 
 ## Desktop
 
 - [x] Create a desktop wrapper app using Pywebview and Pyinstaller
 - [x] Update the styling to reflect a desktop app more
-- [ ] Apply recent design ideas of John
-- 
+- [x] Apply compact card design idea
+- [ ] Adjust the window title to that of the project/article
+- [ ] Add a system tray icon and option
+- [ ] Allow for opening a new folder as database
+

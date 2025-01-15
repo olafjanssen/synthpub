@@ -8,6 +8,8 @@ pydantic==2.9.2
 langchain-ollama
 openai
 langchain_openai
+tomli
+tomli_w
 
 # connectors
 beautifulsoup4==4.12.3

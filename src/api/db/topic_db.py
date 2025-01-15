@@ -12,6 +12,7 @@ from functools import wraps
 from api.signals import topic_updated, topic_saved
 from api.models import Topic
 from api.models.feed_item import FeedItem
+from .common import get_db_path
 
 # In-memory cache for topics
 _topic_cache: Dict[str, Topic] = {}
@@ -42,7 +43,7 @@ def _load_all_topics_from_disk() -> List[Topic]:
     return topics
 
 def DB_PATH():
-    return Path(os.getenv("DB_PATH", "../db")) / 'topics'
+    return get_db_path('topics')
 
 def ensure_db_exists():
     """Create the topics directory if it doesn't exist."""

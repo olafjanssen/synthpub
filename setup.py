@@ -14,12 +14,7 @@ def collect_data_files():
     for root, dirs, files in os.walk('frontend'):
         files_paths = [os.path.join(root, file) for file in files]
         data_files.append((root, files_paths))
-    
-    # Add database files
-    for root, dirs, files in os.walk('db'):
-        files_paths = [os.path.join(root, file) for file in files]
-        data_files.append((root, files_paths))
-    
+        
     # Add environment file if it exists
     if os.path.exists('.env'):
         data_files.append(('.', ['.env']))
@@ -52,6 +47,8 @@ OPTIONS = {
         'pydantic',
         'webview',
         'requests',
+        'tomli',
+        'tomli_w',
         
         # Modern importlib replacements for pkg_resources
         'importlib_resources',
@@ -105,7 +102,7 @@ OPTIONS = {
         # Deprecated
         'pkg_resources',
     ],
-    'resources': ['frontend', 'db', 'src/api','src/news','src/curator'],
+    'resources': ['frontend', 'src/api','src/news','src/curator'],
     'iconfile': './frontend/img/dpbtse_logo.icns',
     'plist': {
         'CFBundleName': 'SynthPub',

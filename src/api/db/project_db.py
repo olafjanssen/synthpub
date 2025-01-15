@@ -10,9 +10,10 @@ from shutil import move
 import os
 
 from api.models.project import Project
+from .common import get_db_path
 
 def DB_PATH():
-    return Path(os.getenv("DB_PATH", "../db")) / 'projects'
+    return get_db_path('projects')
 
 def ensure_db_exists():
     """Create the projects directory if it doesn't exist."""
