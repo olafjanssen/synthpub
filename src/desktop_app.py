@@ -12,13 +12,13 @@ import uvicorn
 import requests
 from api.app import app
 import http.server
-import tomli
+import yaml
 
 def load_environment():
-    """Load environment variables from settings.toml"""
-    if os.path.exists("settings.toml"):
-        with open("settings.toml", 'rb') as f:
-            settings = tomli.load(f)
+    """Load environment variables from settings.yaml"""
+    if os.path.exists("settings.yaml"):
+        with open("settings.yaml", 'r') as f:
+            settings = yaml.safe_load(f)
             env_vars = settings.get("env_vars", {})
             for key, value in env_vars.items():
                 os.environ[key] = value

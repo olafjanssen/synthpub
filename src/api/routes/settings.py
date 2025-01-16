@@ -1,19 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-import os
-import tomli
-import tomli_w
-import webview
 from typing import Dict, Optional
+import os
+import yaml
+import webview
+from pathlib import Path
 
 router = APIRouter()
-SETTINGS_FILE = "settings.toml"
-
-class DbPath(BaseModel):
-    path: str
-
-class EnvVars(BaseModel):
-    variables: Dict[str, str]
+SETTINGS_FILE = "settings.yaml"
 
 class LLMTaskSettings(BaseModel):
     provider: str
@@ -23,67 +17,27 @@ class LLMTaskSettings(BaseModel):
 class LLMSettings(BaseModel):
     settings: Dict[str, LLMTaskSettings]
 
-def get_default_env_vars():
-    """Get default environment variables"""
-    return {
-        "OPENAI_API_KEY": "",
-        "MISTRAL_API_KEY": "",
-        "YOUTUBE_API_KEY": "", 
-        "GITLAB_TOKEN": ""
-    }
-
-def get_default_llm_settings():
-    """Get default LLM settings"""
-    return {
-        "article_generation": {
-            "provider": "openai",
-            "model_name": "gpt-4o-mini",
-            "max_tokens": 800
-        },
-        "article_refinement": {
-            "provider": "openai",
-            "model_name": "gpt-4o-mini",
-            "max_tokens": 800
-        }
-    }
-
 def load_settings():
-    """Load settings from TOML file"""
+    """Load settings from YAML file"""
     if os.path.exists(SETTINGS_FILE):
-        with open(SETTINGS_FILE, 'rb') as f:
-            settings = tomli.load(f)
-            # Ensure all env vars exist
-            default_vars = get_default_env_vars()
-            if "env_vars" not in settings:
-                settings["env_vars"] = default_vars
-            else:
-                for key in default_vars:
-                    if key not in settings["env_vars"]:
-                        settings["env_vars"][key] = default_vars[key]
-
-            # Ensure all LLM settings exist
-            default_llm = get_default_llm_settings()
-            if "llm" not in settings:
-                settings["llm"] = default_llm
-            else:
-                for task in default_llm:
-                    if task not in settings["llm"]:
-                        settings["llm"][task] = default_llm[task]
-                    else:
-                        for key in default_llm[task]:
-                            if key not in settings["llm"][task]:
-                                settings["llm"][task][key] = default_llm[task][key]
-            return settings
-    return {
-        "db_path": "",
-        "env_vars": get_default_env_vars(),
-        "llm": get_default_llm_settings()
-    }
+        with open(SETTINGS_FILE, 'r') as f:
+            return yaml.safe_load(f) or {}
+    return {}
 
 def save_settings(settings):
-    """Save settings to TOML file"""
-    with open(SETTINGS_FILE, 'wb') as f:
-        tomli_w.dump(settings, f)
+    """Save settings to YAML file"""
+    # Convert any Path objects to strings before saving
+    serializable_settings = {}
+    for key, value in settings.items():
+        if isinstance(value, Path):
+            serializable_settings[key] = str(value)
+        elif isinstance(value, dict):
+            serializable_settings[key] = value
+        else:
+            serializable_settings[key] = str(value)
+
+    with open(SETTINGS_FILE, 'w') as f:
+        yaml.safe_dump(serializable_settings, f, sort_keys=False, allow_unicode=True)
 
 @router.get("/api/settings/db-path")
 async def get_db_path():
@@ -112,34 +66,39 @@ async def select_folder():
 
 @router.get("/api/settings/env-vars")
 async def get_env_vars():
-    """Get current environment variables"""
+    """Get environment variables"""
     settings = load_settings()
-    return {"variables": settings.get("env_vars", get_default_env_vars())}
+    return {"variables": settings.get("env_vars", {
+        "OPENAI_API_KEY": "",
+        "MISTRAL_API_KEY": "",
+        "YOUTUBE_API_KEY": "", 
+        "GITLAB_TOKEN": ""
+    })}
 
 @router.post("/api/settings/env-vars")
-async def update_env_vars(env_vars: EnvVars):
+async def update_env_vars(variables: Dict[str, str]):
     """Update environment variables"""
     settings = load_settings()
-    # Ensure all default keys exist
-    default_vars = get_default_env_vars()
-    for key in default_vars:
-        if key not in env_vars.variables:
-            env_vars.variables[key] = default_vars[key]
-            
-    settings["env_vars"] = env_vars.variables
+    settings["env_vars"] = variables
     save_settings(settings)
-    
-    # Update current process environment variables
-    for key, value in env_vars.variables.items():
-        os.environ[key] = value
-        
     return {"status": "success"}
 
 @router.get("/api/settings/llm")
 async def get_llm_settings():
-    """Get current LLM settings"""
+    """Get LLM settings"""
     settings = load_settings()
-    return {"settings": settings.get("llm", get_default_llm_settings())}
+    return {"settings": settings.get("llm", {
+        "article_generation": {
+            "provider": "openai",
+            "model_name": "gpt-4",
+            "max_tokens": 800
+        },
+        "article_refinement": {
+            "provider": "openai",
+            "model_name": "gpt-4",
+            "max_tokens": 800
+        }
+    })}
 
 @router.post("/api/settings/llm")
 async def update_llm_settings(llm_settings: LLMSettings):

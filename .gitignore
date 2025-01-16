@@ -168,6 +168,7 @@ db/topics/
 db/articles/
 db/projects/
 settings.toml
+settings.yaml
 
 # Keys and credentials
 creds/

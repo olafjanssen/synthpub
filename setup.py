@@ -47,8 +47,6 @@ OPTIONS = {
         'pydantic',
         'webview',
         'requests',
-        'tomli',
-        'tomli_w',
         
         # Modern importlib replacements for pkg_resources
         'importlib_resources',
