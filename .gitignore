@@ -167,7 +167,7 @@ cython_debug/
 db/topics/
 db/articles/
 db/projects/
-db_test/
+settings.toml
 
 # Keys and credentials
 creds/

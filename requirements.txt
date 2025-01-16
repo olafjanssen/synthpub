@@ -8,6 +8,7 @@ pydantic==2.9.2
 langchain-ollama
 openai
 langchain_openai
+langchain_mistralai
 tomli
 tomli_w
 

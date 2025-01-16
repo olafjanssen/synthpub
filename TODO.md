@@ -29,7 +29,7 @@
 - [x] Create a file system connector
 - [x] Create a (gmail) email connector
 - [x] Create a Youtube transcript connector
-- [ ] Create an Arxiv connector
+- [x] Create an Arxiv connector
 - [ ] Create a general scientific paper connector
 - [ ] Create a MS Teams connector
 - [ ] Create a Exchange email connector
@@ -43,7 +43,7 @@
 - [ ] Extract knowledge graph information from the article
 - [x] Add a scheduler that will update the topics every X hours
 - [ ] Add relevance reason to topic source feed
-- [ ] Add Mistral LLM provider
+- [x] Add Mistral LLM provider
 - [ ] Compute substance score or information density per article
 - [ ] Keep track of the LLM calls and token usage
 
@@ -58,8 +58,8 @@
 
 - [x] Create a function to publish the articles to a file system location
 - [ ] Create a function to publish the articles as a podcast
-- [ ] Create a function to publish the articles to a GitLab repository
-- [x] Create a function to publish the articles to a GitHub repository
+- [x] Create a function to publish the articles to a GitLab repository
+- [ ] Create a function to publish the articles to a GitHub repository
 
 ## Front-end
 
@@ -79,7 +79,7 @@
 - [ ] Create a sidebar to chat with the application
 - [x] Add a application settings page
 - [x] Add all environment variables to the application settings page
-- [ ] Add LLM options to the application settings page
+- [x] Add LLM options to the application settings page
 - [ ] Add a project settings page/modal
 
 ## Desktop

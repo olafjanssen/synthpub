@@ -1,7 +1,9 @@
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
+from langchain_mistralai.chat_models import ChatMistralAI
 import os
 import tomli
+import time
 
 def load_llm_settings():
     """Load LLM settings from settings.toml"""
@@ -41,6 +43,21 @@ def get_llm(task: str):
             model_name=model_name,
             max_tokens=max_tokens,
             openai_api_key=api_key
+        )
+    elif provider == "mistral":
+        # Get API key from environment variable
+        api_key = os.getenv("MISTRAL_API_KEY")
+        if not api_key:
+            raise ValueError("MISTRAL_API_KEY not found in environment variables")
+        
+        # Mistral API is rate limited, instead of using the Langchain fallback, we just wait for 2 seconds
+        time.sleep(2) 
+        
+        # Initialize Mistral using langchain
+        return ChatMistralAI(
+            model_name=model_name,
+            max_tokens=max_tokens,
+            mistral_api_key=api_key
         )
     else:
         raise ValueError("Unsupported LLM provider specified in the configuration.")

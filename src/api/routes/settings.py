@@ -4,7 +4,7 @@ import os
 import tomli
 import tomli_w
 import webview
-from typing import Dict
+from typing import Dict, Optional
 
 router = APIRouter()
 SETTINGS_FILE = "settings.toml"
@@ -15,10 +15,19 @@ class DbPath(BaseModel):
 class EnvVars(BaseModel):
     variables: Dict[str, str]
 
+class LLMTaskSettings(BaseModel):
+    provider: str
+    model_name: str
+    max_tokens: int
+
+class LLMSettings(BaseModel):
+    settings: Dict[str, LLMTaskSettings]
+
 def get_default_env_vars():
     """Get default environment variables"""
     return {
         "OPENAI_API_KEY": "",
+        "MISTRAL_API_KEY": "",
         "YOUTUBE_API_KEY": "", 
         "GITLAB_TOKEN": ""
     }
@@ -133,9 +142,12 @@ async def get_llm_settings():
     return {"settings": settings.get("llm", get_default_llm_settings())}
 
 @router.post("/api/settings/llm")
-async def update_llm_settings(settings: Dict[str, Dict[str, Dict[str, str]]]):
+async def update_llm_settings(llm_settings: LLMSettings):
     """Update LLM settings"""
-    current_settings = load_settings()
-    current_settings["llm"] = settings["settings"]
-    save_settings(current_settings)
+    settings = load_settings()
+    settings["llm"] = {
+        task: task_settings.dict()
+        for task, task_settings in llm_settings.settings.items()
+    }
+    save_settings(settings)
     return {"status": "success"}

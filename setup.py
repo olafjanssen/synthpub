@@ -58,6 +58,9 @@ OPTIONS = {
         'langchain',
         'langchain_core',
         'langchain_text_splitters',
+        'langchain_ollama',
+        'langchain_openai',
+        'langchain_mistralai',
         
         # Google API
         'googleapiclient',
