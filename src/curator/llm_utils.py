@@ -1,7 +1,15 @@
 from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
-from .config import config
 import os
+import tomli
+
+def load_llm_settings():
+    """Load LLM settings from settings.toml"""
+    if os.path.exists("settings.toml"):
+        with open("settings.toml", 'rb') as f:
+            settings = tomli.load(f)
+            return settings.get("llm", {})
+    return {}
 
 def get_llm(task: str):
     """
@@ -13,9 +21,12 @@ def get_llm(task: str):
     Returns:
         An instance of the LLM
     """
-    provider = config['llm'][task]['provider']
-    model_name = config['llm'][task]['model_name']
-    max_tokens = config['llm'][task]['max_tokens']
+    settings = load_llm_settings()
+    task_settings = settings.get(task, {})
+    
+    provider = task_settings.get("provider", "openai")
+    model_name = task_settings.get("model_name", "gpt-4")
+    max_tokens = task_settings.get("max_tokens", 800)
     
     if provider == "ollama":
         return ChatOllama(model=model_name, num_predict=max_tokens)

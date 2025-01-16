@@ -46,6 +46,16 @@
                 <button type="submit" class="btn btn-primary mt-3">Save Environment Variables</button>
             </form>
         </div>
+
+        <div class="mb-5">
+            <h3 class="h5 mb-3">LLM Settings</h3>
+            <form id="llmSettingsForm">
+                <div id="llmSettingsContainer">
+                    <!-- LLM settings will be dynamically added here -->
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Save LLM Settings</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -123,9 +133,81 @@
         }
     });
 
+    // Load and display LLM settings
+    async function loadLLMSettings() {
+        try {
+            const response = await fetch(`${API_URL}/api/settings/llm`);
+            const data = await response.json();
+            const container = document.getElementById('llmSettingsContainer');
+            container.innerHTML = '';
+
+            Object.entries(data.settings).forEach(([task, settings]) => {
+                container.innerHTML += `
+                    <div class="mb-4">
+                        <h4 class="h6">${task.replace('_', ' ').toUpperCase()}</h4>
+                        <div class="mb-3">
+                            <label class="form-label">Provider</label>
+                            <select class="form-select" name="${task}.provider">
+                                <option value="openai" ${settings.provider === 'openai' ? 'selected' : ''}>OpenAI</option>
+                                <option value="ollama" ${settings.provider === 'ollama' ? 'selected' : ''}>Ollama</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Model Name</label>
+                            <input type="text" class="form-control" name="${task}.model_name" value="${settings.model_name}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Max Tokens</label>
+                            <input type="number" class="form-control" name="${task}.max_tokens" value="${settings.max_tokens}">
+                        </div>
+                    </div>
+                `;
+            });
+        } catch (error) {
+            console.error('Error loading LLM settings:', error);
+            alert('Failed to load LLM settings');
+        }
+    }
+
+    // Handle LLM settings form submission
+    document.getElementById('llmSettingsForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const settings = {
+            article_generation: {},
+            article_refinement: {}
+        };
+        
+        formData.forEach((value, key) => {
+            const [task, setting] = key.split('.');
+            if (!settings[task]) settings[task] = {};
+            settings[task][setting] = setting === 'max_tokens' ? parseInt(value) : value;
+        });
+
+        try {
+            const response = await fetch(`${API_URL}/api/settings/llm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ settings }),
+            });
+
+            if (response.ok) {
+                alert('LLM settings updated successfully');
+            } else {
+                alert('Failed to update LLM settings');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to update LLM settings');
+        }
+    });
+
     // Initialize page
     window.addEventListener('load', () => {
         loadEnvVars();
+        loadLLMSettings();
         
         // Load current database path
         fetch(`${API_URL}/api/settings/db-path`)

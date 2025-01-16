@@ -23,6 +23,21 @@ def get_default_env_vars():
         "GITLAB_TOKEN": ""
     }
 
+def get_default_llm_settings():
+    """Get default LLM settings"""
+    return {
+        "article_generation": {
+            "provider": "openai",
+            "model_name": "gpt-4o-mini",
+            "max_tokens": 800
+        },
+        "article_refinement": {
+            "provider": "openai",
+            "model_name": "gpt-4o-mini",
+            "max_tokens": 800
+        }
+    }
+
 def load_settings():
     """Load settings from TOML file"""
     if os.path.exists(SETTINGS_FILE):
@@ -36,10 +51,24 @@ def load_settings():
                 for key in default_vars:
                     if key not in settings["env_vars"]:
                         settings["env_vars"][key] = default_vars[key]
+
+            # Ensure all LLM settings exist
+            default_llm = get_default_llm_settings()
+            if "llm" not in settings:
+                settings["llm"] = default_llm
+            else:
+                for task in default_llm:
+                    if task not in settings["llm"]:
+                        settings["llm"][task] = default_llm[task]
+                    else:
+                        for key in default_llm[task]:
+                            if key not in settings["llm"][task]:
+                                settings["llm"][task][key] = default_llm[task][key]
             return settings
     return {
         "db_path": "",
-        "env_vars": get_default_env_vars()
+        "env_vars": get_default_env_vars(),
+        "llm": get_default_llm_settings()
     }
 
 def save_settings(settings):
@@ -95,4 +124,18 @@ async def update_env_vars(env_vars: EnvVars):
     for key, value in env_vars.variables.items():
         os.environ[key] = value
         
+    return {"status": "success"}
+
+@router.get("/api/settings/llm")
+async def get_llm_settings():
+    """Get current LLM settings"""
+    settings = load_settings()
+    return {"settings": settings.get("llm", get_default_llm_settings())}
+
+@router.post("/api/settings/llm")
+async def update_llm_settings(settings: Dict[str, Dict[str, Dict[str, str]]]):
+    """Update LLM settings"""
+    current_settings = load_settings()
+    current_settings["llm"] = settings["settings"]
+    save_settings(current_settings)
     return {"status": "success"}
