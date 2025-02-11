@@ -29,3 +29,12 @@ curl http://localhost:8000/topics/
 cd frontend
 python -m http.server 8080
 ```
+
+## Desktop Usage
+
+Build the desktop app:
+
+```bash
+python build.py
+```
+
