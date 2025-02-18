@@ -1,0 +1,14 @@
+[gd_resource type="Theme" load_steps=3 format=3 uid="uid://bsuvxuvkj1sqd"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dglbr"]
+bg_color = Color(0.0784314, 0.352941, 0.329412, 1)
+shadow_color = Color(0.290196, 0.415686, 0.372549, 1)
+shadow_offset = Vector2(10, 10)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xblxp"]
+bg_color = Color(0.941176, 0.431373, 0.423529, 1)
+
+[resource]
+PanelContainer/styles/panel = SubResource("StyleBoxFlat_dglbr")
+TopCardPanel/base_type = &"PanelContainer"
+TopCardPanel/styles/panel = SubResource("StyleBoxFlat_xblxp")

@@ -1,0 +1,117 @@
+[gd_scene load_steps=4 format=3 uid="uid://dndaugvinxcax"]
+
+[ext_resource type="Texture2D" uid="uid://b5ji0vdv31u08" path="res://images/dpbtse_logo.png" id="1_0bed7"]
+[ext_resource type="Theme" uid="uid://bsuvxuvkj1sqd" path="res://card_theme.tres" id="1_fh5nf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5mpxc"]
+bg_color = Color(0.941176, 0.431373, 0.423529, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.290196, 0.415686, 0.372549, 1)
+shadow_size = 3
+shadow_offset = Vector2(3, 3)
+
+[node name="ProjectsScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.360784, 0.498039, 0.439216, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_fh5nf")
+
+[node name="MarginContainer" type="MarginContainer" parent="ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="MainLayout" type="VBoxContainer" parent="ScrollContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="TopCards" type="HFlowContainer" parent="ScrollContainer/MarginContainer/MainLayout"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+
+[node name="LogoCard" type="PanelContainer" parent="ScrollContainer/MarginContainer/MainLayout/TopCards"]
+custom_minimum_size = Vector2(180, 270)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_5mpxc")
+
+[node name="Layout" type="VBoxContainer" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/LogoCard"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Logo" type="TextureRect" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/LogoCard/Layout"]
+layout_mode = 2
+texture = ExtResource("1_0bed7")
+expand_mode = 5
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/LogoCard/Layout"]
+layout_mode = 2
+text = "S Y N T H P U B"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/LogoCard/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "INFORMATION CULTURE"
+horizontal_alignment = 1
+
+[node name="NewProjectCard" type="PanelContainer" parent="ScrollContainer/MarginContainer/MainLayout/TopCards"]
+custom_minimum_size = Vector2(180, 270)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_5mpxc")
+
+[node name="Layout" type="VBoxContainer" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/NewProjectCard"]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/NewProjectCard/Layout"]
+layout_mode = 2
+text = "CREATE
+NEW PROJECT"
+horizontal_alignment = 1
+
+[node name="SettingsCard" type="PanelContainer" parent="ScrollContainer/MarginContainer/MainLayout/TopCards"]
+custom_minimum_size = Vector2(180, 270)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_5mpxc")
+
+[node name="Layout" type="VBoxContainer" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/SettingsCard"]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="ScrollContainer/MarginContainer/MainLayout/TopCards/SettingsCard/Layout"]
+layout_mode = 2
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="ProjectsList" type="HFlowContainer" parent="ScrollContainer/MarginContainer/MainLayout"]
+layout_mode = 2
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20

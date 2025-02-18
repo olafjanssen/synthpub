@@ -1,0 +1,171 @@
+[gd_scene load_steps=4 format=3 uid="uid://dndaugvinxcax"]
+
+[ext_resource type="Texture2D" uid="uid://b5ji0vdv31u08" path="res://images/dpbtse_logo.png" id="1_0bed7"]
+[ext_resource type="Theme" uid="uid://bsuvxuvkj1sqd" path="res://card_theme.tres" id="1_fh5nf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5mpxc"]
+bg_color = Color(0.941176, 0.431373, 0.423529, 1)
+shadow_color = Color(0.290196, 0.415686, 0.372549, 1)
+shadow_size = 3
+shadow_offset = Vector2(3, 3)
+
+[node name="Node2D" type="Node2D"]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+color = Color(0.360784, 0.498039, 0.439216, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CanvasLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_fh5nf")
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ScrollContainer/MarginContainer"]
+layout_mode = 2
+
+[node name="VFlowContainer" type="VFlowContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="DPBTSECard" type="PanelContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer"]
+custom_minimum_size = Vector2(180, 270)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_5mpxc")
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard/MarginContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+texture = ExtResource("1_0bed7")
+expand_mode = 5
+
+[node name="Spacer" type="Control" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "S y n t h P u b"
+horizontal_alignment = 3
+uppercase = true
+
+[node name="Label2" type="Label" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "informatiom culture"
+horizontal_alignment = 3
+uppercase = true
+
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/DPBTSECard/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="NewProjectCard" type="PanelContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer"]
+custom_minimum_size = Vector2(180, 270)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_5mpxc")
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/NewProjectCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/NewProjectCard/MarginContainer"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/NewProjectCard/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/NewProjectCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_constants/line_spacing = -8
+text = "create
+new project"
+horizontal_alignment = 3
+uppercase = true
+
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/NewProjectCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/NewProjectCard/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="SettingsCard" type="PanelContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer"]
+custom_minimum_size = Vector2(180, 270)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_5mpxc")
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/SettingsCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/SettingsCard/MarginContainer"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/SettingsCard/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Label" type="Label" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/SettingsCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_constants/line_spacing = -8
+text = "settings"
+horizontal_alignment = 3
+uppercase = true
+
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/SettingsCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Spacer2" type="Control" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer/VFlowContainer/SettingsCard/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="HFlowContainer" type="HFlowContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="HFlowContainer2" type="HFlowContainer" parent="CanvasLayer/ScrollContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
