@@ -2,7 +2,6 @@ import os
 import yaml
 import json
 from neo4j import GraphDatabase
-from pathlib import Path
 from datetime import datetime
 
 SETTINGS_FILE = "settings.yaml"
@@ -24,205 +23,140 @@ NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "securepassword123"
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
 
-# Function to handle datetime serialization
-def serialize_datetime(obj):
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    return obj
-
 def load_yaml_files(folder_name, label):
-    """Reads YAML files from the selected database folder."""
-    if not os.path.exists(DATABASE_PATH):
-        print(f"⚠️ Database path does not exist: {DATABASE_PATH}")
+    """Reads and updates YAML files before inserting into Neo4j."""
+    folder_path = os.path.join(DATABASE_PATH, folder_name)
+
+    if not os.path.exists(folder_path):
+        print(f"⚠️ Folder {folder_path} does not exist!")
         return
     
-    print(f"📂 Scanning for files in: {DATABASE_PATH}")
+    print(f"📂 Scanning for YAML files in: {folder_path}")
 
-    files_found = False
-    for subdir, dirs, files in os.walk(DATABASE_PATH):
-        for filename in files:
-            if filename.endswith(".yaml") or filename.endswith(".yml"):
-                files_found = True
-                file_path = os.path.join(subdir, filename)
-                print(f"📂 Found YAML file: {file_path}")  # Debugging output
-                
-                # Read YAML file
-                with open(file_path, "r") as file:
-                    try:
-                        data = yaml.safe_load(file)
-                        
-                        # Convert datetime objects to string before printing
-                        print(f"📜 Contents of {filename}: {json.dumps(data, indent=2, default=serialize_datetime)}")  
-                        
-                        # Determine label type (Topic or Project)
-                        label = "Project" if "title" in data and "id" in data else "Topic"
-                        
-                        # ✅ Ensure `filename` is passed when calling `create_graph_nodes()`
-                        create_graph_nodes(data, label, filename)
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".yaml") or filename.endswith(".yml"):
+            file_path = os.path.join(folder_path, filename)
 
-                    except yaml.YAMLError as e:
-                        print(f"❌ Error reading {filename}: {e}")
+            with open(file_path, "r") as file:
+                try:
+                    data = yaml.safe_load(file)
+                    update_yaml_versions(data, file_path, label)
+                except yaml.YAMLError as e:
+                    print(f"❌ Error reading {filename}: {e}")
 
-    if not files_found:
-        print("❌ No YAML files found in the directory.")
-
-
-def create_graph_nodes(data, label, filename):
-    """Creates nodes in Neo4j and dynamically assigns previous and next versions."""
+def update_yaml_versions(data, file_path, label):
+    """Assigns version, previous_version, and next_version before inserting into Neo4j."""
     node_id = data.get("id")
-    created_at = data.get("created_at", datetime.utcnow().isoformat())  # Ensure created_at exists
-    
-    # Assign a default version if missing
-    version = str(data.get("version", "1"))  # Default to "1" if missing
-    
-    previous_version = None
-    next_version = None
+    created_at = data.get("created_at", datetime.utcnow().isoformat())
 
     with driver.session() as session:
-        # Find the previous version (earlier created_at)
+        # 🔹 Get the latest version for this ID
+        latest_version_record = session.run(
+            f"""
+            MATCH (n:{label})
+            WHERE n.id = $id
+            RETURN MAX(toInteger(n.version)) AS latest_version;
+            """,
+            id=node_id
+        ).single()
+
+        latest_version = latest_version_record["latest_version"] if latest_version_record and latest_version_record["latest_version"] else 0
+        version = str(latest_version + 1)  # Increment version properly
+
+        # 🔹 Find previous version
         previous_record = session.run(
-            """
-            MATCH (t:Topic)
-            WHERE t.id = $id AND datetime(t.created_at) < datetime($created_at)
-            RETURN t.id ORDER BY datetime(t.created_at) DESC LIMIT 1;
+            f"""
+            MATCH (n:{label})
+            WHERE n.id = $id AND datetime(n.created_at) < datetime($created_at)
+            RETURN n.id ORDER BY datetime(n.created_at) DESC LIMIT 1;
             """,
             id=node_id, created_at=created_at
         ).single()
-        
-        if previous_record:
-            previous_version = previous_record["t.id"]
+        previous_version = previous_record["n.id"] if previous_record else None
 
-        # Find the next version (later created_at)
+        # 🔹 Find next version
         next_record = session.run(
-            """
-            MATCH (t:Topic)
-            WHERE t.id = $id AND datetime(t.created_at) > datetime($created_at)
-            RETURN t.id ORDER BY datetime(t.created_at) ASC LIMIT 1;
+            f"""
+            MATCH (n:{label})
+            WHERE n.id = $id AND datetime(n.created_at) > datetime($created_at)
+            RETURN n.id ORDER BY datetime(n.created_at) ASC LIMIT 1;
             """,
             id=node_id, created_at=created_at
         ).single()
-        
-        if next_record:
-            next_version = next_record["t.id"]
+        next_version = next_record["n.id"] if next_record else None
 
-    print(f"🛠️ Processing {label}: {node_id} (Version: {version}, Prev: {previous_version}, Next: {next_version})")
+    # 🔹 Update the YAML file with the new version info
+    data["version"] = version
+    data["previous_version"] = previous_version
+    data["next_version"] = next_version
 
-    with driver.session() as session:
-        if label == "Topic":
-            print(f"📂 Creating Topic Node: {node_id} (Version: {version}, Previous: {previous_version}, Next: {next_version})")
-            session.run(
-                """
-                MERGE (t:Topic {id: $id})
-                ON CREATE SET t.name = $name, 
-                              t.description = $description, 
-                              t.version = $version, 
-                              t.created_at = $created_at, 
-                              t.previous_version = $previous_version,
-                              t.next_version = $next_version
-                """,
-                id=node_id, version=version,
-                name=data.get("name", "Untitled Topic"),
-                description=data.get("description", "No Description"),
-                created_at=created_at,
-                previous_version=previous_version,
-                next_version=next_version
-            )
+    with open(file_path, "w") as file:
+        yaml.dump(data, file)
 
+    print(f"✅ Updated {label} in YAML: {file_path} (Version {version})")
 
-def load_markdown_files():
-    """Reads Markdown files from the articles folder."""
-    articles_path = os.path.join(DATABASE_PATH, "articles")
-    if not os.path.exists(articles_path):
-        print(f"⚠️ Folder 'articles' not found at {DATABASE_PATH}")
-        return
+    # Insert into Neo4j
+    insert_into_neo4j(data, label)
 
-    print(f"📂 Loading Markdown articles from: {articles_path}")
-
-    for filename in os.listdir(articles_path):
-        if filename.endswith(".md"):
-            file_path = os.path.join(articles_path, filename)
-            with open(file_path, "r", encoding="utf-8") as file:
-                content = file.read()
-                create_article_node(filename, content)
-
-def create_article_node(filename, content):
-    """Creates an Article node in Neo4j."""
-    article_id = filename.replace(".md", "")
-
+def insert_into_neo4j(data, label):
+    """Inserts or updates nodes in Neo4j with versioning."""
     with driver.session() as session:
         session.run(
-            """
-            MERGE (a:Article {id: $id})
-            ON CREATE SET a.content = $content, a.created_at = timestamp()
+            f"""
+            MERGE (n:{label} {{id: $id}})
+            SET n.name = $name, 
+                n.description = $description, 
+                n.version = $version, 
+                n.created_at = $created_at, 
+                n.previous_version = $previous_version,
+                n.next_version = $next_version
             """,
-            id=article_id, content=content
+            id=data["id"],
+            name=data.get("name", "Untitled"),
+            description=data.get("description", "No Description"),
+            version=data["version"],
+            created_at=data["created_at"],
+            previous_version=data["previous_version"],
+            next_version=data["next_version"]
         )
 
 def link_versions():
-    """Links different versions of Topics and Projects using `previous_version` and `next_version`."""
+    """Links different versions using `previous_version` and `next_version` in Neo4j."""
     with driver.session() as session:
         print("🔗 Linking previous and next versions...")
 
-        # 🔹 Link previous versions of Topics
+        # 🔹 Link previous versions
         result = session.run(
             """
             MATCH (old:Topic), (new:Topic)
             WHERE new.previous_version = old.id
             MERGE (old)-[:PREVIOUS_VERSION]->(new)
-            RETURN old.id AS old_id, new.id AS new_id, old.version AS old_version, new.version AS new_version
+            RETURN COUNT(*);
             """
-        )
-        for record in result:
-            print(f"✅ Linked Topic Versions: {record['old_id']} → {record['new_id']} (v{record['old_version']} → v{record['new_version']})")
+        ).single()
+        prev_links = result[0] if result and result[0] else 0
+        print(f"✅ {prev_links} Previous Version links created.")
 
-        # 🔹 Link next versions of Topics
+        # 🔹 Link next versions
         result = session.run(
             """
             MATCH (old:Topic), (new:Topic)
             WHERE old.next_version = new.id
             MERGE (old)-[:NEXT_VERSION]->(new)
-            RETURN old.id AS old_id, new.id AS new_id, old.version AS old_version, new.version AS new_version
+            RETURN COUNT(*);
             """
-        )
-        for record in result:
-            print(f"✅ Linked Topic Next Versions: {record['old_id']} → {record['new_id']} (v{record['old_version']} → v{record['new_version']})")
-
-        # 🔹 Link previous versions of Projects
-        result = session.run(
-            """
-            MATCH (old:Project), (new:Project)
-            WHERE new.previous_version = old.id
-            MERGE (old)-[:PREVIOUS_VERSION]->(new)
-            RETURN old.id AS old_id, new.id AS new_id, old.version AS old_version, new.version AS new_version
-            """
-        )
-        for record in result:
-            print(f"✅ Linked Project Versions: {record['old_id']} → {record['new_id']} (v{record['old_version']} → v{record['new_version']})")
-
-        # 🔹 Link next versions of Projects
-        result = session.run(
-            """
-            MATCH (old:Project), (new:Project)
-            WHERE old.next_version = new.id
-            MERGE (old)-[:NEXT_VERSION]->(new)
-            RETURN old.id AS old_id, new.id AS new_id, old.version AS old_version, new.version AS new_version
-            """
-        )
-        for record in result:
-            print(f"✅ Linked Project Next Versions: {record['old_id']} → {record['new_id']} (v{record['old_version']} → v{record['new_version']})")
+        ).single()
+        next_links = result[0] if result and result[0] else 0
+        print(f"✅ {next_links} Next Version links created.")
 
     print("✅ Version linking complete.")
-
 
 if __name__ == "__main__":
     print(f"🔍 Using Database Path: {DATABASE_PATH}")
     
-    # Load topics and projects
+    # Load and process topics and projects
     load_yaml_files("topics", "Topic")
     load_yaml_files("projects", "Project")
-
-    # Load articles
-    load_markdown_files()
 
     # Link different versions using `previous_version` and `next_version`
     link_versions()
