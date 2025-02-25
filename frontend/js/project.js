@@ -22,9 +22,9 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-var cardIndex = 2;
-
 async function loadTopics(projectId) {
+    var cardIndex = 2;
+
     try {
         const response = await fetch(`${API_URL}/projects/${projectId}`);
         const project = await response.json();

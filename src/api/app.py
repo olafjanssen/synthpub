@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+import yaml
 from .routes.topic_routes import router as topic_router
 from .routes.article_routes import router as article_router
 from .routes.health import router as health_router
@@ -16,6 +17,15 @@ from curator.topic_updater import start_update_processor
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events."""
+    # Load environment variables from settings.yaml
+    if os.path.exists("settings.yaml"):
+        with open("settings.yaml", 'r') as f:
+            settings = yaml.safe_load(f)
+            env_vars = settings.get("env_vars", {})
+            print(env_vars)
+            for key, value in env_vars.items():
+                os.environ[key] = value
+
     start_update_processor()
     yield
     # Add any cleanup code here if needed

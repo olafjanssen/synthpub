@@ -5,7 +5,8 @@
 Run the API:
 
 ```bash
-python -m curator.api.run
+cd src
+python -m api.run
 ```
 
 You can interact with the Curator API using curl:
