@@ -7,12 +7,12 @@ from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
 from api.models.feed_item import FeedItem
 from typing import Optional
-from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated
+from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated, convert_requested
 import threading
 from queue import Queue
 import news.feeds
 import news.publishers
-
+import news.converter   
 
 # Add queue for handling updates
 update_queue = Queue()
@@ -29,8 +29,19 @@ def handle_topic_publishing(sender):
     # Process feeds
     topic = sender
     for publish_url in topic.publish_urls:
-        print(f"Publishing to {publish_url}")
-        publish_requested.send(topic, publish_url=publish_url)
+        # split publish_url into piped elements
+        commands = publish_url.split('|')
+
+        print("Default conversion: content")
+        convert_requested.send(topic, type="content")
+
+        for cmd in commands:
+            if cmd.startswith('convert://'):
+                print(f"Converting to {cmd}")
+                convert_requested.send(topic, type=cmd.split('://')[1])
+            else:
+                print(f"Publishing to {cmd}")
+                publish_requested.send(topic, publish_url=cmd)
 
 
 def process_update_queue():

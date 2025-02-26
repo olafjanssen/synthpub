@@ -28,13 +28,10 @@ class FilePublisher(Publisher):
             # Create parent directories if they don't exist
             path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Get the specific article
-            article = get_article(topic.article)
-
-            # Write content to file
+            # Write representation to file
             with open(path, 'w', encoding='utf-8') as f:
-                f.write(article.content)
-                
+                f.write(topic.representation)
+
             return True
             
         except Exception as e:
