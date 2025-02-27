@@ -15,7 +15,7 @@ class Prompt(Converter):
         return type == 'prompt'
     
     @staticmethod
-    def convert_content(type: str, topic: Topic) -> bool:
+    def convert_representation(type: str, topic: Topic) -> bool:
         try:            
             content = topic.representations[-1].content
             
@@ -49,7 +49,7 @@ Now, generate the full radio news script, keeping it engaging, informative, and 
 
             converted_content = llm.invoke(prompt.format(content=content)).content.strip()
 
-            topic.add_representation("text", converted_content)
+            topic.add_representation(type, converted_content)
 
             return True
             

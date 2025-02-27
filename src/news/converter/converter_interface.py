@@ -34,7 +34,7 @@ class Converter(Protocol):
         if cls.can_handle(type):
             print(f"Can handle convert request for {type} as {cls.__name__}")
             try:
-                cls.convert_content(type, sender)
+                cls.convert_representation(type, sender)
                 topic_converted.send(sender, type=type)
             except Exception as e:
                 print(f"Error converting {type}: {str(e)}")

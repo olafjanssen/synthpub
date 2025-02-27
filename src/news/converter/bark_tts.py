@@ -67,7 +67,7 @@ class BarkTTS(Converter):
         return type == 'bark-tts'
     
     @staticmethod
-    def convert_content(type: str, topic: Topic) -> bool:
+    def convert_representation(type: str, topic: Topic) -> bool:
         try:
             # Generate audio chunks for each sentence
             audio_chunks = [
@@ -88,7 +88,7 @@ class BarkTTS(Converter):
             
             # Add audio representation
             audio_bytes = buffer.getvalue()
-            topic.add_representation("audio", audio_bytes.hex(), {"format": "mp3", "binary": True})
+            topic.add_representation(type, audio_bytes.hex(), {"format": "mp3", "binary": True})
             
             return True
             

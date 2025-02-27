@@ -4,7 +4,6 @@ from urllib.parse import unquote, urlparse
 from typing import Dict
 from .publisher_interface import Publisher
 from api.models.topic import Topic
-import base64
 
 def parse_file_url(url: str) -> Path:
     """Parse a file:// URL and return the filesystem path."""

@@ -11,12 +11,12 @@ class Content(Converter):
         return type == 'content'
     
     @staticmethod
-    def convert_content(type: str, topic: Topic) -> bool:
+    def convert_representation(type: str, topic: Topic) -> bool:
         try:
             # Get the specific article
             article = get_article(topic.article)
 
-            topic.add_representation("text", article.content)
+            topic.add_representation(type, article.content)
             return True
             
         except Exception as e:

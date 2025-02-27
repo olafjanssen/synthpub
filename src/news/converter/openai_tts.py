@@ -13,7 +13,6 @@ import io
 from pydub import AudioSegment
 
 class OpenAITTS(Converter):
-    os.makedirs("output/audio", exist_ok=True)
     
     @staticmethod
     def split_into_sentences(text: str, max_length: int = 4096) -> List[str]:
@@ -66,7 +65,7 @@ class OpenAITTS(Converter):
         return type == 'openai-tts'
     
     @classmethod
-    def convert_content(cls, type: str, topic: Topic) -> bool:
+    def convert_representation(cls, type: str, topic: Topic) -> bool:
         try:            
             content = topic.representations[-1].content
             
@@ -88,7 +87,7 @@ class OpenAITTS(Converter):
             audio_bytes = buffer.getvalue()
             
             # Add audio representation
-            topic.add_representation("audio", audio_bytes.hex(), {"format": "mp3", "binary": True})
+            topic.add_representation(type, audio_bytes.hex(), {"format": "mp3", "binary": True})
             return True
             
         except Exception as e:
