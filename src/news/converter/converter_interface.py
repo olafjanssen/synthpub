@@ -14,7 +14,7 @@ class Converter(Protocol):
         ...
         
     @staticmethod
-    def convert_content(type: str, topic: Topic) -> bool:
+    def convert_representation(type: str, topic: Topic) -> bool:
         """
         Publish content to the given URL.
         
@@ -38,7 +38,9 @@ class Converter(Protocol):
                 topic_converted.send(sender, type=type)
             except Exception as e:
                 print(f"Error converting {type}: {str(e)}")
-
+        else:
+            print(f"Cannot handle convert request for {type} as {cls.__name__}")
+            
     @classmethod
     def connect_signals(cls):
         """Connect to feed update signals."""

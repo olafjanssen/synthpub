@@ -30,7 +30,7 @@ def handle_topic_publishing(sender):
     topic = sender
     for publish_url in topic.publish_urls:
         # split publish_url into piped elements
-        commands = publish_url.split('|')
+        commands = [cmd.strip() for cmd in publish_url.split('|')]
 
         print("Default conversion: content")
         convert_requested.send(topic, type="content")
@@ -38,7 +38,7 @@ def handle_topic_publishing(sender):
         for cmd in commands:
             if cmd.startswith('convert://'):
                 print(f"Converting to {cmd}")
-                convert_requested.send(topic, type=cmd.split('://')[1])
+                convert_requested.send(topic, type=cmd.split('://')[1].strip())
             else:
                 print(f"Publishing to {cmd}")
                 publish_requested.send(topic, publish_url=cmd)

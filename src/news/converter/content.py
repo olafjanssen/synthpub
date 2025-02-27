@@ -16,7 +16,7 @@ class Content(Converter):
             # Get the specific article
             article = get_article(topic.article)
 
-            topic.representation = article.content
+            topic.add_representation("text", article.content)
             return True
             
         except Exception as e:
