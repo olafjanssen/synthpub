@@ -4,7 +4,7 @@ Content converter using a generic llm prompt.
 from .converter_interface import Converter
 from api.models.topic import Topic
 from langchain.prompts import PromptTemplate
-from src.curator.llm_utils import get_llm
+from curator.llm_utils import get_llm
 
 
 class Prompt(Converter):
