@@ -13,6 +13,9 @@ class LLMTaskSettings(BaseModel):
     provider: str
     model_name: str
     max_tokens: int
+    model_config = {
+        'protected_namespaces': ()  # Disable protected namespace checks
+    }
 
 class LLMSettings(BaseModel):
     settings: Dict[str, LLMTaskSettings]
