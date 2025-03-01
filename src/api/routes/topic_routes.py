@@ -11,7 +11,7 @@ from curator.topic_updater import handle_topic_publishing
 
 router = APIRouter()
 
-@router.post("/api/topics/", response_model=Topic)
+@router.post("/topics/", response_model=Topic)
 async def create_topic_route(topic: TopicCreate):
     """Create a new topic and generate its initial article."""
     try:
@@ -43,13 +43,13 @@ async def create_topic_route(topic: TopicCreate):
         print(f"Error creating topic: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.get("/api/topics/", response_model=list[Topic])
+@router.get("/topics/", response_model=list[Topic])
 async def list_topics_route():
     """List all topics."""
     topics = load_topics()
     return list(topics.values())
 
-@router.get("/api/topics/{topic_id}", response_model=Topic)
+@router.get("/topics/{topic_id}", response_model=Topic)
 async def get_topic_route(topic_id: str):
     """Get a specific topic by ID."""
     topics = load_topics()
@@ -58,7 +58,7 @@ async def get_topic_route(topic_id: str):
     return topics[topic_id]
 
 # Add a new route to update feed URLs
-@router.put("/api/topics/{topic_id}/feeds", response_model=Topic)
+@router.put("/topics/{topic_id}/feeds", response_model=Topic)
 async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
     """Update the feed URLs for a specific topic."""
     topics = load_topics()
@@ -71,7 +71,7 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
     
     return topic
 
-@router.post("/api/topics/{topic_id}/update", response_model=dict)
+@router.post("/topics/{topic_id}/update", response_model=dict)
 async def update_topic_route(topic_id: str):
     """Request topic update via signal."""
     # Send signal instead of directly spawning thread
@@ -79,7 +79,7 @@ async def update_topic_route(topic_id: str):
     topic_update_requested.send('api', topic_id=topic_id)
     return {"message": "Topic update requested", "topic_id": topic_id}
 
-@router.delete("/api/topics/{topic_id}", response_model=dict)
+@router.delete("/topics/{topic_id}", response_model=dict)
 async def delete_topic_route(topic_id: str):
     """Mark a topic as deleted (soft delete)."""
     try:
@@ -99,7 +99,7 @@ async def delete_topic_route(topic_id: str):
         print(f"Error deleting topic: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.put("/api/topics/{topic_id}", response_model=Topic)
+@router.put("/topics/{topic_id}", response_model=Topic)
 async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
     """Update a topic's details."""
     try:
@@ -119,7 +119,7 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
         print(f"Error updating topic: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.post("/api/topics/{topic_id}/publish", response_model=dict)
+@router.post("/topics/{topic_id}/publish", response_model=dict)
 async def publish_topic_route(topic_id: str):
     """Request topic publish via signal."""
     try:

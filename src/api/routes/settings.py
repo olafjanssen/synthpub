@@ -39,13 +39,13 @@ def save_settings(settings):
     with open(SETTINGS_FILE, 'w') as f:
         yaml.safe_dump(serializable_settings, f, sort_keys=False, allow_unicode=True)
 
-@router.get("/api/settings/db-path")
+@router.get("/settings/db-path")
 async def get_db_path():
     """Get current database path"""
     settings = load_settings()
     return {"path": settings.get("db_path", "")}
 
-@router.post("/api/settings/select-folder")
+@router.post("/settings/select-folder")
 async def select_folder():
     """Open folder selection dialog using PyWebView"""
     window = webview.windows[0]
@@ -64,7 +64,7 @@ async def select_folder():
     
     raise HTTPException(status_code=400, detail="No folder selected")
 
-@router.get("/api/settings/env-vars")
+@router.get("/settings/env-vars")
 async def get_env_vars():
     """Get environment variables"""
     settings = load_settings()
@@ -75,7 +75,7 @@ async def get_env_vars():
         "GITLAB_TOKEN": ""
     })}
 
-@router.post("/api/settings/env-vars")
+@router.post("/settings/env-vars")
 async def update_env_vars(variables: Dict[str, str]):
     """Update environment variables"""
     settings = load_settings()
@@ -83,7 +83,7 @@ async def update_env_vars(variables: Dict[str, str]):
     save_settings(settings)
     return {"status": "success"}
 
-@router.get("/api/settings/llm")
+@router.get("/settings/llm")
 async def get_llm_settings():
     """Get LLM settings"""
     settings = load_settings()
@@ -100,7 +100,7 @@ async def get_llm_settings():
         }
     })}
 
-@router.post("/api/settings/llm")
+@router.post("/settings/llm")
 async def update_llm_settings(llm_settings: LLMSettings):
     """Update LLM settings"""
     settings = load_settings()

@@ -31,8 +31,6 @@ class SynthPubApp:
         self.window = None
         self.server_thread = None
         self.server_started = False
-        self.http_thread = None
-        self.http_started = False
 
     def start_server(self):
         """Start the FastAPI server."""
@@ -42,19 +40,6 @@ class SynthPubApp:
         self.server_thread.daemon = True
         self.server_thread.start()
 
-    def start_http_server(self):
-        """Start the HTTP server for the 'frontend' folder."""
-
-        class Handler(http.server.SimpleHTTPRequestHandler):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, directory='frontend', **kwargs)
-
-        server_address = ('', 8080)
-        httpd = http.server.HTTPServer(server_address, Handler)
-        self.http_thread = threading.Thread(target=httpd.serve_forever)
-        self.http_thread.daemon = True
-        self.http_thread.start()
-
     def wait_for_server(self, timeout=10):
         """Wait for the server to start."""
         start_time = time.time()
@@ -63,19 +48,6 @@ class SynthPubApp:
                 response = requests.get('http://127.0.0.1:8000/api/health')
                 if response.status_code == 200:
                     self.server_started = True
-                    return True
-            except requests.exceptions.ConnectionError:
-                time.sleep(0.1)
-        return False
-
-    def wait_for_http_server(self, timeout=10):
-        """Wait for the HTTP server to start."""
-        start_time = time.time()
-        while time.time() - start_time < timeout:
-            try:
-                response = requests.get('http://127.0.0.1:8080')
-                if response.status_code == 200:
-                    self.http_started = True
                     return True
             except requests.exceptions.ConnectionError:
                 time.sleep(0.1)
@@ -91,19 +63,10 @@ class SynthPubApp:
         if not self.wait_for_server():
             raise Exception("Server failed to start within timeout")
 
-
-        # Start HTTP server
-        if not self.http_thread:
-            self.start_http_server()
-
-        # Wait for HTTP server to start
-        if not self.wait_for_http_server():
-            raise Exception("HTTP server failed to start within timeout")
-
         # Create window only after server is confirmed running
         self.window = webview.create_window(
             'SynthPub',
-            'http://127.0.0.1:8080',
+            'http://127.0.0.1:8000',
             width=1200,
             height=800,
             min_size=(800, 600),

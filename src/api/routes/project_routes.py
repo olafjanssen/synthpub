@@ -16,7 +16,7 @@ from api.db.project_db import (
 
 router = APIRouter()
 
-@router.post("/api/projects/", response_model=Project)
+@router.post("/projects/", response_model=Project)
 async def create_project_route(project: ProjectCreate):
     """Create a new project."""
     try:
@@ -30,12 +30,12 @@ async def create_project_route(project: ProjectCreate):
         print(f"Error creating project: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.get("/api/projects/", response_model=List[Project])
+@router.get("/projects/", response_model=List[Project])
 async def list_projects_route():
     """List all projects."""
     return list_projects()
 
-@router.get("/api/projects/{project_id}", response_model=Project)
+@router.get("/projects/{project_id}", response_model=Project)
 async def get_project_route(project_id: str):
     """Get a specific project by ID."""
     project = get_project(project_id)
@@ -43,7 +43,7 @@ async def get_project_route(project_id: str):
         raise HTTPException(status_code=404, detail="Project not found")
     return project
 
-@router.put("/api/projects/{project_id}", response_model=Project)
+@router.put("/projects/{project_id}", response_model=Project)
 async def update_project_route(project_id: str, project_update: ProjectUpdate):
     """Update a project's details."""
     try:
@@ -63,7 +63,7 @@ async def update_project_route(project_id: str, project_update: ProjectUpdate):
         print(f"Error updating project: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.delete("/api/projects/{project_id}")
+@router.delete("/projects/{project_id}")
 async def delete_project_route(project_id: str):
     """Mark a project as deleted (soft delete)."""
     try:
@@ -77,7 +77,7 @@ async def delete_project_route(project_id: str):
         print(f"Error deleting project: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@router.post("/api/projects/{project_id}/topics/{topic_id}", response_model=Project)
+@router.post("/projects/{project_id}/topics/{topic_id}", response_model=Project)
 async def add_topic_route(project_id: str, topic_id: str):
     """Add a topic to a project."""
     updated_project = add_topic_to_project(project_id, topic_id)
@@ -85,7 +85,7 @@ async def add_topic_route(project_id: str, topic_id: str):
         raise HTTPException(status_code=404, detail="Project not found")
     return updated_project
 
-@router.delete("/api/projects/{project_id}/topics/{topic_id}", response_model=Project)
+@router.delete("/projects/{project_id}/topics/{topic_id}", response_model=Project)
 async def remove_topic_route(project_id: str, topic_id: str):
     """Remove a topic from a project."""
     updated_project = remove_topic_from_project(project_id, topic_id)

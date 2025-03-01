@@ -4,7 +4,7 @@ from ..models.article import Article
 
 router = APIRouter()
 
-@router.get("/api/articles/{article_id}", response_model=Article)
+@router.get("/articles/{article_id}", response_model=Article)
 async def get_article_route(article_id: str):
     """Get a specific article by ID."""
     article = get_article(article_id)
