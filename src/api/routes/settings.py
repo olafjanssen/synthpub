@@ -5,6 +5,7 @@ import os
 import yaml
 import webview
 from pathlib import Path
+import sys
 
 router = APIRouter()
 SETTINGS_FILE = "settings.yaml"
@@ -45,12 +46,29 @@ def save_settings(settings):
 @router.get("/settings/db-path")
 async def get_db_path():
     """Get current database path"""
-    settings = load_settings()
-    return {"path": settings.get("db_path", "")}
+    # Check if running in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    
+    # Only return the actual path in desktop environment
+    if is_desktop:
+        settings = load_settings()
+        return {"path": settings.get("db_path", "")}
+    else:
+        # Return empty or generic message in browser environment
+        return {"path": "", "error": "Database path not available in browser mode"}
 
 @router.post("/settings/select-folder")
 async def select_folder():
     """Open folder selection dialog using PyWebView"""
+    # Check if running in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    
+    if not is_desktop:
+        raise HTTPException(
+            status_code=403, 
+            detail="Folder selection is only available in desktop application mode"
+        )
+    
     window = webview.windows[0]
     result = window.create_file_dialog(
         webview.FOLDER_DIALOG,
@@ -113,3 +131,10 @@ async def update_llm_settings(llm_settings: LLMSettings):
     }
     save_settings(settings)
     return {"status": "success"}
+
+@router.get("/settings/environment")
+async def get_environment():
+    """Check if running in desktop or browser environment"""
+    # PyWebView will be available in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    return {"is_desktop": is_desktop}
