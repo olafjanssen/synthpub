@@ -3,7 +3,6 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 from typing import Dict
 from .publisher_interface import Publisher
-from api.db.article_db import get_article
 from api.models.topic import Topic
 
 def parse_file_url(url: str) -> Path:
@@ -21,20 +20,33 @@ class FilePublisher(Publisher):
         return parsed.scheme == 'file'
     
     @staticmethod
+    def write_content(path: Path, content: str, is_binary: bool = False) -> None:
+        """Write content to file, handling both text and binary data."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        
+        if is_binary:
+            # Convert hex string back to bytes
+            binary_data = bytes.fromhex(content)
+            with open(path, 'wb') as f:
+                f.write(binary_data)
+        else:
+            with open(path, 'w', encoding='utf-8') as f:
+                f.write(content)
+    
+    @staticmethod
     def publish_content(url: str, topic: Topic) -> bool:
         try:
-            path = parse_file_url(url)
+            file_path = parse_file_url(url)
             
-            # Create parent directories if they don't exist
-            path.parent.mkdir(parents=True, exist_ok=True)
+            # Get the most recent representation
+            rep = topic.representations[-1]
             
-            # Get the specific article
-            article = get_article(topic.article)
+            # Use metadata to determine format and binary mode
+            is_binary = rep.metadata.get('binary', False)
+                        
+            FilePublisher.write_content(file_path, rep.content, is_binary)
+            print(f"Published {rep.type} content to {file_path}")
 
-            # Write content to file
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write(article.content)
-                
             return True
             
         except Exception as e:

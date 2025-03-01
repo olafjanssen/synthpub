@@ -1,6 +1,6 @@
 """Topic-related data models."""
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime
 from .feed_item import FeedItem
 
@@ -22,10 +22,28 @@ class TopicUpdate(BaseModel):
     feed_urls: Optional[List[str]] = None
     publish_urls: Optional[List[str]] = None
 
+class Representation(BaseModel):
+    """Model for content representations."""
+    type: str
+    content: str
+    created_at: datetime = datetime.now()
+    metadata: Dict = {}
+
 class Topic(TopicBase):
     """Complete topic model."""
     id: str
     article: Optional[str] = None
+    representations: List[Representation] = []
     processed_feeds: List[FeedItem] = []
     created_at: datetime = datetime.now()
     updated_at: Optional[datetime] = None
+
+    def add_representation(self, type: str, content: str, metadata: Dict = {}) -> None:
+        """Add a new representation to the topic."""
+        self.representations.append(
+            Representation(
+                type=type,
+                content=content,
+                metadata=metadata
+            )
+        )

@@ -20,6 +20,13 @@ google-api-python-client
 arxiv
 PyPDF2
 
+# converters
+transformers
+torch
+torchaudio
+numpy
+pydub
+
 # desktop
 pywebview
 py2app==0.28.8
