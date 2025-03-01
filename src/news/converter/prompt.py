@@ -11,7 +11,6 @@ class Prompt(Converter):
     
     @staticmethod
     def can_handle(type: str) -> bool:
-        print(f"Checking if {type} can handle Prompt")
         return type == 'prompt'
     
     @staticmethod

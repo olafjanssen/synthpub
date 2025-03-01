@@ -38,7 +38,7 @@ def handle_topic_publishing(sender):
         for cmd in commands:
             if cmd.startswith('convert://'):
                 print(f"Converting to {cmd}")
-                convert_requested.send(topic, type=cmd.split('://')[1].strip())
+                convert_requested.send(topic, type=cmd.split('://', 1)[1].strip())
             else:
                 print(f"Publishing to {cmd}")
                 publish_requested.send(topic, publish_url=cmd)

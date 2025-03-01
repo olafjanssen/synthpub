@@ -30,7 +30,6 @@ class Converter(Protocol):
     @classmethod
     def handle_convert_requested(cls, sender, type: str):
         """Handle feed update request signal."""
-        print(f"Trying handling convert request for {type} as {cls.__name__}")
         if cls.can_handle(type):
             print(f"Can handle convert request for {type} as {cls.__name__}")
             try:
