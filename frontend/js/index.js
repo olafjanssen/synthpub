@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000';
+const API_URL = '/api';
 
 document.addEventListener("DOMContentLoaded", function() {
     loadProjects();
@@ -38,7 +38,7 @@ function createProject() {
     const title = document.getElementById("projectTitle").value;
     const description = document.getElementById("projectDescription").value;
 
-    fetch(`${API_URL}/projects/`, {
+    fetch(getFullUrl('/projects/'), {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

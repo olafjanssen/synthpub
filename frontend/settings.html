@@ -59,11 +59,11 @@
     </div>
 
     <script>
-    const API_URL = 'http://localhost:8000';
+    const API_URL = '/api';
 
     async function selectFolder() {
         try {
-            const response = await fetch(`${API_URL}/api/settings/select-folder`, {
+            const response = await fetch(`${API_URL}/settings/select-folder`, {
                 method: 'POST'
             });
 
@@ -84,7 +84,7 @@
     // Load and display environment variables
     async function loadEnvVars() {
         try {
-            const response = await fetch(`${API_URL}/api/settings/env-vars`);
+            const response = await fetch(`${API_URL}/settings/env-vars`);
             const data = await response.json();
             const container = document.getElementById('envVarsContainer');
             container.innerHTML = '';
@@ -114,7 +114,7 @@
         });
 
         try {
-            const response = await fetch(`${API_URL}/api/settings/env-vars`, {
+            const response = await fetch(`${API_URL}/settings/env-vars`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -136,7 +136,7 @@
     // Load and display LLM settings
     async function loadLLMSettings() {
         try {
-            const response = await fetch(`${API_URL}/api/settings/llm`);
+            const response = await fetch(`${API_URL}/settings/llm`);
             const data = await response.json();
             const container = document.getElementById('llmSettingsContainer');
             container.innerHTML = '';
@@ -186,7 +186,7 @@
         });
 
         try {
-            const response = await fetch(`${API_URL}/api/settings/llm`, {
+            const response = await fetch(`${API_URL}/settings/llm`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -211,7 +211,7 @@
         loadLLMSettings();
         
         // Load current database path
-        fetch(`${API_URL}/api/settings/db-path`)
+        fetch(`${API_URL}/settings/db-path`)
             .then(response => response.json())
             .then(data => {
                 document.getElementById('currentPath').textContent = 

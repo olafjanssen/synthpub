@@ -1,7 +1,7 @@
 """
 FastAPI application for the Curator API.
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
@@ -13,6 +13,7 @@ from .routes.project_routes import router as project_router
 from .routes.settings import router as settings_router
 from contextlib import asynccontextmanager
 from curator.topic_updater import start_update_processor
+from pathlib import Path
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -41,9 +42,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the various routes
-app.include_router(topic_router, tags=["topics"])
-app.include_router(article_router, tags=["articles"])
-app.include_router(health_router, tags=["health"])
-app.include_router(project_router, tags=["projects"])
-app.include_router(settings_router, tags=["settings"])
+# Create API router with prefix
+api_router = APIRouter(prefix="/api")
+
+# Include the various routes in the API router
+api_router.include_router(topic_router, tags=["topics"])
+api_router.include_router(article_router, tags=["articles"])
+api_router.include_router(health_router, tags=["health"])
+api_router.include_router(project_router, tags=["projects"])
+api_router.include_router(settings_router, tags=["settings"])
+
+# Include the API router in the main app
+app.include_router(api_router)
+
+# Mount the frontend static files
+frontend_dir = Path(__file__).parent.parent.parent / "frontend"
+if frontend_dir.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
