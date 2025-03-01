@@ -26,7 +26,5 @@ pydub
 
 # desktop
 pywebview
-py2app==0.28.8
-setuptools==70.3.0
 chardet
 nuitka
