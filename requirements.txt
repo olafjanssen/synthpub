@@ -21,9 +21,6 @@ arxiv
 PyPDF2
 
 # converters
-transformers
-torch
-torchaudio
 numpy
 pydub
 
