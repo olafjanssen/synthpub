@@ -49,15 +49,15 @@
 
 ## Transformer
 
-- [ ] Create a transformer architecture for transforming the article into other formats
+- [x] Create a transformer architecture for transforming the article into other formats
 - [ ] Create a Markdown transformer with front-matter
-- [ ] Create an mp3 transformer
-- [ ] Create a podcast transformer
+- [x] Create an mp3 transformer
+- [x] Create a podcast transformer
 
 ## Publisher
 
 - [x] Create a function to publish the articles to a file system location
-- [ ] Create a function to publish the articles as a podcast
+- [x] Create a function to publish the articles as a podcast
 - [x] Create a function to publish the articles to a GitLab repository
 - [ ] Create a function to publish the articles to a GitHub repository
 

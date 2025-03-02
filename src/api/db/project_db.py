@@ -11,6 +11,7 @@ import os
 
 from api.models.project import Project
 from .common import get_db_path
+from . import topic_db
 
 def DB_PATH():
     return get_db_path('projects')
@@ -97,6 +98,14 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
         if hasattr(project, key):
             setattr(project, key, value)
     
+    # Filter out any topic IDs that no longer exist
+    if hasattr(project, 'topic_ids') and project.topic_ids:
+        valid_topic_ids = []
+        for topic_id in project.topic_ids:
+            if topic_db.get_topic(topic_id) is not None:
+                valid_topic_ids.append(topic_id)
+        project.topic_ids = valid_topic_ids
+    
     # Update the timestamp
     project.updated_at = datetime.utcnow()
     
@@ -120,11 +129,11 @@ def mark_project_deleted(project_id: str) -> bool:
     return True
 
 def add_topic_to_project(project_id: str, topic_id: str) -> Optional[Project]:
-    """Add a topic to a project's topic list."""
+    """Add a topic to a project's topic list if the topic exists."""
     project = get_project(project_id)
     if not project:
         return None
-        
+            
     if topic_id not in project.topic_ids:
         project.topic_ids.append(topic_id)
         project.updated_at = datetime.utcnow()

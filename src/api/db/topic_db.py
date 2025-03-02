@@ -92,7 +92,7 @@ def create_topic(title: str, description: str) -> Topic:
     return topic
 
 def mark_topic_deleted(topic_id: str) -> bool:
-    """Mark a topic as deleted and remove from cache."""
+    """Mark a topic as deleted, remove from cache, and update any projects."""
     filename = DB_PATH() / f"{topic_id}.yaml"
     if not filename.exists():
         return False
@@ -102,6 +102,17 @@ def mark_topic_deleted(topic_id: str) -> bool:
     
     # Remove from cache
     _topic_cache.pop(topic_id, None)
+    
+    # Import project_db locally to avoid circular imports
+    from . import project_db
+    
+    # Remove this topic from all projects that reference it
+    projects = project_db.list_projects()
+    for project in projects:
+        if topic_id in project.topic_ids:
+            project.topic_ids.remove(topic_id)
+            project_db.save_project(project)
+    
     return True
 
 def update_topic(topic_id: str, updated_data: dict) -> Optional[Topic]:
