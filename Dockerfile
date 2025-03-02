@@ -6,6 +6,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
@@ -27,4 +28,5 @@ ENV HOST=0.0.0.0
 ENV PORT=8000
 
 # Command to run the application
-CMD ["python", "-m", "src.api.run"] 
+WORKDIR /app/src
+CMD ["python", "-m", "api.run"] 
