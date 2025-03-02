@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./db:/app/db
+    environment:
+      - HOST=0.0.0.0
+    command: python -m api.run
+    restart: unless-stopped 

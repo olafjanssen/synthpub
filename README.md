@@ -24,6 +24,28 @@ curl http://localhost:8000/api/topics/AI%20Ethics
 curl http://localhost:8000/api/topics/
 ```
 
+## Docker Usage
+
+Build and run the application using Docker:
+
+```bash
+# Build the Docker image
+docker build -t synthpub .
+
+# Run the container
+docker run -p 8000:8000 -v $(pwd)/db:/app/db -v $(pwd)/creds:/app/creds synthpub
+```
+
+Or use Docker Compose for a simpler setup:
+
+```bash
+# Build and start the application
+docker-compose up -d
+
+# Stop the application
+docker-compose down
+```
+
 ## Desktop Usage
 
 Build the desktop app:
