@@ -37,13 +37,18 @@ function renderProjects(projects) {
 function createProject() {
     const title = document.getElementById("projectTitle").value;
     const description = document.getElementById("projectDescription").value;
+    const thumbnailUrl = document.getElementById("projectThumbnailUrl").value.trim();
 
     fetch(`${API_URL}/projects/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ title, description })
+        body: JSON.stringify({ 
+            title, 
+            description,
+            thumbnail_url: thumbnailUrl // Send empty string if field is empty
+        })
     })
     .then(response => response.json())
     .then(project => {

@@ -21,15 +21,25 @@ router = APIRouter()
 async def create_project_route(project: ProjectCreate):
     """Create a new project."""
     try:
-        # Get thumbnail from Pexels
-        search_text = f"{project.title} {project.description}"
-        thumbnail_data = get_random_thumbnail(search_text)
+        # Get thumbnail from Pexels only if one is not provided or explicitly empty
+        thumbnail_url = project.thumbnail_url
+        
+        # If None (not included in request) or non-empty string, process normally
+        if thumbnail_url is None or (isinstance(thumbnail_url, str) and thumbnail_url.strip()):
+            # If None, generate a thumbnail
+            if thumbnail_url is None:
+                search_text = f"{project.title} {project.description}"
+                thumbnail_data = get_random_thumbnail(search_text)
+                thumbnail_url = thumbnail_data.get("thumbnail_url")
+        else:
+            # Empty string means user explicitly wants no thumbnail
+            thumbnail_url = None
         
         project_data = create_project(
             title=project.title,
             description=project.description,
             topic_ids=project.topic_ids,
-            thumbnail_url=thumbnail_data.get("thumbnail_url")
+            thumbnail_url=thumbnail_url
         )
         return project_data
     except Exception as e:
@@ -59,12 +69,16 @@ async def update_project_route(project_id: str, project_update: ProjectUpdate):
             if v is not None
         }
         
-        updated_project = update_project(project_id, updated_data)
-        if not updated_project:
-            raise HTTPException(status_code=404, detail="Project not found")
-            
-        return updated_project
+        # Handle empty thumbnail_url explicitly
+        if hasattr(project_update, 'thumbnail_url') and project_update.thumbnail_url == "":
+            updated_data['thumbnail_url'] = None
         
+        updated_project = update_project(project_id, updated_data)
+        
+        if not updated_project:
+            raise HTTPException(status_code=404, detail="Project not found or update failed")
+        
+        return updated_project
     except Exception as e:
         print(f"Error updating project: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

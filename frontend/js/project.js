@@ -129,6 +129,7 @@ async function createTopic() {
 
     const name = document.getElementById('topicName').value;
     const description = document.getElementById('topicDescription').value;
+    const thumbnailUrl = document.getElementById('thumbnailUrl').value.trim();
     const feedUrls = Array.from(document.querySelectorAll('.feed-url'))
         .map(input => input.value)
         .filter(url => url.trim() !== '');
@@ -146,8 +147,8 @@ async function createTopic() {
                 name, 
                 description, 
                 feed_urls: feedUrls, 
-                publish_urls: publishUrls
-                // Note: thumbnail_url and thumbnail_color will be generated server-side
+                publish_urls: publishUrls,
+                thumbnail_url: thumbnailUrl // Send empty string if field is empty
             })
         });
         
@@ -222,6 +223,7 @@ function editTopic(topicId) {
             document.getElementById('editTopicId').value = topicId;
             document.getElementById('editTopicName').value = topic.name;
             document.getElementById('editTopicDescription').value = topic.description;
+            document.getElementById('editThumbnailUrl').value = topic.thumbnail_url || '';
 
             // Clear existing feed URLs
             const editFeedUrlsContainer = document.getElementById('editFeedUrlsContainer');
@@ -297,6 +299,7 @@ async function updateTopic() {
     const topicId = document.getElementById('editTopicId').value;
     const name = document.getElementById('editTopicName').value;
     const description = document.getElementById('editTopicDescription').value;
+    const thumbnailUrl = document.getElementById('editThumbnailUrl').value.trim();
     const feedInputs = document.querySelectorAll('#editFeedUrlsContainer .feed-url');
     const publishInputs = document.querySelectorAll('#editPublishUrlsContainer .edit-publish-url');
     const urlParams = new URLSearchParams(window.location.search);
@@ -316,7 +319,13 @@ async function updateTopic() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name, description, feed_urls, publish_urls })
+            body: JSON.stringify({ 
+                name, 
+                description, 
+                feed_urls, 
+                publish_urls,
+                thumbnail_url: thumbnailUrl // Send empty string if field is empty
+            })
         });
 
         if (!response.ok) {
