@@ -71,7 +71,7 @@ def list_projects() -> List[Project]:
             
     return projects
 
-def create_project(title: str, description: str, topic_ids: Optional[List[str]] = None) -> Project:
+def create_project(title: str, description: str, topic_ids: Optional[List[str]] = None, thumbnail_url: Optional[str] = None) -> Project:
     """Create a new project."""
     project_id = str(uuid.uuid4())
     project = Project(
@@ -79,6 +79,7 @@ def create_project(title: str, description: str, topic_ids: Optional[List[str]] 
         title=title,
         description=description,
         topic_ids=topic_ids or [],
+        thumbnail_url=thumbnail_url,
         created_at=datetime.utcnow()
     )
     save_project(project)
