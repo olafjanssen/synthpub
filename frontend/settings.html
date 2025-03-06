@@ -69,12 +69,25 @@
             const data = await response.json();
             isDesktopEnvironment = data.is_desktop;
             
-            // Show or hide database section based on environment
+            // Show or hide database section and environment variables section based on environment
             const dbSection = document.querySelector('#settings-container > div:first-of-type');
+            const envVarsSection = document.querySelector('#settings-container > div:nth-of-type(2)');
+            
             if (!isDesktopEnvironment) {
                 dbSection.style.display = 'none';
+                envVarsSection.style.display = 'none';
+                
+                // Add a message for web users explaining the limitation
+                const webMessage = document.createElement('div');
+                webMessage.className = 'alert alert-info mb-5';
+                webMessage.innerHTML = 'Environment variables and database settings can only be configured in the desktop application for security reasons.';
+                
+                // Insert the message after the heading
+                const heading = document.querySelector('#settings-container > h2');
+                heading.insertAdjacentElement('afterend', webMessage);
             } else {
                 dbSection.style.display = 'block';
+                envVarsSection.style.display = 'block';
             }
         } catch (error) {
             console.error('Error checking environment:', error);
@@ -133,6 +146,13 @@
     // Handle form submission
     document.getElementById('envVarsForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Don't allow submission if not in desktop environment
+        if (!isDesktopEnvironment) {
+            alert('Environment variables can only be modified in the desktop application');
+            return;
+        }
+        
         const formData = new FormData(e.target);
         const variables = {};
         
@@ -169,12 +189,16 @@
             container.innerHTML = '';
 
             Object.entries(data.settings).forEach(([task, settings]) => {
+                // Determine if we should mask the model name (which might contain API keys or sensitive info)
+                const modelNameValue = isDesktopEnvironment ? settings.model_name : '********';
+                const isReadOnly = !isDesktopEnvironment;
+                
                 container.innerHTML += `
                     <div class="mb-4">
                         <h4 class="h6">${task.replace('_', ' ').toUpperCase()}</h4>
                         <div class="mb-3">
                             <label class="form-label">Provider</label>
-                            <select class="form-select" name="${task}.provider">
+                            <select class="form-select" name="${task}.provider" ${isReadOnly ? 'disabled' : ''}>
                                 <option value="openai" ${settings.provider === 'openai' ? 'selected' : ''}>OpenAI</option>
                                 <option value="ollama" ${settings.provider === 'ollama' ? 'selected' : ''}>Ollama</option>
                                 <option value="mistral" ${settings.provider === 'mistral' ? 'selected' : ''}>Mistral</option>
@@ -182,15 +206,29 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Model Name</label>
-                            <input type="text" class="form-control" name="${task}.model_name" value="${settings.model_name}">
+                            <input type="text" class="form-control" name="${task}.model_name" value="${modelNameValue}" ${isReadOnly ? 'readonly' : ''}>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Max Tokens</label>
-                            <input type="number" class="form-control" name="${task}.max_tokens" value="${settings.max_tokens}">
+                            <input type="number" class="form-control" name="${task}.max_tokens" value="${settings.max_tokens}" ${isReadOnly ? 'readonly' : ''}>
                         </div>
                     </div>
                 `;
             });
+            
+            // Hide the submit button if not in desktop environment
+            const submitButton = document.querySelector('#llmSettingsForm button[type="submit"]');
+            if (submitButton) {
+                submitButton.style.display = isDesktopEnvironment ? 'block' : 'none';
+            }
+            
+            // Add a note for web users
+            if (!isDesktopEnvironment) {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'alert alert-info';
+                noteElement.textContent = 'LLM settings can only be modified in the desktop application for security reasons.';
+                container.appendChild(noteElement);
+            }
         } catch (error) {
             console.error('Error loading LLM settings:', error);
             alert('Failed to load LLM settings');
@@ -200,6 +238,13 @@
     // Handle LLM settings form submission
     document.getElementById('llmSettingsForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Don't allow submission if not in desktop environment
+        if (!isDesktopEnvironment) {
+            alert('LLM settings can only be modified in the desktop application');
+            return;
+        }
+        
         const formData = new FormData(e.target);
         const settings = {
             article_generation: {},
@@ -233,20 +278,24 @@
     });
 
     // Initialize page
-    window.addEventListener('load', () => {
-        checkEnvironment();
-        loadEnvVars();
-        loadLLMSettings();
+    window.addEventListener('load', async () => {
+        // First check environment, then load appropriate settings
+        await checkEnvironment();
         
-        // Only fetch database path if in desktop environment
+        // Only load sensitive settings in desktop environment
         if (isDesktopEnvironment) {
+            loadEnvVars();
+            
             fetch(`${API_URL}/settings/db-path`)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('currentPath').textContent = 
-                        `${data.path || 'Not set'}`;
+                        `Current database path: ${data.path || 'Not set'}`;
                 });
         }
+        
+        // Always load LLM settings, but they'll be masked in web environment
+        loadLLMSettings();
     });
     </script>
 

@@ -45,17 +45,16 @@ def save_settings(settings):
 
 @router.get("/settings/db-path")
 async def get_db_path():
-    """Get current database path"""
+    """Get the database path"""
     # Check if running in desktop environment
     is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
     
-    # Only return the actual path in desktop environment
-    if is_desktop:
-        settings = load_settings()
-        return {"path": settings.get("db_path", "")}
-    else:
-        # Return empty or generic message in browser environment
-        return {"path": "", "error": "Database path not available in browser mode"}
+    # Don't return the actual path in web environment for security
+    if not is_desktop:
+        return {"path": "Path only available in desktop application"}
+    
+    settings = load_settings()
+    return {"path": settings.get("db_path", "")}
 
 @router.post("/settings/select-folder")
 async def select_folder():
@@ -88,17 +87,39 @@ async def select_folder():
 @router.get("/settings/env-vars")
 async def get_env_vars():
     """Get environment variables"""
+    # Check if running in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    
     settings = load_settings()
+    
+    # Only return real values in desktop environment
+    if not is_desktop:
+        # Return masked values for security
+        env_vars = settings.get("env_vars", {})
+        masked_vars = {key: "********" if value else "" for key, value in env_vars.items()}
+        return {"variables": masked_vars}
+    
     return {"variables": settings.get("env_vars", {
         "OPENAI_API_KEY": "",
         "MISTRAL_API_KEY": "",
         "YOUTUBE_API_KEY": "", 
-        "GITLAB_TOKEN": ""
+        "GITLAB_TOKEN": "",
+        "FTP_USERNAME": "",
+        "FTP_PASSWORD": ""
     })}
 
 @router.post("/settings/env-vars")
 async def update_env_vars(variables: Dict[str, str]):
     """Update environment variables"""
+    # Check if running in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    
+    if not is_desktop:
+        raise HTTPException(
+            status_code=403, 
+            detail="Environment variables can only be updated in desktop application"
+        )
+    
     settings = load_settings()
     settings["env_vars"] = variables
     save_settings(settings)
@@ -107,25 +128,48 @@ async def update_env_vars(variables: Dict[str, str]):
 @router.get("/settings/llm")
 async def get_llm_settings():
     """Get LLM settings"""
+    # Check if running in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    
     settings = load_settings()
-    return {"settings": settings.get("llm", {
-        "article_generation": {
-            "provider": "openai",
-            "model_name": "gpt-4",
-            "max_tokens": 800
-        },
-        "article_refinement": {
-            "provider": "openai",
-            "model_name": "gpt-4",
-            "max_tokens": 800
+    llm_settings = settings.get("llm_settings", {})
+    
+    # If not in desktop environment, mask potentially sensitive model names
+    if not is_desktop and llm_settings:
+        masked_settings = {}
+        for task, task_settings in llm_settings.items():
+            # Create a copy of the settings with masked model name
+            masked_task_settings = task_settings.copy()
+            # Model names could contain API keys or endpoints, so mask them
+            if "model_name" in masked_task_settings and masked_task_settings["model_name"]:
+                masked_task_settings["model_name"] = "********"
+            masked_settings[task] = masked_task_settings
+        
+        return {"settings": masked_settings}
+    
+    # Default LLM settings if none exist yet
+    if not llm_settings:
+        llm_settings = {
+            "article_generation": {"provider": "openai", "model_name": "gpt-4-1106-preview", "max_tokens": 4000},
+            "article_refinement": {"provider": "openai", "model_name": "gpt-4-1106-preview", "max_tokens": 4000}
         }
-    })}
+    
+    return {"settings": llm_settings}
 
 @router.post("/settings/llm")
 async def update_llm_settings(llm_settings: LLMSettings):
     """Update LLM settings"""
+    # Check if running in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    
+    if not is_desktop:
+        raise HTTPException(
+            status_code=403, 
+            detail="LLM settings can only be updated in desktop application"
+        )
+    
     settings = load_settings()
-    settings["llm"] = {
+    settings["llm_settings"] = {
         task: task_settings.dict()
         for task, task_settings in llm_settings.settings.items()
     }
