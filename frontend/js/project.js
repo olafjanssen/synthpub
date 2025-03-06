@@ -47,7 +47,14 @@ async function loadTopics(projectId) {
             // Fill in the template
             topicElement.querySelector('.topic-name').textContent = topic.name;
             topicElement.querySelector('.description').textContent = topic.description;
-            topicElement.querySelector('.topic-img').src = `/img/bg/bg-${(cardIndex++ % 5) + 1}.png`;
+            
+            // Use Pexels thumbnail if available, otherwise use default image
+            const topicImg = topicElement.querySelector('.topic-img');
+            if (topic.thumbnail_url) {
+                topicImg.src = topic.thumbnail_url;
+            } else {
+                topicImg.src = `/img/bg/bg-${(cardIndex++ % 5) + 1}.png`;
+            }
 
             // Set up view article button
             const viewButton = topicElement.querySelector('.view-article');
@@ -135,7 +142,13 @@ async function createTopic() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name, description, feed_urls: feedUrls, publish_urls: publishUrls })
+            body: JSON.stringify({ 
+                name, 
+                description, 
+                feed_urls: feedUrls, 
+                publish_urls: publishUrls
+                // Note: thumbnail_url and thumbnail_color will be generated server-side
+            })
         });
         
         if (!response.ok) {

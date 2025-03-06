@@ -10,6 +10,7 @@ class TopicBase(BaseModel):
     description: str
     feed_urls: List[str]
     publish_urls: List[str] = []
+    thumbnail_url: Optional[str] = None
 
 class TopicCreate(TopicBase):
     """Topic creation model."""
@@ -21,6 +22,7 @@ class TopicUpdate(BaseModel):
     description: Optional[str] = None
     feed_urls: Optional[List[str]] = None
     publish_urls: Optional[List[str]] = None
+    thumbnail_url: Optional[str] = None
 
 class Representation(BaseModel):
     """Model for content representations."""

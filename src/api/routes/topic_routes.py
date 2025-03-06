@@ -8,6 +8,7 @@ from curator.article_generator import generate_article
 from typing import List
 from api.signals import topic_update_requested
 from curator.topic_updater import handle_topic_publishing
+from services.pexels_service import get_random_thumbnail
 
 router = APIRouter()
 
@@ -16,6 +17,10 @@ async def create_topic_route(topic: TopicCreate):
     """Create a new topic and generate its initial article."""
     try:
         topic_id = str(uuid4())
+        
+        # Get thumbnail from Pexels
+        search_text = f"{topic.name} {topic.description}"
+        thumbnail_data = get_random_thumbnail(search_text)
         
         # Create topic and initial article
         content = generate_article(topic.name, topic.description)
@@ -31,7 +36,8 @@ async def create_topic_route(topic: TopicCreate):
             name=topic.name,
             description=topic.description,
             article=article.id,
-            feed_urls=topic.feed_urls
+            feed_urls=topic.feed_urls,
+            thumbnail_url=thumbnail_data.get("thumbnail_url")
         )
             
         # Save to database

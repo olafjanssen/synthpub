@@ -13,6 +13,7 @@ from api.db.project_db import (
     add_topic_to_project,
     remove_topic_from_project
 )
+from services.pexels_service import get_random_thumbnail
 
 router = APIRouter()
 
@@ -20,10 +21,15 @@ router = APIRouter()
 async def create_project_route(project: ProjectCreate):
     """Create a new project."""
     try:
+        # Get thumbnail from Pexels
+        search_text = f"{project.title} {project.description}"
+        thumbnail_data = get_random_thumbnail(search_text)
+        
         project_data = create_project(
             title=project.title,
             description=project.description,
-            topic_ids=project.topic_ids
+            topic_ids=project.topic_ids,
+            thumbnail_url=thumbnail_data.get("thumbnail_url")
         )
         return project_data
     except Exception as e:

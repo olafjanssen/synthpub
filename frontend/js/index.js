@@ -66,8 +66,15 @@ function createProjectCard(project) {
 
     const cardImg = document.createElement('img');
     cardImg.className = 'card-img-top';
-    cardImg.src = `/img/bg/bg-${(cardIndex++ % 5) + 1}.png`;
-    cardImg.alt = 'Card image cap';
+    
+    // Use Pexels thumbnail if available, otherwise use default image
+    if (project.thumbnail_url) {
+        cardImg.src = project.thumbnail_url;
+    } else {
+        cardImg.src = `/img/bg/bg-${(cardIndex++ % 5) + 1}.png`;
+    }
+    
+    cardImg.alt = project.title;
     
     const cardBody = document.createElement('div');
     cardBody.className = 'card-body';

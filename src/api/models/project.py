@@ -8,6 +8,7 @@ class ProjectBase(BaseModel):
     title: str
     description: str
     topic_ids: List[str] = []
+    thumbnail_url: Optional[str] = None
 
 class ProjectCreate(ProjectBase):
     """Project creation model."""
@@ -18,6 +19,7 @@ class ProjectUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     topic_ids: Optional[List[str]] = None
+    thumbnail_url: Optional[str] = None
 
 class Project(ProjectBase):
     """Complete project model."""

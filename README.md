@@ -1,4 +1,42 @@
-# synthpub
+# SynthPub
+
+## Features
+
+- Project and Topic management with automated content generation
+- Feed aggregation and processing
+- Article generation using LLMs
+- Multi-channel publishing
+- Image thumbnails from Pexels API
+
+## Environment Configuration
+
+The application uses a `settings.yaml` file in the root directory for configuration. Make sure to set up the following:
+
+```yaml
+env_vars:
+  OPENAI_API_KEY: your_openai_key
+  YOUTUBE_API_KEY: your_youtube_key
+  PEXELS_API_KEY: your_pexels_key
+  # Other API keys...
+
+llm:
+  article_generation:
+    provider: openai
+    model_name: gpt-4
+    max_tokens: 800
+  # Other LLM settings...
+
+db_path: ../db
+```
+
+## Pexels API Integration
+
+SynthPub uses the Pexels API to find relevant images for project and topic thumbnails. The system:
+
+1. Uses project/topic title and description for image search
+2. Automatically selects appropriate images related to the content
+
+Make sure you have a valid Pexels API key in your `settings.yaml` file to enable this feature.
 
 ## API Usage Examples
 
