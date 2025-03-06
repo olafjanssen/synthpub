@@ -207,6 +207,16 @@ h5.card-title:after {
     object-fit: cover;
 }   
 
+img.card-img-top {
+    filter: grayscale() brightness(1.5);
+    mix-blend-mode: overlay;
+}
+
+.top-card .card-img-top {
+    object-fit: contain;
+    object-position: top;
+}
+
 .card-header-buttons {
     position: absolute;
     top: 0.5rem;
