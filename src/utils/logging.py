@@ -15,6 +15,13 @@ from pathlib import Path
 from loguru import logger
 from blinker import signal
 
+# Try to import from api.signals if available, otherwise create a new signal
+try:
+    from api.signals import log_event
+except ImportError:
+    # Create signal for log events
+    log_event = signal('log-event')
+
 # Custom log levels for user-facing logs
 USER_INFO = 25     # Between INFO and WARNING
 USER_WARNING = 35  # Between WARNING and ERROR
@@ -24,9 +31,6 @@ USER_ERROR = 45    # Between ERROR and CRITICAL
 logger.level("USER_INFO", no=USER_INFO, color="<blue>", icon="🔵")
 logger.level("USER_WARNING", no=USER_WARNING, color="<yellow>", icon="🟡")
 logger.level("USER_ERROR", no=USER_ERROR, color="<red>", icon="🔴")
-
-# Create signal for log events
-log_event = signal('log-event')
 
 # Configure system log file
 log_dir = Path("logs")
@@ -56,6 +60,10 @@ logger.add(
     filter=lambda record: record["level"].no >= USER_INFO,
     format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
 )
+
+# Print initialization message
+print(f"Logging system initialized with custom levels: USER_INFO={USER_INFO}, USER_WARNING={USER_WARNING}, USER_ERROR={USER_ERROR}")
+print(f"Log files will be stored in: {log_dir.absolute()}")
 
 # Store recent logs in memory for quick retrieval
 MAX_LOGS = 100
@@ -92,9 +100,10 @@ def log_with_signal(level: str, message: str, **kwargs) -> None:
     if len(recent_logs) > MAX_LOGS:
         recent_logs.pop(0)
     
-    # Emit signal for WebSocket
+    # Emit signal for WebSocket - sending all user-facing logs
     if level_no >= USER_INFO:  # Only emit signal for user-facing logs
-        log_event.send(log_entry)
+        # Send log entry to all handlers
+        log_event.send(log_entry=log_entry)  # Use 'log_entry' as a named parameter
 
 # Define convenience functions for logging
 def debug(message: str, **kwargs) -> None:
