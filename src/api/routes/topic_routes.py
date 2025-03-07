@@ -9,6 +9,7 @@ from typing import List
 from api.signals import topic_update_requested, article_generation_requested
 from curator.topic_updater import handle_topic_publishing
 from services.pexels_service import get_random_thumbnail
+from utils.logging import error, info, user_info, user_error
 
 router = APIRouter()
 
@@ -79,7 +80,8 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
         return topic_data
         
     except Exception as e:
-        print(f"Error creating topic: {str(e)}")
+        error(f"TOPIC - Creation error: {str(e)}")
+        user_error(f"TOPIC - Creation failed")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("/topics/", response_model=list[Topic])
@@ -140,7 +142,8 @@ async def delete_topic_route(topic_id: str):
         return {"message": "Topic marked as deleted", "topic_id": topic_id}
         
     except Exception as e:
-        print(f"Error deleting topic: {str(e)}")
+        error(f"TOPIC - Deletion error: {str(e)}")
+        user_error(f"TOPIC - Deletion failed")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.put("/topics/{topic_id}", response_model=Topic)
@@ -188,7 +191,8 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
         return updated_topic
         
     except Exception as e:
-        print(f"Error updating topic: {str(e)}")
+        error(f"TOPIC - Update error: {str(e)}")
+        user_error(f"TOPIC - Update failed")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/topics/{topic_id}/publish", response_model=dict)
@@ -209,5 +213,6 @@ async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
         return {"message": "Topic publish requested", "topic_id": topic_id}
         
     except Exception as e:
-        print(f"Error publishing topic: {str(e)}")
+        error(f"TOPIC - Publishing error: {str(e)}")
+        user_error(f"TOPIC - Publishing failed")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

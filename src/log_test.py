@@ -18,18 +18,18 @@ def generate_log_messages():
     print("Generating log messages...")
     
     # Generate system logs
-    debug("This is a debug message")
-    info("This is an info message")
-    warning("This is a warning message")
-    error("This is an error message")
-    critical("This is a critical message")
+    debug("This is a debug message for system")
+    info("This is an info message for system")
+    warning("This is a warning message for system")
+    error("This is an error message for system")
+    critical("This is a critical message for system")
     
     # Generate user-facing logs (these should appear in the web interface)
-    user_info("User info message: Application is running normally")
+    user_info("TEST - Info message: System running normally")
     time.sleep(1)  # Small delay to space out messages
-    user_warning("User warning message: Resource usage is high")
+    user_warning("TEST - Warning message: Resource usage high")
     time.sleep(1)
-    user_error("User error message: Could not connect to external service")
+    user_error("TEST - Error message: External service unreachable")
     
     print("Log messages generated.")
     print("Recent user logs:")

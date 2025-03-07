@@ -23,17 +23,17 @@ def start_queue_processor():
         # Make a copy to avoid concurrent modification issues
         connections = list(active_connections)
         if connections:
-            debug(f"Sending log to {len(connections)} websocket clients: {log_entry['message'][:30]}...")
+            debug(f"LOG - Sending to {len(connections)} clients: {log_entry['message'][:30]}...")
         
         for websocket in connections:
             try:
                 await websocket.send_json({"type": "log", "log": log_entry})
             except Exception as e:
-                error(f"Error sending to websocket: {str(e)}")
+                error(f"LOG - WebSocket send error: {str(e)}")
                 # Connection probably closed, will be removed later
                 pass
     
-    info("Starting WebSocket log distributor thread")
+    info("LOG - Starting distributor thread")
     while True:
         try:
             # Get log from queue (blocks until an item is available)
@@ -53,7 +53,7 @@ def start_queue_processor():
             # Mark item as processed
             log_queue.task_done()
         except Exception as e:
-            error(f"Error processing log queue: {e}")
+            error(f"LOG - Queue processing error: {str(e)}")
             # Sleep briefly to avoid tight loops in case of persistent errors
             time.sleep(0.1)
 
@@ -67,37 +67,37 @@ def handle_log(sender, **kwargs):
     log_entry = kwargs.get('log_entry', sender)
     # Add to synchronous queue
     log_queue.put(log_entry)
-    debug(f"Added log to queue: {log_entry['message'][:30]}...")
+    debug(f"LOG - Queued: {log_entry['message'][:30]}...")
 
 # Register the signal handler
 log_event.connect(handle_log)
-info("Registered log event handler")
+info("LOG - Event handler registered")
 
 @router.get("/logs")
 async def get_logs(user_only: bool = False, count: int = 100):
     """Get recent logs."""
     if user_only:
         logs = get_user_logs()[:count]
-        debug(f"Returning {len(logs)} user logs")
+        debug(f"LOG - Returning {len(logs)} user logs")
         return logs
     else:
         logs = get_recent_logs()[:count]
-        debug(f"Returning {len(logs)} system logs")
+        debug(f"LOG - Returning {len(logs)} system logs")
         return logs
 
 @router.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
     """WebSocket endpoint for real-time log updates."""
     client_info = f"{websocket.client.host}:{websocket.client.port}"
-    info(f"New WebSocket connection from {client_info}")
+    info(f"LOG - New connection from {client_info}")
     
     await websocket.accept()
     active_connections.append(websocket)
-    info(f"WebSocket connection accepted - {len(active_connections)} active connections")
+    info(f"LOG - Connection accepted: {len(active_connections)} active")
     
     # Send initial logs
     initial_logs = get_user_logs()
-    info(f"Sending {len(initial_logs)} initial logs to new client")
+    info(f"LOG - Sending {len(initial_logs)} initial logs")
     await websocket.send_json({"type": "initial", "logs": initial_logs})
     
     try:
@@ -108,12 +108,12 @@ async def websocket_logs(websocket: WebSocket):
             # You could process client messages here if needed
             if data == "ping":
                 await websocket.send_text("pong")
-                debug(f"Received ping from {client_info}, sent pong")
+                debug(f"LOG - Ping received from {client_info}")
     except WebSocketDisconnect:
         # Remove connection when disconnected
         if websocket in active_connections:
             active_connections.remove(websocket)
-            info(f"WebSocket client {client_info} disconnected - {len(active_connections)} connections remaining")
+            info(f"LOG - Client disconnected: {len(active_connections)} remaining")
     
     # Return after disconnection
     return 

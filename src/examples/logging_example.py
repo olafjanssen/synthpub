@@ -32,7 +32,7 @@ def simulate_topic_creation():
     info(f"Creating new topic: {topic_name}")
     
     # Successful creation - log to user
-    user_info(f"Created new topic: {topic_name}")
+    user_info(f"TOPIC - Created: {topic_name}")
     
     return topic_name
 
@@ -42,7 +42,7 @@ def simulate_feed_processing(topic_name):
     
     # Log processing start
     info(f"Processing feeds for topic: {topic_name}")
-    user_info(f"Searching for content related to '{topic_name}'")
+    user_info(f"FEEDS - Searching: {topic_name}")
     
     # Simulate work
     time.sleep(1)
@@ -52,10 +52,10 @@ def simulate_feed_processing(topic_name):
     
     if found_items == 0:
         warning(f"No relevant feed items found for topic: {topic_name}")
-        user_warning(f"No relevant content found for '{topic_name}'. Try adjusting the topic description.")
+        user_warning(f"FEEDS - No results: {topic_name}")
     else:
         info(f"Found {found_items} relevant feed items for topic: {topic_name}")
-        user_info(f"Found {found_items} relevant articles for '{topic_name}'")
+        user_info(f"FEEDS - Found {found_items} articles: {topic_name}")
         
     return found_items
 
@@ -65,7 +65,7 @@ def simulate_article_generation(topic_name, feed_items):
     
     # Log generation start
     info(f"Generating article for topic: {topic_name}")
-    user_info(f"Generating article for '{topic_name}'")
+    user_info(f"ARTICLE - Generation started: {topic_name}")
     
     # Simulate work
     time.sleep(1.5)
@@ -73,11 +73,11 @@ def simulate_article_generation(topic_name, feed_items):
     # Simulate success or failure based on feed items
     if feed_items > 0:
         info(f"Article generation successful for topic: {topic_name}")
-        user_info(f"Article for '{topic_name}' generated successfully")
+        user_info(f"ARTICLE - Generated: {topic_name}")
         return True
     else:
         error(f"Failed to generate article for topic: {topic_name} - insufficient content")
-        user_error(f"Could not generate article for '{topic_name}' - insufficient content")
+        user_error(f"ARTICLE - Generation failed: {topic_name}")
         return False
 
 def simulate_publishing(topic_name, article_generated):
@@ -90,7 +90,7 @@ def simulate_publishing(topic_name, article_generated):
     
     # Log publish start
     info(f"Publishing article for topic: {topic_name}")
-    user_info(f"Publishing article for '{topic_name}'")
+    user_info(f"PUBLISH - Started: {topic_name}")
     
     # Simulate work
     time.sleep(1)
@@ -98,10 +98,10 @@ def simulate_publishing(topic_name, article_generated):
     # Simulate random success/failure
     if random.random() > 0.2:  # 80% success rate
         info(f"Article published successfully for topic: {topic_name}")
-        user_info(f"Article for '{topic_name}' published successfully")
+        user_info(f"PUBLISH - Completed: {topic_name}")
     else:
         error(f"Failed to publish article for topic: {topic_name}")
-        user_error(f"Failed to publish article for '{topic_name}'. Please try again.")
+        user_error(f"PUBLISH - Failed: {topic_name}")
 
 def simulate_workflow():
     """Simulate a complete content workflow with logging."""

@@ -42,12 +42,12 @@ logger.remove()
 # Add console logger for development
 logger.add(sys.stderr, level="INFO")
 
-# Add file logger for system logs with rotation
+# Add file logger for system logs with rotation - include ALL logs
 logger.add(
     str(log_dir / "system.log"), 
     rotation="10 MB", 
     retention="1 week", 
-    level="DEBUG",
+    level="DEBUG",  # Capture all logs including user logs
     format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
 )
 
@@ -62,8 +62,8 @@ logger.add(
 )
 
 # Print initialization message
-print(f"Logging system initialized with custom levels: USER_INFO={USER_INFO}, USER_WARNING={USER_WARNING}, USER_ERROR={USER_ERROR}")
-print(f"Log files will be stored in: {log_dir.absolute()}")
+logger.info(f"Logging system initialized with custom levels: USER_INFO={USER_INFO}, USER_WARNING={USER_WARNING}, USER_ERROR={USER_ERROR}")
+logger.info(f"Log files will be stored in: {log_dir.absolute()}")
 
 # Store recent logs in memory for quick retrieval
 MAX_LOGS = 100

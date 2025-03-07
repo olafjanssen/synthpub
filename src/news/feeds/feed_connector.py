@@ -4,6 +4,7 @@ from typing_extensions import runtime_checkable
 from api.signals import news_feed_update_requested, news_feed_item_found
 from api.models.feed_item import FeedItem
 from api.db.cache_manager import get_from_cache, add_to_cache
+from utils.logging import debug, info, error, warning
 
 @runtime_checkable
 class FeedConnector(Protocol):
@@ -43,19 +44,19 @@ class FeedConnector(Protocol):
         2. For final content items (like web pages or individual files):
            - Creates FeedItem objects and sends them for processing
         """
-        print(f"Trying to handle feed update for {feed_url} as {cls.__name__}")
+        debug(f"FEED - Checking handler for {feed_url}: {cls.__name__}")
         if cls.can_handle(feed_url):
-            print(f"Can handle feed update for {feed_url} as {cls.__name__}")
+            info(f"FEED - Using handler for {feed_url}: {cls.__name__}")
             try:
                 # Check cache first
                 cached_data = get_from_cache(feed_url)
                 if cached_data and isinstance(cached_data, dict) and 'items' in cached_data:
-                    print(f"Using cached data for {feed_url}")
+                    debug(f"FEED - Using cached data: {feed_url}")
                     items = cached_data['items']
                 else:
                     # Fetch fresh content
                     items = cls.fetch_content(feed_url)
-                    print(f"Fetched {len(items)} items from {feed_url}")
+                    info(f"FEED - Fetched {len(items)} items: {feed_url}")
                     
                     # Cache the results if caching is enabled
                     if cls.cache_expiration != 0 and items:
@@ -69,7 +70,7 @@ class FeedConnector(Protocol):
                     if needs_further_processing:
                         # For items needing further processing, send a new update request
                         item_url = item['url']
-                        print(f"Item needs further processing: {item_url}")
+                        debug(f"FEED - Item needs further processing: {item_url}")
                         news_feed_update_requested.send(sender, feed_url=item_url)
                     else:
                         # For final content items, create a FeedItem and send to processing queue
@@ -82,7 +83,7 @@ class FeedConnector(Protocol):
                         news_feed_item_found.send(sender, feed_url=feed_url, feed_item=feed_item, content=item['content'])
                     
             except Exception as e:
-                print(f"Error processing feed {feed_url}: {str(e)}")
+                error(f"FEED - Processing error: {feed_url} - {str(e)}")
 
     @classmethod
     def connect_signals(cls):
