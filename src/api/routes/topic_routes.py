@@ -1,20 +1,37 @@
 """Topic-related API routes."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from uuid import uuid4
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from api.db.topic_db import load_topics, mark_topic_deleted, update_topic, get_topic, save_topic
 from api.db.article_db import create_article
 from curator.article_generator import generate_article
 from typing import List
-from api.signals import topic_update_requested
+from api.signals import topic_update_requested, article_generation_requested
 from curator.topic_updater import handle_topic_publishing
 from services.pexels_service import get_random_thumbnail
 
 router = APIRouter()
 
+def request_article_generation(topic_id: str, topic_name: str, topic_description: str):
+    """Background task to request article generation."""
+    article_generation_requested.send(
+        'api', 
+        topic_id=topic_id,
+        topic_name=topic_name,
+        topic_description=topic_description
+    )
+
+def request_topic_update(topic_id: str):
+    """Background task to request topic update."""
+    topic_update_requested.send('api', topic_id=topic_id)
+
+def request_topic_publish(topic):
+    """Background task to request topic publishing."""
+    handle_topic_publishing(topic)
+
 @router.post("/topics/", response_model=Topic)
-async def create_topic_route(topic: TopicCreate):
-    """Create a new topic and generate its initial article."""
+async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTasks):
+    """Create a new topic and asynchronously generate its initial article."""
     try:
         topic_id = str(uuid4())
         
@@ -38,31 +55,26 @@ async def create_topic_route(topic: TopicCreate):
             thumbnail_data = get_random_thumbnail(search_text)
             thumbnail_url = thumbnail_data.get("thumbnail_url")
         
-        # At this point thumbnail_url is either:
-        # - A URL from Pexels (if auto-generated)
-        # - A custom URL provided by the user (if not auto-generated)
-        # - None if thumbnail generation failed
-        
-        # Create topic and initial article
-        content = generate_article(topic.name, topic.description)
-            
-        article = create_article(
-            title=topic.name,
-            topic_id=topic_id,
-            content=content
-        )
-        
+        # Create topic without an article initially
         topic_data = Topic(
             id=topic_id,
             name=topic.name,
             description=topic.description,
-            article=article.id,
+            article=None,  # Initially no article
             feed_urls=topic.feed_urls,
             thumbnail_url=thumbnail_url
         )
             
-        # Save to database
+        # Save topic to database
         save_topic(topic_data)
+        
+        # Schedule article generation in the background
+        background_tasks.add_task(
+            request_article_generation,
+            topic_id=topic_id,
+            topic_name=topic.name,
+            topic_description=topic.description
+        )
         
         return topic_data
         
@@ -99,11 +111,16 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
     return topic
 
 @router.post("/topics/{topic_id}/update", response_model=dict)
-async def update_topic_route(topic_id: str):
+async def update_topic_route(topic_id: str, background_tasks: BackgroundTasks):
     """Request topic update via signal."""
-    # Send signal instead of directly spawning thread
-    print(f"Sending signal for topic {topic_id}")
-    topic_update_requested.send('api', topic_id=topic_id)
+    # Check if topic exists
+    topics = load_topics()
+    if topic_id not in topics:
+        raise HTTPException(status_code=404, detail="Topic not found")
+        
+    # Schedule update in background
+    background_tasks.add_task(request_topic_update, topic_id=topic_id)
+    
     return {"message": "Topic update requested", "topic_id": topic_id}
 
 @router.delete("/topics/{topic_id}", response_model=dict)
@@ -175,7 +192,7 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/topics/{topic_id}/publish", response_model=dict)
-async def publish_topic_route(topic_id: str):
+async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
     """Request topic publish via signal."""
     try:
         # Check if topic exists
@@ -183,11 +200,13 @@ async def publish_topic_route(topic_id: str):
         if topic_id not in topics:
             raise HTTPException(status_code=404, detail="Topic not found")
         
-        # Publish topic
+        # Get topic for publishing
         topic = get_topic(topic_id)
-        handle_topic_publishing(topic)
+        
+        # Schedule publishing in background
+        background_tasks.add_task(request_topic_publish, topic=topic)
 
-        return {"message": "Topic published", "topic_id": topic_id}
+        return {"message": "Topic publish requested", "topic_id": topic_id}
         
     except Exception as e:
         print(f"Error publishing topic: {str(e)}")

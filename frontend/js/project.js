@@ -48,6 +48,17 @@ async function loadTopics(projectId) {
             topicElement.querySelector('.topic-name').textContent = topic.name;
             topicElement.querySelector('.description').textContent = topic.description;
             
+            // Check if article is still being generated
+            if (!topic.article) {
+                // Disable the update button while generating
+                topicElement.querySelector('.update-article').disabled = true;
+                topicElement.querySelector('.update-article').title = 'Article is still being generated';
+                
+                // Disable the publish button while generating
+                topicElement.querySelector('.publish-article').disabled = true;
+                topicElement.querySelector('.publish-article').title = 'Article is still being generated';
+            }
+            
             // Use Pexels thumbnail if available, otherwise use default image
             const topicImg = topicElement.querySelector('.topic-img');
             if (topic.thumbnail_url) {
@@ -62,7 +73,12 @@ async function loadTopics(projectId) {
             viewButton.addEventListener('click', () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const projectId = urlParams.get("project_id");
-                window.location.href = `article.html?id=${topic.article}&project_id=${projectId}`;
+                if (topic.article) {
+                    window.location.href = `article.html?id=${topic.article}&project_id=${projectId}`;
+                } else {
+                    // If the article isn't generated yet, show a message to the user
+                    alert('Article is being generated. Please try again in a moment.');
+                }
             });
                         
             // Add data attributes and event listeners for other buttons

@@ -1,13 +1,14 @@
 from fastapi import HTTPException
 from api.models.topic import Topic
 from api.models.article import Article
-from api.db.topic_db import get_topic
-from api.db.article_db import get_article, update_article
+from api.db.topic_db import get_topic, save_topic
+from api.db.article_db import get_article, update_article, create_article
 from curator.article_relevance_filter import filter_relevance
 from curator.article_refiner import refine_article
+from curator.article_generator import generate_article
 from api.models.feed_item import FeedItem
 from typing import Optional
-from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated, convert_requested
+from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated, convert_requested, article_generation_requested
 import threading
 from queue import Queue
 import news.feeds
@@ -45,6 +46,32 @@ def handle_topic_publishing(sender):
                 print(f"Publishing to {cmd}")
                 publish_requested.send(topic, publish_url=cmd)
 
+def handle_article_generation(sender, topic_id: str, topic_name: str, topic_description: str):
+    """Signal handler for article generation requests."""
+    try:
+        print(f"Generating article for topic {topic_id}")
+        
+        # Generate article content
+        content = generate_article(topic_name, topic_description)
+        
+        # Create article in the database
+        article = create_article(
+            title=topic_name,
+            topic_id=topic_id,
+            content=content
+        )
+        
+        # Update the topic with the new article ID
+        topic = get_topic(topic_id)
+        if topic:
+            topic.article = article.id
+            save_topic(topic)
+            print(f"Article generated and saved for topic {topic_id}")
+        else:
+            print(f"Error: Topic {topic_id} not found when updating with new article")
+            
+    except Exception as e:
+        print(f"Error generating article: {str(e)}")
 
 def process_update_queue():
     """Process queued topic updates and feed items."""
@@ -142,6 +169,7 @@ def start_update_processor():
     topic_update_requested.connect(handle_topic_update)
     news_feed_item_found.connect(queue_feed_item)
     article_updated.connect(handle_topic_publishing)
+    article_generation_requested.connect(handle_article_generation)
     
     # Start queue processor thread
     processor_thread = threading.Thread(target=process_update_queue, daemon=True)

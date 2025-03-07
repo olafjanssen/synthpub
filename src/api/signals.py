@@ -6,6 +6,7 @@ topic_updated = signal('topic-updated', doc='Topic description updated')
 topic_saved = signal('topic-saved', doc='Topic saved')
 topic_published = signal('topic-published', doc='Topic published')
 topic_converted = signal('topic-converted', doc='Topic converted')
+article_generation_requested = signal('article-generation-requested', doc='Article generation requested')
 
 article_updated = signal('article-updated', doc='Article updated')
 
