@@ -59,6 +59,9 @@ def fetch_files(url: str) -> List[Dict[str, str]]:
         # Relative paths are relative to current working directory
         glob_pattern = str(Path.cwd() / path_pattern)
     
+    # Check if this is a glob pattern or a specific file
+    is_glob_pattern = '*' in path_pattern or '?' in path_pattern
+    
     # Find all matching files
     for filepath in glob.glob(glob_pattern, recursive=True):
         path = Path(filepath)
@@ -73,12 +76,21 @@ def fetch_files(url: str) -> List[Dict[str, str]]:
         # Only process text files
         if mime_type and mime_type.startswith('text/'):
             try:
-                content = read_text_file(filepath)
+                if not is_glob_pattern:
+                    # For single files, include the full content
+                    content = read_text_file(filepath)
+                    needs_processing = False
+                else:
+                    # For glob patterns, just include file info and let the file be processed individually
+                    content = f"File: {path.name}"
+                    needs_processing = True
+                    
                 results.append({
                     'title': path.name,
                     'content': content,
                     'url': f"file://{path.absolute()}",
-                    'modified': path.stat().st_mtime
+                    'modified': path.stat().st_mtime,
+                    'needs_further_processing': needs_processing
                 })
             except Exception as e:
                 print(f"Error reading file {filepath}: {str(e)}")
@@ -93,6 +105,28 @@ def fetch_files(url: str) -> List[Dict[str, str]]:
     return results
 
 class FileConnector(FeedConnector):
+    # Cache file listings indefinitely
+    cache_expiration = -1
+    # This is an aggregate connector when using glob patterns
+    is_aggregate = False  # Default
+
+    @classmethod
+    def handle_feed_update(cls, sender, feed_url: str):
+        """Override to dynamically set is_aggregate based on URL type."""
+        if cls.can_handle(feed_url):
+            # Check if it's a glob pattern
+            path_pattern = parse_file_url(feed_url)
+            if '*' in path_pattern or '?' in path_pattern:
+                cls.is_aggregate = True
+            else:
+                cls.is_aggregate = False
+                
+            # Call parent implementation with correct flag set
+            super().handle_feed_update(sender, feed_url)
+            
+            # Reset flag
+            cls.is_aggregate = False
+    
     @staticmethod
     def can_handle(url: str) -> bool:
         parsed = urlparse(url)

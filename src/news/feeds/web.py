@@ -46,6 +46,9 @@ def fetch_webpage(url: str) -> Dict[str, str]:
     } 
 
 class WebConnector(FeedConnector):
+    # Cache web pages for 1 day
+    cache_expiration = 86400
+    
     @staticmethod
     def can_handle(url: str) -> bool:
         parsed = urlparse(url)

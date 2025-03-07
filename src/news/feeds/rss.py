@@ -66,6 +66,9 @@ def fetch_rss_links(url: str) -> List[Dict[str, str]]:
     return sorted_entries
 
 class RSSConnector(FeedConnector):
+    # Cache RSS feeds for 1 hour
+    cache_expiration = 3600
+    
     @staticmethod
     def can_handle(url: str) -> bool:
         parsed = urlparse(url)
@@ -82,7 +85,8 @@ class RSSConnector(FeedConnector):
             return [{
                 'url': entry.get('link', ''),
                 'content': f"{entry.get('title', '')}\n\n{entry.get('summary', '')}",
-                'title': entry.get('title', '')
+                'title': entry.get('title', ''),
+                'needs_further_processing': True  # Mark RSS items as needing further processing
             } for entry in entries]
         except Exception as e:
             print(f"Error fetching RSS feed {url}: {str(e)}")

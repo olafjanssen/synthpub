@@ -85,6 +85,12 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     """Signal handler for feed item found."""
     print(f"Feed item found for {feed_url}: {feed_item.url}")
 
+    # If this item needs further processing, send a new feed update request
+    if feed_item.needs_further_processing:
+        print(f"Item needs further processing: {feed_item.url}")
+        news_feed_update_requested.send(sender, feed_url=feed_item.url)
+        return
+
     topic = sender
     processed_items = {(item.url, item.content_hash): item for item in topic.processed_feeds}
 

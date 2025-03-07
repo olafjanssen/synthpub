@@ -44,6 +44,9 @@ def parse_arxiv_query(url: str) -> str:
     return unquote(parsed.netloc + parsed.path)
 
 class ArxivConnector(FeedConnector):
+    # Cache arXiv search results
+    cache_expiration = 24 * 3600  # 24 hours
+    
     @staticmethod
     def can_handle(url: str) -> bool:
         """Check if URL uses arxiv:// scheme."""
@@ -75,25 +78,19 @@ class ArxivConnector(FeedConnector):
             )
             
             print(f"Search: {search}")
-            print(f"Search results: {search.results()}")
             
             results = []
             for paper in search.results():
                 print(f"Paper: {paper}")
-                # Get PDF content
-                pdf_text = extract_pdf_text(paper.pdf_url)
-                
-                # Create result entry
+                # Create a basic result entry with minimal info, mark for further processing
                 entry = {
-                    'url': paper.entry_id,
+                    'url': paper.pdf_url,  # Use the PDF URL for direct access in the next step
                     'title': paper.title,
                     'content': f"""Title: {paper.title}
 Authors: {', '.join(author.name for author in paper.authors)}
 Published: {paper.published}
-Summary: {paper.summary}
-
-Full Text:
-{pdf_text}"""
+Summary: {paper.summary}""",
+                    'needs_further_processing': True  # Mark for further processing to fetch PDF content
                 }
                 results.append(entry)
             

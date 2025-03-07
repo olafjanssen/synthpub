@@ -91,30 +91,13 @@ def fetch_gmail_content(max_results: int = 50) -> List[Dict[str, str]]:
         email_contents = []
         
         for message in messages:
-            # Get full message details
-            msg = service.users().messages().get(
-                userId='me',
-                id=message['id']
-            ).execute()
-            
-            # Extract headers
-            headers = {
-                header['name']: header['value']
-                for header in msg['payload']['headers']
-            }
-            
-            # Create content entry
-            content = f"""
-From: {headers.get('From', 'Unknown')}
-Date: {headers.get('Date', 'Unknown')}
-Subject: {headers.get('Subject', 'No Subject')}
-
-{get_email_content(msg)}
-"""
+            # Get just basic message info for preview, mark for further processing
+            msg_id = message['id']
             email_contents.append({
-                'url': f"gmail://message/{message['id']}",
-                'content': content,
-                'type': 'email'
+                'url': f"gmail://message/{msg_id}",
+                'content': f"Email message {msg_id}",
+                'type': 'email',
+                'needs_further_processing': True  # Mark for further processing
             })
         
         return email_contents
@@ -124,6 +107,9 @@ Subject: {headers.get('Subject', 'No Subject')}
         return [] 
 
 class GmailConnector(FeedConnector):
+    # Cache Gmail listings for 15 minutes
+    cache_expiration = 15 * 60
+    
     @staticmethod
     def can_handle(url: str) -> bool:
         parsed = urlparse(url)
@@ -132,7 +118,23 @@ class GmailConnector(FeedConnector):
     @staticmethod
     def fetch_content(url: str) -> List[Dict[str, str]]:
         try:
-            return fetch_gmail_content()
+            # If this is a specific message URL, fetch the full message
+            parsed = urlparse(url)
+            path_parts = parsed.path.split('/')
+            
+            if len(path_parts) > 1 and path_parts[1] == 'message' and len(path_parts) > 2:
+                msg_id = path_parts[2]
+                # This would fetch an individual message - implement as needed
+                # For now, return an empty message with no further processing
+                return [{
+                    'url': url,
+                    'content': f"Email message {msg_id} content would go here",
+                    'type': 'email',
+                    'needs_further_processing': False
+                }]
+            else:
+                # For the gmail:// URL, fetch the message list
+                return fetch_gmail_content()
         except Exception as e:
             print(f"Error fetching Gmail content: {str(e)}")
             return []

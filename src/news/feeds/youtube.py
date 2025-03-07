@@ -40,13 +40,14 @@ def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, str]]:
         for item in playlist_response['items']:
             video_id = item['snippet']['resourceId']['videoId']
             video_url = f"https://www.youtube.com/watch?v={video_id}"
-            transcript = fetch_youtube_transcript(video_id)
-            if transcript:
-                items.append({
-                    'url': video_url,
-                    'content': transcript,
-                    'title': item['snippet'].get('title', f'YouTube Video {video_id}')
-                })
+            
+            # For playlist items, we only fetch basic info and mark for further processing
+            items.append({
+                'url': video_url,
+                'content': f"YouTube Video: {item['snippet'].get('title', f'Video {video_id}')}",
+                'title': item['snippet'].get('title', f'YouTube Video {video_id}'),
+                'needs_further_processing': True  # These items need further processing by the YouTube connector
+            })
         
         return items
     except Exception as e:
@@ -79,13 +80,14 @@ def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
         for item in search_response['items']:
             video_id = item['id']['videoId']
             video_url = f"https://www.youtube.com/watch?v={video_id}"
-            transcript = fetch_youtube_transcript(video_id)
-            if transcript:
-                items.append({
-                    'url': video_url,
-                    'content': transcript,
-                    'title': item['snippet'].get('title', f'YouTube Video {video_id}')
-                })
+            
+            # For channel items, we only fetch basic info and mark for further processing
+            items.append({
+                'url': video_url,
+                'content': f"YouTube Video: {item['snippet'].get('title', f'Video {video_id}')}",
+                'title': item['snippet'].get('title', f'YouTube Video {video_id}'),
+                'needs_further_processing': True  # These items need further processing by the YouTube connector
+            })
 
         return items
     except Exception as e:
@@ -93,6 +95,9 @@ def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
         return []
 
 class YouTubeConnector(FeedConnector):
+    # Cache for 6 hours
+    cache_expiration = 6 * 3600
+    
     @staticmethod
     def can_handle(url: str) -> bool:
         parsed = urlparse(url)
@@ -133,7 +138,8 @@ class YouTubeConnector(FeedConnector):
             return [{
                 'url': url,
                 'content': transcript,
-                'title': f'YouTube Video {video_id}'
+                'title': f'YouTube Video {video_id}',
+                'needs_further_processing': False  # Individual videos don't need further processing
             }] if transcript else []
             
         except Exception as e:
