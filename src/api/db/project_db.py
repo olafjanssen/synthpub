@@ -118,12 +118,12 @@ def mark_project_deleted(project_id: str) -> bool:
     Mark a project as deleted by prefixing its filename with '_'.
     Returns True if successful, False if project not found.
     """
-    filename = DB_PATH / f"{project_id}.yaml"
+    filename = DB_PATH() / f"{project_id}.yaml"
     if not filename.exists():
         return False
         
     # New filename with '_' prefix
-    new_filename = DB_PATH / f"_{project_id}.yaml"
+    new_filename = DB_PATH() / f"_{project_id}.yaml"
     
     # Move/rename the file
     move(filename, new_filename)

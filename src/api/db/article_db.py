@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List, Optional
 import uuid
 import os
+from shutil import move
 
 from ..models.article import Article
 from ..models.feed_item import FeedItem
@@ -187,3 +188,19 @@ def get_latest_version(article_id: str) -> Optional[Article]:
         current = get_article(current.next_version)
     
     return current
+
+def mark_article_deleted(article_id: str) -> bool:
+    """
+    Mark an article as deleted by prefixing its filename with '_'.
+    Returns True if successful, False if article not found.
+    """
+    filename = DB_PATH() / f"{article_id}.md"
+    if not filename.exists():
+        return False
+    
+    # New filename with '_' prefix
+    new_filename = DB_PATH() / f"_{article_id}.md"
+    
+    # Move/rename the file
+    move(filename, new_filename)
+    return True

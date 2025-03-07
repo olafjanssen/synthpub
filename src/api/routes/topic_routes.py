@@ -18,19 +18,30 @@ async def create_topic_route(topic: TopicCreate):
     try:
         topic_id = str(uuid4())
         
-        # Get thumbnail from Pexels only if one is not provided or explicitly empty
+        # Check if we should generate a thumbnail
         thumbnail_url = topic.thumbnail_url
         
-        # If None (not included in request) or non-empty string, process normally
-        if thumbnail_url is None or (isinstance(thumbnail_url, str) and thumbnail_url.strip()):
-            # If None, generate a thumbnail
-            if thumbnail_url is None:
-                search_text = f"{topic.name} {topic.description}"
-                thumbnail_data = get_random_thumbnail(search_text)
-                thumbnail_url = thumbnail_data.get("thumbnail_url")
-        else:
-            # Empty string means user explicitly wants no thumbnail
-            thumbnail_url = None
+        # Generate a thumbnail if:
+        # 1. Field is None (not provided in request)
+        # 2. Field is an empty string (user left the field blank)
+        # 3. Field is "auto" or "none" (explicit request for auto-generation)
+        should_generate = (
+            thumbnail_url is None or 
+            (isinstance(thumbnail_url, str) and (
+                thumbnail_url.strip() == "" or
+                thumbnail_url.lower().strip() in ["auto", "none"]
+            ))
+        )
+        
+        if should_generate:
+            search_text = f"{topic.name} {topic.description}"
+            thumbnail_data = get_random_thumbnail(search_text)
+            thumbnail_url = thumbnail_data.get("thumbnail_url")
+        
+        # At this point thumbnail_url is either:
+        # - A URL from Pexels (if auto-generated)
+        # - A custom URL provided by the user (if not auto-generated)
+        # - None if thumbnail generation failed
         
         # Create topic and initial article
         content = generate_article(topic.name, topic.description)
@@ -124,15 +135,35 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
         if topic_id not in topics:
             raise HTTPException(status_code=404, detail="Topic not found")
         
-        # Handle empty thumbnail_url explicitly
-        if hasattr(topic_update, 'thumbnail_url') and topic_update.thumbnail_url == "":
-            # Convert empty string to None
-            topic_update_dict = topic_update.model_dump(exclude_unset=True)
-            topic_update_dict['thumbnail_url'] = None
-            updated_topic = update_topic(topic_id, topic_update_dict)
-        else:
-            # Process normally
-            updated_topic = update_topic(topic_id, topic_update.model_dump(exclude_unset=True))
+        # Get the topic data for potential thumbnail generation
+        topic_data = topic_update.model_dump(exclude_unset=True)
+        
+        # Special handling for thumbnail_url
+        if hasattr(topic_update, 'thumbnail_url') and topic_update.thumbnail_url is not None:
+            thumbnail_url = topic_update.thumbnail_url.strip()
+            
+            # Check if we should generate a new thumbnail
+            if thumbnail_url == "" or thumbnail_url.lower() in ["auto", "none"]:
+                # Get data for search terms
+                name = topic_update.name
+                description = topic_update.description
+                
+                # If name and description aren't being updated, get them from the existing topic
+                if not name or not description:
+                    existing_topic = get_topic(topic_id)
+                    if existing_topic:
+                        name = name or existing_topic.name
+                        description = description or existing_topic.description
+                
+                search_text = f"{name} {description}"
+                thumbnail_data = get_random_thumbnail(search_text)
+                topic_data['thumbnail_url'] = thumbnail_data.get("thumbnail_url")
+            else:
+                # Use the provided URL
+                topic_data['thumbnail_url'] = thumbnail_url
+        
+        # Update the topic
+        updated_topic = update_topic(topic_id, topic_data)
             
         if not updated_topic:
             raise HTTPException(status_code=500, detail="Failed to update topic")

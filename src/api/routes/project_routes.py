@@ -21,19 +21,30 @@ router = APIRouter()
 async def create_project_route(project: ProjectCreate):
     """Create a new project."""
     try:
-        # Get thumbnail from Pexels only if one is not provided or explicitly empty
+        # Check if we should generate a thumbnail
         thumbnail_url = project.thumbnail_url
         
-        # If None (not included in request) or non-empty string, process normally
-        if thumbnail_url is None or (isinstance(thumbnail_url, str) and thumbnail_url.strip()):
-            # If None, generate a thumbnail
-            if thumbnail_url is None:
-                search_text = f"{project.title} {project.description}"
-                thumbnail_data = get_random_thumbnail(search_text)
-                thumbnail_url = thumbnail_data.get("thumbnail_url")
-        else:
-            # Empty string means user explicitly wants no thumbnail
-            thumbnail_url = None
+        # Generate a thumbnail if:
+        # 1. Field is None (not provided in request)
+        # 2. Field is an empty string (user left the field blank)
+        # 3. Field is "auto" or "none" (explicit request for auto-generation)
+        should_generate = (
+            thumbnail_url is None or 
+            (isinstance(thumbnail_url, str) and (
+                thumbnail_url.strip() == "" or
+                thumbnail_url.lower().strip() in ["auto", "none"]
+            ))
+        )
+        
+        if should_generate:
+            search_text = f"{project.title} {project.description}"
+            thumbnail_data = get_random_thumbnail(search_text)
+            thumbnail_url = thumbnail_data.get("thumbnail_url")
+        
+        # At this point thumbnail_url is either:
+        # - A URL from Pexels (if auto-generated)
+        # - A custom URL provided by the user (if not auto-generated)
+        # - None if thumbnail generation failed
         
         project_data = create_project(
             title=project.title,
@@ -69,9 +80,25 @@ async def update_project_route(project_id: str, project_update: ProjectUpdate):
             if v is not None
         }
         
-        # Handle empty thumbnail_url explicitly
-        if hasattr(project_update, 'thumbnail_url') and project_update.thumbnail_url == "":
-            updated_data['thumbnail_url'] = None
+        # Special handling for thumbnail_url
+        if hasattr(project_update, 'thumbnail_url') and project_update.thumbnail_url is not None:
+            thumbnail_url = project_update.thumbnail_url.strip()
+            
+            # Check if we should generate a new thumbnail
+            if thumbnail_url == "" or thumbnail_url.lower() in ["auto", "none"]:
+                search_text = f"{project_update.title or ''} {project_update.description or ''}"
+                
+                # If title and description aren't being updated, get them from the existing project
+                if not search_text.strip():
+                    existing_project = get_project(project_id)
+                    if existing_project:
+                        search_text = f"{existing_project.title} {existing_project.description}"
+                
+                thumbnail_data = get_random_thumbnail(search_text)
+                updated_data['thumbnail_url'] = thumbnail_data.get("thumbnail_url")
+            else:
+                # Use the provided URL
+                updated_data['thumbnail_url'] = thumbnail_url
         
         updated_project = update_project(project_id, updated_data)
         
@@ -85,13 +112,29 @@ async def update_project_route(project_id: str, project_update: ProjectUpdate):
 
 @router.delete("/projects/{project_id}")
 async def delete_project_route(project_id: str):
-    """Mark a project as deleted (soft delete)."""
+    """Mark a project and all its associated topics as deleted (soft delete)."""
     try:
-        success = mark_project_deleted(project_id)
-        if not success:
+        # First get the project to retrieve its topics
+        project = get_project(project_id)
+        if not project:
             raise HTTPException(status_code=404, detail="Project not found")
             
-        return {"message": "Project deleted successfully"}
+        # Mark all associated topics as deleted
+        from api.db.topic_db import mark_topic_deleted
+        
+        for topic_id in project.topic_ids:
+            try:
+                mark_topic_deleted(topic_id)
+            except Exception as e:
+                print(f"Warning: Failed to delete topic {topic_id}: {str(e)}")
+                # Continue with other topics even if one fails
+                
+        # Then delete the project itself
+        success = mark_project_deleted(project_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete project")
+            
+        return {"message": "Project and its topics deleted successfully"}
         
     except Exception as e:
         print(f"Error deleting project: {str(e)}")

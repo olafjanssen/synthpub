@@ -93,6 +93,20 @@ def create_topic(title: str, description: str) -> Topic:
 
 def mark_topic_deleted(topic_id: str) -> bool:
     """Mark a topic as deleted, remove from cache, and update any projects."""
+    # Get the topic to find its article ID before deleting
+    topic = get_topic(topic_id)
+    if not topic:
+        return False
+        
+    # Mark the associated article as deleted if it exists
+    if topic.article:
+        try:
+            from .article_db import mark_article_deleted
+            mark_article_deleted(topic.article)
+        except Exception as e:
+            print(f"Warning: Failed to delete article {topic.article}: {str(e)}")
+            # Continue with topic deletion even if article deletion fails
+    
     filename = DB_PATH() / f"{topic_id}.yaml"
     if not filename.exists():
         return False

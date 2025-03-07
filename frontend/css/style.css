@@ -217,11 +217,38 @@ img.card-img-top {
     object-position: top;
 }
 
+/* Button styling in card headers */
 .card-header-buttons {
     position: absolute;
     top: 0.5rem;
     right: 0.5rem;
     z-index: 2;
+    display: flex;
+}
+
+.card-header-buttons .btn {
+    color: white;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+
+.card-header-buttons .btn:hover {
+    opacity: 1;
+}
+
+/* Make sure edit buttons are visible over images */
+.card-header .edit-project,
+.card-header .edit-article,
+.card-header .update-article,
+.card-header .publish-article {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.25rem;
 }
 
 div.card-img-top {
