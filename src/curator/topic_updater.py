@@ -13,9 +13,11 @@ from queue import Queue
 import news.feeds
 import news.publishers
 import news.converter   
+import time
 
 # Add queue for handling updates
 update_queue = Queue()
+feed_item_queue = Queue()  # New queue for feed items
 
 def handle_topic_update(sender, topic_id):
     """Signal handler for topic update requests."""
@@ -45,14 +47,39 @@ def handle_topic_publishing(sender):
 
 
 def process_update_queue():
-    """Process queued topic updates."""
+    """Process queued topic updates and feed items."""
     while True:
         try:
-            topic_id = update_queue.get()
-            print(f"Processing update for topic {topic_id}")
-            update_topic(topic_id)
+            # Check for pending topic updates
+            if not update_queue.empty():
+                topic_id = update_queue.get()
+                print(f"Processing update for topic {topic_id}")
+                update_topic(topic_id)
+            
+            # Check for pending feed items
+            if not feed_item_queue.empty():
+                feed_item_data = feed_item_queue.get()
+                process_queued_feed_item(feed_item_data)
+            
+            # Small sleep to prevent CPU spinning
+            if update_queue.empty() and feed_item_queue.empty():
+                time.sleep(0.1)
+                
         except Exception as e:
-            print(f"Error processing topic update: {str(e)}")
+            print(f"Error processing queue item: {str(e)}")
+
+def process_queued_feed_item(feed_item_data):
+    """Process a feed item from the queue."""
+    try:
+        print(f"Processing feed item: {feed_item_data['feed_item'].url}")
+        handle_feed_item(
+            sender=feed_item_data['sender'],
+            feed_url=feed_item_data['feed_url'],
+            feed_item=feed_item_data['feed_item'],
+            content=feed_item_data['content']
+        )
+    except Exception as e:
+        print(f"Error processing feed item: {str(e)}")
 
 def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     """Signal handler for feed item found."""
@@ -93,11 +120,21 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     if updated_article:
         article_updated.send(topic)
 
+def queue_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
+    """Queue a feed item for processing."""
+    print(f"Queuing feed item: {feed_item.url}")
+    feed_item_queue.put({
+        'sender': sender,
+        'feed_url': feed_url,
+        'feed_item': feed_item,
+        'content': content
+    })
+
 def start_update_processor():
     """Start the update processor thread."""
-    # Connect signal handler
+    # Connect signal handlers
     topic_update_requested.connect(handle_topic_update)
-    news_feed_item_found.connect(handle_feed_item)
+    news_feed_item_found.connect(queue_feed_item)
     article_updated.connect(handle_topic_publishing)
     
     # Start queue processor thread

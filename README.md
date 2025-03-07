@@ -8,6 +8,8 @@
 - Multi-channel publishing
 - Image thumbnails from Pexels API
 
+Explanation of important [implementation](IMPLEMENTATION.md) decisions.
+
 ## Environment Configuration
 
 The application uses a `settings.yaml` file in the root directory for configuration. Make sure to set up the following:
@@ -29,14 +31,7 @@ llm:
 db_path: ../db
 ```
 
-## Pexels API Integration
 
-SynthPub uses the Pexels API to find relevant images for project and topic thumbnails. The system:
-
-1. Uses project/topic title and description for image search
-2. Automatically selects appropriate images related to the content
-
-Make sure you have a valid Pexels API key in your `settings.yaml` file to enable this feature.
 
 ## API Usage Examples
 
@@ -84,6 +79,8 @@ docker-compose up -d
 docker-compose down
 ```
 
+
+
 ## Desktop Usage
 
 Build the desktop app:
@@ -91,4 +88,3 @@ Build the desktop app:
 ```bash
 python -m nuitka --macos-create-app-bundle --product-name=SynthPub --macos-app-icon=./frontend/img/dpbtse_logo.icns --output-dir=dist ./src/desktop_app.py
 ```
-
