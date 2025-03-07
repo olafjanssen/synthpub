@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SynthPub - Logs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <style>
+        .log-container {
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .log-entry {
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .log-entry-USER_INFO {
+            background-color: #cfe2ff;
+            border-left: 4px solid #0d6efd;
+        }
+        .log-entry-USER_WARNING {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        .log-entry-USER_ERROR {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .log-timestamp {
+            color: #6c757d;
+            font-size: 0.85em;
+            margin-right: 10px;
+        }
+        .log-level {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-right: 10px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: white;
+        }
+        .log-level-USER_INFO {
+            background-color: #0d6efd;
+        }
+        .log-level-USER_WARNING {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .log-level-USER_ERROR {
+            background-color: #dc3545;
+        }
+        .log-message {
+            font-size: 1em;
+        }
+        .log-auto-scroll {
+            margin-right: 15px;
+        }
+        #logFilters {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">SynthPub</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="project.html">Projects</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="logs.html">Logs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="settings.html">Settings</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <h2>System Logs</h2>
+        <p>View real-time system and user logs.</p>
+        
+        <div id="logFilters" class="d-flex justify-content-between">
+            <div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="infoFilter" checked>
+                    <label class="form-check-label" for="infoFilter">Info</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="warningFilter" checked>
+                    <label class="form-check-label" for="warningFilter">Warning</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" id="errorFilter" checked>
+                    <label class="form-check-label" for="errorFilter">Error</label>
+                </div>
+            </div>
+            <div class="form-check form-check-inline log-auto-scroll">
+                <input class="form-check-input" type="checkbox" id="autoScroll" checked>
+                <label class="form-check-label" for="autoScroll">Auto-scroll</label>
+            </div>
+            <button id="clearLogs" class="btn btn-sm btn-secondary">Clear View</button>
+        </div>
+        
+        <div id="logContainer" class="log-container">
+            <div id="logEntries"></div>
+        </div>
+        
+        <div class="d-flex justify-content-end">
+            <span id="connectionStatus" class="badge bg-secondary me-2">Disconnected</span>
+            <button id="reconnectButton" class="btn btn-sm btn-primary" disabled>Reconnect</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">© 2023 SynthPub. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const logEntries = document.getElementById('logEntries');
+            const logContainer = document.getElementById('logContainer');
+            const autoScrollCheckbox = document.getElementById('autoScroll');
+            const clearLogsButton = document.getElementById('clearLogs');
+            const connectionStatus = document.getElementById('connectionStatus');
+            const reconnectButton = document.getElementById('reconnectButton');
+            const infoFilter = document.getElementById('infoFilter');
+            const warningFilter = document.getElementById('warningFilter');
+            const errorFilter = document.getElementById('errorFilter');
+            
+            let socket = null;
+            let isConnected = false;
+            
+            // Format timestamp
+            function formatTimestamp(isoString) {
+                const date = new Date(isoString);
+                return date.toLocaleTimeString();
+            }
+            
+            // Create log entry element
+            function createLogEntry(log) {
+                const entry = document.createElement('div');
+                entry.className = `log-entry log-entry-${log.level}`;
+                entry.dataset.level = log.level;
+                
+                const timestamp = document.createElement('span');
+                timestamp.className = 'log-timestamp';
+                timestamp.textContent = formatTimestamp(log.timestamp);
+                
+                const level = document.createElement('span');
+                level.className = `log-level log-level-${log.level}`;
+                level.textContent = log.level.replace('USER_', '');
+                
+                const message = document.createElement('span');
+                message.className = 'log-message';
+                message.textContent = log.message;
+                
+                entry.appendChild(timestamp);
+                entry.appendChild(level);
+                entry.appendChild(message);
+                
+                return entry;
+            }
+            
+            // Apply log filters
+            function applyFilters() {
+                const entries = document.querySelectorAll('.log-entry');
+                entries.forEach(entry => {
+                    const level = entry.dataset.level;
+                    
+                    if (level === 'USER_INFO' && !infoFilter.checked) {
+                        entry.style.display = 'none';
+                    } else if (level === 'USER_WARNING' && !warningFilter.checked) {
+                        entry.style.display = 'none';
+                    } else if (level === 'USER_ERROR' && !errorFilter.checked) {
+                        entry.style.display = 'none';
+                    } else {
+                        entry.style.display = 'block';
+                    }
+                });
+            }
+            
+            // Auto scroll to bottom
+            function scrollToBottom() {
+                if (autoScrollCheckbox.checked) {
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                }
+            }
+            
+            // Connect to WebSocket
+            function connectWebSocket() {
+                // Close existing connection if any
+                if (socket) {
+                    socket.close();
+                }
+                
+                // Determine the WebSocket URL
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/api/logs/ws/logs`;
+                
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function() {
+                    isConnected = true;
+                    connectionStatus.textContent = 'Connected';
+                    connectionStatus.className = 'badge bg-success me-2';
+                    reconnectButton.disabled = true;
+                };
+                
+                socket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'initial') {
+                        // Initial logs
+                        data.logs.forEach(log => {
+                            const entry = createLogEntry(log);
+                            logEntries.appendChild(entry);
+                        });
+                    } else if (data.type === 'log') {
+                        // New log
+                        const entry = createLogEntry(data.log);
+                        logEntries.appendChild(entry);
+                    }
+                    
+                    applyFilters();
+                    scrollToBottom();
+                };
+                
+                socket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                };
+                
+                socket.onclose = function() {
+                    isConnected = false;
+                    connectionStatus.textContent = 'Disconnected';
+                    connectionStatus.className = 'badge bg-danger me-2';
+                    reconnectButton.disabled = false;
+                    
+                    // Auto reconnect after 5 seconds
+                    setTimeout(() => {
+                        if (!isConnected) {
+                            connectWebSocket();
+                        }
+                    }, 5000);
+                };
+            }
+            
+            // Initial connection
+            connectWebSocket();
+            
+            // Event listeners
+            clearLogsButton.addEventListener('click', function() {
+                logEntries.innerHTML = '';
+            });
+            
+            reconnectButton.addEventListener('click', function() {
+                connectWebSocket();
+            });
+            
+            infoFilter.addEventListener('change', applyFilters);
+            warningFilter.addEventListener('change', applyFilters);
+            errorFilter.addEventListener('change', applyFilters);
+            
+            // Initial load of logs via REST API
+            fetch('/api/logs/logs?user_only=true')
+                .then(response => response.json())
+                .then(logs => {
+                    logs.forEach(log => {
+                        const entry = createLogEntry(log);
+                        logEntries.appendChild(entry);
+                    });
+                    applyFilters();
+                    scrollToBottom();
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                });
+        });
+    </script>
+</body>
+</html> 

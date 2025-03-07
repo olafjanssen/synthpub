@@ -30,3 +30,5 @@ pydub
 pywebview
 chardet
 nuitka
+
+loguru==0.7.2

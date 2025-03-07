@@ -11,9 +11,11 @@ from .routes.article_routes import router as article_router
 from .routes.health import router as health_router
 from .routes.project_routes import router as project_router
 from .routes.settings import router as settings_router
+from .routes.log_routes import router as log_router
 from contextlib import asynccontextmanager
 from curator.topic_updater import start_update_processor
 from pathlib import Path
+from utils.logging import info, user_info
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,8 +29,11 @@ async def lifespan(app: FastAPI):
             for key, value in env_vars.items():
                 os.environ[key] = value
 
+    info("Starting SynthPub API server")
+    user_info("SynthPub system initialized and ready")
     start_update_processor()
     yield
+    info("Shutting down SynthPub API server")
     # Add any cleanup code here if needed
 
 app = FastAPI(title="SynthPub API", lifespan=lifespan)
@@ -51,6 +56,7 @@ api_router.include_router(article_router, tags=["articles"])
 api_router.include_router(health_router, tags=["health"])
 api_router.include_router(project_router, tags=["projects"])
 api_router.include_router(settings_router, tags=["settings"])
+api_router.include_router(log_router, tags=["logs"], prefix="/logs")
 
 # Include the API router in the main app
 app.include_router(api_router)

@@ -88,3 +88,48 @@ Build the desktop app:
 ```bash
 python -m nuitka --macos-create-app-bundle --product-name=SynthPub --macos-app-icon=./frontend/img/dpbtse_logo.icns --output-dir=dist ./src/desktop_app.py
 ```
+
+## Logging System
+
+SynthPub includes a comprehensive logging system that provides:
+
+1. **System Logs** - Internal debug, info, warning, and error messages for developers
+2. **User Logs** - Clear, concise messages displayed to end users in the web interface
+
+### Log Levels
+
+The logging system uses [loguru](https://github.com/Delgan/loguru) with standard and custom log levels:
+
+- Standard levels (system-only): DEBUG, INFO, WARNING, ERROR, CRITICAL
+- Custom levels (user-facing): USER_INFO, USER_WARNING, USER_ERROR
+
+### Real-time Log Viewing
+
+The system provides real-time log viewing through:
+
+1. Web interface at `/logs.html` with live updates via WebSockets
+2. Log files in the `logs` directory:
+   - `system.log` - Complete system logs
+   - `user.log` - User-facing logs only
+
+### Using Logs in Code
+
+To log messages in your code:
+
+```python
+from src.utils.logging import debug, info, warning, error, critical, user_info, user_warning, user_error
+
+# System-only logs (not shown to users)
+debug("This is a debug message")
+info("Processing started")
+warning("Resource usage high")
+error("Connection failed")
+critical("System failure")
+
+# User-facing logs (shown in web interface)
+user_info("Project created successfully")
+user_warning("Feed update incomplete - check connection")
+user_error("Unable to generate article")
+```
+
+System logs include technical details for debugging, while user logs should be clear, concise, and actionable for end users.

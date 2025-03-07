@@ -15,3 +15,6 @@ news_feed_item_found = signal('news-feed-item-found', doc='News feed item found'
 publish_requested = signal('publish-requested', doc='Publish requested')
 convert_requested = signal('convert-requested', doc='Convert requested')
 
+# Logging signals
+log_event = signal('log-event', doc='Log event emitted')
+
