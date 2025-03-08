@@ -91,13 +91,29 @@ def fetch_gmail_content(max_results: int = 50) -> List[Dict[str, str]]:
         email_contents = []
         
         for message in messages:
-            # Get just basic message info for preview, mark for further processing
             msg_id = message['id']
+            # Get full message content
+            full_message = service.users().messages().get(
+                userId='me', 
+                id=msg_id
+            ).execute()
+            
+            # Extract email content
+            content = get_email_content(full_message)
+            subject = ""
+            
+            # Get subject from headers
+            if 'payload' in full_message and 'headers' in full_message['payload']:
+                for header in full_message['payload']['headers']:
+                    if header['name'] == 'Subject':
+                        subject = header['value']
+                        break
+            
             email_contents.append({
                 'url': f"gmail://message/{msg_id}",
-                'content': f"Email message {msg_id}",
+                'content': f"Subject: {subject}\n\n{content}",
                 'type': 'email',
-                'needs_further_processing': True  # Mark for further processing
+                'needs_further_processing': False  # No further processing needed
             })
         
         return email_contents
@@ -118,23 +134,8 @@ class GmailConnector(FeedConnector):
     @staticmethod
     def fetch_content(url: str) -> List[Dict[str, str]]:
         try:
-            # If this is a specific message URL, fetch the full message
-            parsed = urlparse(url)
-            path_parts = parsed.path.split('/')
-            
-            if len(path_parts) > 1 and path_parts[1] == 'message' and len(path_parts) > 2:
-                msg_id = path_parts[2]
-                # This would fetch an individual message - implement as needed
-                # For now, return an empty message with no further processing
-                return [{
-                    'url': url,
-                    'content': f"Email message {msg_id} content would go here",
-                    'type': 'email',
-                    'needs_further_processing': False
-                }]
-            else:
-                # For the gmail:// URL, fetch the message list
-                return fetch_gmail_content()
+            # For the gmail:// URL, fetch the message list
+            return fetch_gmail_content()
         except Exception as e:
             error("GMAIL", "Content fetch failed", f"Error fetching Gmail content: {str(e)}")
             return []

@@ -15,7 +15,7 @@ from .routes.log_routes import router as log_router
 from contextlib import asynccontextmanager
 from curator.topic_updater import start_update_processor
 from pathlib import Path
-from utils.logging import info, debug
+from utils.logging import info, debug, error
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +34,14 @@ async def lifespan(app: FastAPI):
     # Start background processes
     start_update_processor()
     
+    # Initialize the news scheduler
+    try:
+        from news.news_scheduler import start_scheduler_thread, stop_scheduler_thread
+        start_scheduler_thread()
+        debug("SYSTEM", "News scheduler started")
+    except Exception as e:
+        error("SYSTEM", "Failed to start news scheduler", str(e))
+    
     # Run log router's lifespan if it exists
     if hasattr(log_router, 'lifespan'):
         async with log_router.lifespan(app):
@@ -41,8 +49,13 @@ async def lifespan(app: FastAPI):
     else:
         yield
     
-    debug("SYSTEM", "Server stopping", "SynthPub API")
-    # Add any cleanup code here if needed
+    # Cleanup on shutdown
+    try:
+        from news.news_scheduler import stop_scheduler_thread
+        stop_scheduler_thread()
+        debug("SYSTEM", "News scheduler stopped")
+    except Exception as e:
+        error("SYSTEM", "Error stopping news scheduler", str(e))
 
 app = FastAPI(title="SynthPub API", lifespan=lifespan)
 

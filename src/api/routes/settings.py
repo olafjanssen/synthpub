@@ -182,3 +182,45 @@ async def get_environment():
     # PyWebView will be available in desktop environment
     is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
     return {"is_desktop": is_desktop}
+
+class SchedulerSettings(BaseModel):
+    enabled: bool
+    update_interval_minutes: int
+    update_threshold_hours: int
+
+@router.get("/settings/scheduler")
+async def get_scheduler_settings():
+    """Get scheduler settings"""
+    settings = load_settings()
+    scheduler_settings = settings.get("scheduler", {
+        "enabled": True,
+        "update_interval_minutes": 15,
+        "update_threshold_hours": 1
+    })
+    return {"settings": scheduler_settings}
+
+@router.post("/settings/scheduler")
+async def update_scheduler_settings(scheduler_settings: SchedulerSettings):
+    """Update scheduler settings"""
+    # Check if running in desktop environment
+    is_desktop = 'webview' in sys.modules and len(webview.windows) > 0
+    
+    if not is_desktop:
+        raise HTTPException(
+            status_code=403, 
+            detail="Scheduler settings can only be updated in desktop application"
+        )
+    
+    settings = load_settings()
+    settings["scheduler"] = scheduler_settings.dict()
+    save_settings(settings)
+    
+    # Restart the scheduler to apply new settings immediately
+    try:
+        from news.news_scheduler import stop_scheduler_thread, start_scheduler_thread
+        stop_scheduler_thread()
+        start_scheduler_thread()
+    except ImportError:
+        pass  # Scheduler not available, just update settings
+    
+    return {"status": "success"}
