@@ -84,7 +84,7 @@ class SynthPubApp:
             os.environ['FRONTEND_PATH'] = frontend_path
             os.environ['DB_PATH'] = db_path
 
-            info("APP", "Environment setup", f"DB_PATH: {db_path}")
+            debug("APP", "Environment setup", f"DB_PATH: {db_path}")
             
             # Create and show the window
             self.create_window()

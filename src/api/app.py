@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
             for key, value in env_vars.items():
                 os.environ[key] = value
 
-    info("SYSTEM", "Server starting", "SynthPub API")
+    debug("SYSTEM", "Server starting", "SynthPub API")
     
     # Start background processes
     start_update_processor()
@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
     else:
         yield
     
-    info("SYSTEM", "Server stopping", "SynthPub API")
+    debug("SYSTEM", "Server stopping", "SynthPub API")
     # Add any cleanup code here if needed
 
 app = FastAPI(title="SynthPub API", lifespan=lifespan)
@@ -72,7 +72,7 @@ app.include_router(api_router)
 # Mount the frontend static files
 frontend_dir = Path(__file__).parent.parent.parent / "frontend"
 if frontend_dir.exists():
-    info("SYSTEM", "Mounting frontend", str(frontend_dir))
+    debug("SYSTEM", "Mounting frontend", str(frontend_dir))
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 else:
-    info("SYSTEM", "Frontend directory not found", str(frontend_dir))
+    debug("SYSTEM", "Frontend directory not found", str(frontend_dir))

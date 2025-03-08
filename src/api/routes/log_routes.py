@@ -108,7 +108,7 @@ async def lifespan(app):
     global main_event_loop
     main_event_loop = asyncio.get_running_loop()
     log_signal.connect(handle_log)
-    info("SYSTEM", "Starting WebSocket distributor", "Log message relay")
+    debug("SYSTEM", "Starting WebSocket distributor", "Log message relay")
     yield
     
     # Shutdown: cleanup if needed

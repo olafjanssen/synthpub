@@ -109,7 +109,6 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
         
         topic.feed_urls = feed_urls
         save_topic(topic)
-        info("TOPIC", "Feeds updated", f"{topic.name}, {len(feed_urls)} feeds")
         return topic
     except Exception as e:
         error("TOPIC", "Feed update error", str(e))
@@ -125,7 +124,7 @@ async def update_topic_route(topic_id: str, background_tasks: BackgroundTasks):
             raise HTTPException(status_code=404, detail="Topic not found")
         
         background_tasks.add_task(request_topic_update, topic_id)
-        info("TOPIC", "Update scheduled", topic.name)
+        debug("TOPIC", "Update scheduled", topic.name)
         return {"message": f"Update scheduled for topic {topic_id}"}
     except Exception as e:
         error("TOPIC", "Update scheduling error", str(e))
@@ -190,7 +189,7 @@ async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
             raise HTTPException(status_code=404, detail="Topic not found")
         
         background_tasks.add_task(request_topic_publish, topic)
-        info("TOPIC", "Publishing scheduled", topic.name)
+        debug("TOPIC", "Publishing scheduled", topic.name)
         return {"message": f"Publishing scheduled for topic {topic_id}"}
     except Exception as e:
         error("TOPIC", "Publishing error", str(e))

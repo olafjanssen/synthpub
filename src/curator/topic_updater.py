@@ -82,10 +82,8 @@ def process_update_queue():
             # Check for pending topic updates
             if not update_queue.empty():
                 topic_id = update_queue.get()
-                info("TOPIC", "Processing update", topic_id)
+                debug("TOPIC", "Processing update", topic_id)
                 topic = update_topic(topic_id)
-                if topic:
-                    info("TOPIC", "Updated", topic.name)
             
             # Check for pending feed items
             if not feed_item_queue.empty():
@@ -115,7 +113,7 @@ def process_queued_feed_item(feed_item_data):
 
 def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     """Signal handler for feed item found."""
-    info("FEED", "Item found", f"{feed_url} ({feed_item.url})")
+    debug("FEED", "Item found", f"{feed_url} ({feed_item.url})")
 
     # If this item needs further processing, send a new feed update request
     if feed_item.needs_further_processing:

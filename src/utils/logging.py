@@ -1,22 +1,18 @@
 """
-Simplified logging module for SynthPub using loguru.
+Logging module for SynthPub using loguru.
 
 A unified logging approach that provides clear, structured logs for both
 developers and users without unnecessary duplication.
 """
-import os
 import sys
-import json
 from datetime import datetime
 from typing import Dict, List, Any
-from pathlib import Path
 from loguru import logger
 from blinker import signal
 from api.db.common import get_db_path
 
 def DB_PATH():
     return get_db_path('logs')
-
 
 # Create signal for log events
 try:
