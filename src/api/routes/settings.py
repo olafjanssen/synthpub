@@ -211,16 +211,25 @@ async def update_scheduler_settings(scheduler_settings: SchedulerSettings):
             detail="Scheduler settings can only be updated in desktop application"
         )
     
+    # Get current settings to check if enabled state is changing
+    current_settings = load_settings()
+    current_enabled = current_settings.get("scheduler", {}).get("enabled", False)
+    
+    # Save the new settings
     settings = load_settings()
-    settings["scheduler"] = scheduler_settings.dict()
+    settings["scheduler"] = scheduler_settings.model_dump()
     save_settings(settings)
     
-    # Restart the scheduler to apply new settings immediately
+    # Update the scheduler based on settings changes
     try:
         from news.news_scheduler import stop_scheduler_thread, start_scheduler_thread
+        
+        # Always stop and restart the scheduler to apply new settings
         stop_scheduler_thread()
+                
+        # Restart the scheduler with new settings
         start_scheduler_thread()
-    except ImportError:
-        pass  # Scheduler not available, just update settings
-    
+    except Exception as e:
+        # Log error but don't fail the request
+        print(f"Error updating scheduler: {e}")
     return {"status": "success"}

@@ -56,6 +56,16 @@
                 <button type="submit" class="btn btn-primary mt-3">Save LLM Settings</button>
             </form>
         </div>
+
+        <div class="mb-5">
+            <h3 class="h5 mb-3">News Scheduler Settings</h3>
+            <form id="schedulerSettingsForm">
+                <div id="schedulerSettingsContainer">
+                    <!-- Scheduler settings will be dynamically added here -->
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Save Scheduler Settings</button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -277,6 +287,91 @@
         }
     });
 
+    // Load and display scheduler settings
+    async function loadSchedulerSettings() {
+        try {
+            const response = await fetch(`${API_URL}/settings/scheduler`);
+            const data = await response.json();
+            const container = document.getElementById('schedulerSettingsContainer');
+            container.innerHTML = '';
+
+            const settings = data.settings;
+            
+            // Create the enabled toggle
+            container.innerHTML += `
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="schedulerEnabled" name="enabled" ${settings.enabled ? 'checked' : ''} ${!isDesktopEnvironment ? 'disabled' : ''}>
+                    <label class="form-check-label" for="schedulerEnabled">Enable News Scheduler</label>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Update Interval (minutes)</label>
+                    <input type="number" class="form-control" name="update_interval_minutes" value="${settings.update_interval_minutes}" min="1" ${!isDesktopEnvironment ? 'readonly' : ''}>
+                    <div class="form-text">How often the scheduler checks for updates</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Update Threshold (hours)</label>
+                    <input type="number" class="form-control" name="update_threshold_hours" value="${settings.update_threshold_hours}" min="1" ${!isDesktopEnvironment ? 'readonly' : ''}>
+                    <div class="form-text">Minimum time between updates for each topic</div>
+                </div>
+            `;
+            
+            // Hide the submit button if not in desktop environment
+            const submitButton = document.querySelector('#schedulerSettingsForm button[type="submit"]');
+            if (submitButton) {
+                submitButton.style.display = isDesktopEnvironment ? 'block' : 'none';
+            }
+            
+            // Add a note for web users
+            if (!isDesktopEnvironment) {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'alert alert-info';
+                noteElement.textContent = 'Scheduler settings can only be modified in the desktop application for security reasons.';
+                container.appendChild(noteElement);
+            }
+        } catch (error) {
+            console.error('Error loading scheduler settings:', error);
+            alert('Failed to load scheduler settings');
+        }
+    }
+
+    // Handle scheduler settings form submission
+    document.getElementById('schedulerSettingsForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Don't allow submission if not in desktop environment
+        if (!isDesktopEnvironment) {
+            alert('Scheduler settings can only be modified in the desktop application');
+            return;
+        }
+        
+        const formData = new FormData(e.target);
+        const settings = {
+            enabled: formData.has('enabled'),
+            update_interval_minutes: parseInt(formData.get('update_interval_minutes')),
+            update_threshold_hours: parseInt(formData.get('update_threshold_hours'))
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/settings/scheduler`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings),
+            });
+
+            if (response.ok) {
+                alert('Scheduler settings updated successfully');
+            } else {
+                const errorData = await response.json();
+                alert(`Failed to update scheduler settings: ${errorData.detail || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to update scheduler settings');
+        }
+    });
+
     // Initialize page
     window.addEventListener('load', async () => {
         // First check environment, then load appropriate settings
@@ -294,8 +389,9 @@
                 });
         }
         
-        // Always load LLM settings, but they'll be masked in web environment
+        // Always load these settings, but they'll be masked/readonly in web environment
         loadLLMSettings();
+        loadSchedulerSettings();
     });
     </script>
 

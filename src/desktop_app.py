@@ -12,7 +12,7 @@ import uvicorn
 import requests
 from api.app import app
 import yaml
-from utils.logging import info, error
+from utils.logging import info, error, debug
 
 def load_environment():
     """Load environment variables from settings.yaml"""

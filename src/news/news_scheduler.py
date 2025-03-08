@@ -17,7 +17,7 @@ DEFAULT_SCHEDULER_ENABLED = True
 # Dictionary to store last check times for topics
 _last_checked_times = {}
 _scheduler_thread = None
-_should_stop = False
+_stop_event = threading.Event()
 
 def load_settings():
     """Load scheduler settings from settings.yaml."""
@@ -66,44 +66,80 @@ def check_and_update_topics():
 
 def run_scheduler():
     """Run the scheduler loop."""
-    global _should_stop
+    info("SCHEDULER", "Starting scheduler monitoring loop")
     
-    info("SCHEDULER", "Starting")
-    
-    while not _should_stop:
+    while not _stop_event.is_set():
         try:
-            update_interval, _, enabled = load_settings()
+            # Load settings on every iteration to get the latest values
+            update_interval, threshold_hours, enabled = load_settings()
             
             if enabled:
+                info("SCHEDULER", f"Running update check (interval: {update_interval}m, threshold: {threshold_hours}h)")
                 check_and_update_topics()
             else:
-                info("SCHEDULER", "Scheduler is disabled in settings")
+                info("SCHEDULER", "Scheduler is disabled in settings, skipping update check")
             
-            # Sleep for the configured interval
-            time.sleep(update_interval * 60)  # Convert minutes to seconds
+            # Wait for the specified interval or until stopped
+            # Using wait with a short timeout allows responding to stop requests quickly
+            wait_minutes = max(1, update_interval)
+            seconds_to_wait = wait_minutes * 60
+            
+            # Wait in small increments to be responsive to stop requests
+            wait_increment = 5  # Check every 5 seconds if we should stop
+            for _ in range(0, seconds_to_wait, wait_increment):
+                if _stop_event.wait(wait_increment):
+                    # Stop event was set, exit the loop
+                    info("SCHEDULER", "Stop requested during wait period")
+                    return
+                
         except Exception as e:
             error("SCHEDULER", "Error in scheduler loop", str(e))
-            time.sleep(60)  # Wait a minute before retrying after error
+            # Short wait for error recovery
+            _stop_event.wait(10)  # Wait 10 seconds before retrying after error
 
 def start_scheduler_thread():
     """Start the scheduler in a background thread."""
-    global _scheduler_thread, _should_stop
+    global _scheduler_thread
     
+    # Reset the stop event
+    _stop_event.clear()
+    
+    # Check if the scheduler is enabled in settings
+    _, _, enabled = load_settings()
+    
+    # If scheduler is already running, check if it should continue
     if _scheduler_thread and _scheduler_thread.is_alive():
-        info("SCHEDULER", "Scheduler already running")
+        info("SCHEDULER", "Scheduler thread already running")
         return
     
-    _should_stop = False
+    # Start the thread (it will check enabled setting internally)
     _scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
     _scheduler_thread.start()
-    info("SCHEDULER", "Scheduler started in background thread")
+    
+    if enabled:
+        info("SCHEDULER", "Scheduler started and enabled in background thread")
+    else:
+        info("SCHEDULER", "Scheduler thread started but waiting (disabled in settings)")
 
 def stop_scheduler_thread():
     """Stop the scheduler thread."""
-    global _should_stop
+    global _scheduler_thread
     
-    _should_stop = True
-    info("SCHEDULER", "Scheduler stopping")
+    # Signal the thread to stop
+    info("SCHEDULER", "Signaling scheduler to stop")
+    _stop_event.set()
+    
+    # Wait for the thread to finish if it's running
+    if _scheduler_thread and _scheduler_thread.is_alive():
+        # Set a timeout to prevent hanging indefinitely
+        _scheduler_thread.join(timeout=3.0)
+        if _scheduler_thread.is_alive():
+            error("SCHEDULER", "Failed to stop scheduler thread within timeout")
+        else:
+            info("SCHEDULER", "Scheduler thread stopped cleanly")
+            _scheduler_thread = None
+    else:
+        info("SCHEDULER", "No scheduler thread running")
 
 if __name__ == "__main__":
     # Direct execution for testing
