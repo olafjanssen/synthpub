@@ -33,7 +33,7 @@ class Publisher(Protocol):
         """Handle feed update request signal."""
         debug("PUBLISH", "Checking handler", f"URL: {publish_url}, Handler: {cls.__name__}")
         if cls.can_handle(publish_url):
-            info("PUBLISH", "Using handler", f"URL: {publish_url}, Handler: {cls.__name__}")
+            debug("PUBLISH", "Using handler", f"URL: {publish_url}, Handler: {cls.__name__}")
             try:
                 cls.publish_content(publish_url, sender)
                 topic_published.send(sender, publish_url=publish_url)

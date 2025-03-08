@@ -33,7 +33,7 @@ class Converter(Protocol):
         """Handle conversion request signal."""
         debug("CONVERT", "Checking handler", f"Type: {type}, Handler: {cls.__name__}")
         if cls.can_handle(type):
-            info("CONVERT", "Using handler", f"Type: {type}, Handler: {cls.__name__}")
+            debug("CONVERT", "Using handler", f"Type: {type}, Handler: {cls.__name__}")
             try:
                 cls.convert_representation(type, sender)
                 topic_converted.send(sender, type=type)

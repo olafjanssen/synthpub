@@ -46,7 +46,7 @@ class FeedConnector(Protocol):
         """
         debug("FEED", "Checking handler", f"URL: {feed_url}, Handler: {cls.__name__}")
         if cls.can_handle(feed_url):
-            info("FEED", "Using handler", f"URL: {feed_url}, Handler: {cls.__name__}")
+            debug("FEED", "Using handler", f"URL: {feed_url}, Handler: {cls.__name__}")
             try:
                 # Check cache first
                 cached_data = get_from_cache(feed_url)
