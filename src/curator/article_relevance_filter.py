@@ -3,6 +3,7 @@ Article refiner module for updating existing articles with new context.
 """
 from langchain.prompts import PromptTemplate
 from .llm_utils import get_llm
+from utils.logging import debug
 
 def filter_relevance(topic_title: str, topic_description: str, article: str, new_context: str) -> bool:
     """
@@ -40,5 +41,5 @@ def filter_relevance(topic_title: str, topic_description: str, article: str, new
         article=article,
         new_context=new_context
     )).content
-    print(response)
+    debug("FILTER", "Response", response)
     return response.strip().upper().startswith('YES')

@@ -106,3 +106,10 @@ The system includes several connectors that handle aggregate feeds containing mu
    - Cached for 15 minutes (900 seconds)
 
 Each connector follows the same pattern of separating content acquisition from processing, using the `needs_further_processing` flag to make item-by-item decisions.
+
+## Logging System
+
+SynthPub includes a comprehensive logging system that provides:
+
+1. **System Logs** - Internal debug, info, warning, and error messages for developers
+2. **User Logs** - Clear, concise messages displayed to end users in the web interface

@@ -7,12 +7,11 @@ import yaml
 import uuid
 from datetime import datetime
 from shutil import move
-import os
-from functools import wraps
 from api.signals import topic_updated, topic_saved
 from api.models import Topic
 from api.models.feed_item import FeedItem
 from .common import get_db_path
+from utils.logging import warning, error
 
 # In-memory cache for topics
 _topic_cache: Dict[str, Topic] = {}
@@ -104,7 +103,7 @@ def mark_topic_deleted(topic_id: str) -> bool:
             from .article_db import mark_article_deleted
             mark_article_deleted(topic.article)
         except Exception as e:
-            print(f"Warning: Failed to delete article {topic.article}: {str(e)}")
+            warning("DB", "Article deletion failed", f"Failed to delete article {topic.article}: {str(e)}")
             # Continue with topic deletion even if article deletion fails
     
     filename = DB_PATH() / f"{topic_id}.yaml"
@@ -150,7 +149,7 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
             item['accessed_at'] = datetime.fromisoformat(item['accessed_at'])
             feed_items.append(FeedItem(**item))
         except Exception as e:
-            print(f"Error parsing feed item: {e}")
+            error("DB", "Feed item parsing", f"Error parsing feed item: {e}")
     return feed_items
 
 topic_updated.connect(save_topic)

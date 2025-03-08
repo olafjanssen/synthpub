@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from typing import Dict, Optional, Any, List
 from .common import get_db_path
+from utils.logging import error
 
 # Cache configuration
 MAX_CACHE_SIZE_MB = 500  # 500MB cache limit
@@ -357,7 +358,7 @@ def get_cache_info(url: str) -> Optional[Dict[str, Any]]:
             'expired': is_expired
         }
     except Exception as e:
-        print(f"Error getting cache info for {url}: {str(e)}")
+        error("CACHE", "Info retrieval failed", f"Error getting cache info for {url}: {str(e)}")
         return None
 
 def get_all_connectors():

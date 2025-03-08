@@ -7,7 +7,7 @@ from .feed_connector import FeedConnector
 from youtube_transcript_api import YouTubeTranscriptApi
 from googleapiclient.discovery import build
 import os
-from api.signals import news_feed_update_requested, news_feed_item_found
+from utils.logging import info, error
 
 def get_api_key():
     """Get YouTube API key from environment variables"""
@@ -22,7 +22,7 @@ def fetch_youtube_transcript(video_id: str) -> str:
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
         return " ".join(entry["text"] for entry in transcript)
     except Exception as e:
-        print(f"Error fetching transcript for video ID {video_id}: {str(e)}")
+        error("YOUTUBE", "Transcript fetch failed", str(e))
         return ""
 
 def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, str]]:
@@ -51,7 +51,7 @@ def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, str]]:
         
         return items
     except Exception as e:
-        print(f"Error fetching playlist {playlist_id}: {str(e)}")
+        error("YOUTUBE", "Playlist fetch failed", str(e))
         return []
 
 def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
@@ -91,7 +91,7 @@ def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
 
         return items
     except Exception as e:
-        print(f"Error fetching channel {handle}: {str(e)}")
+        error("YOUTUBE", "Channel fetch failed", str(e))
         return []
 
 class YouTubeConnector(FeedConnector):
@@ -108,7 +108,7 @@ class YouTubeConnector(FeedConnector):
     
     @staticmethod
     def fetch_content(url: str) -> List[Dict[str, str]]:
-        print(f"Fetching content for {url}")
+        info("YOUTUBE", "Fetching content", url)
         try:
             parsed = urlparse(url)
             path_parts = [p for p in parsed.path.split('/') if p]
@@ -143,7 +143,7 @@ class YouTubeConnector(FeedConnector):
             }] if transcript else []
             
         except Exception as e:
-            print(f"Error fetching YouTube content {url}: {str(e)}")
+            error("YOUTUBE", "Fetching content failed", str(e))
             return []
 
 YouTubeConnector.connect_signals()

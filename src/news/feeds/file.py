@@ -7,7 +7,7 @@ from urllib.parse import unquote, urlparse
 import mimetypes
 import glob
 from .feed_connector import FeedConnector
-from api.signals import news_feed_update_requested, news_feed_item_found
+from utils.logging import error, warning
 
 def parse_file_url(url: str) -> str:
     """
@@ -93,9 +93,9 @@ def fetch_files(url: str) -> List[Dict[str, str]]:
                     'needs_further_processing': needs_processing
                 })
             except Exception as e:
-                print(f"Error reading file {filepath}: {str(e)}")
+                error("FILE", "Read error", f"Error reading file {filepath}: {str(e)}")
         else:
-            print(f"Skipping non-text file: {filepath}")
+            warning("FILE", "Skipping file", f"Skipping non-text file: {filepath}")
     
     # Sort by modified date and remove the modified field
     results.sort(key=lambda x: x['modified'])
@@ -137,7 +137,7 @@ class FileConnector(FeedConnector):
         try:
             return fetch_files(url)
         except Exception as e:
-            print(f"Error processing file URL {url}: {str(e)}")
+            error("FILE", "URL processing failed", f"Error processing file URL {url}: {str(e)}")
             return []
 
 FileConnector.connect_signals()

@@ -6,7 +6,7 @@ from typing import Dict, List, Any
 import asyncio
 import time
 from contextlib import asynccontextmanager
-from utils.logging import get_recent_logs, info, debug, error
+from utils.logging import get_recent_logs, info, debug
 from api.signals import log_event as log_signal
 
 router = APIRouter()

@@ -6,9 +6,9 @@ import requests
 import PyPDF2
 import io
 from typing import List, Dict
-from urllib.parse import urlparse, parse_qs, unquote
+from urllib.parse import urlparse, unquote
 from .feed_connector import FeedConnector
-
+from utils.logging import info, error
 def extract_pdf_text(pdf_url: str) -> str:
     """Download and extract text from PDF."""
     try:
@@ -29,12 +29,12 @@ def extract_pdf_text(pdf_url: str) -> str:
                 cleaned_text = page_text.encode('utf-8', errors='ignore').decode('utf-8')
                 text_parts.append(cleaned_text)
             except Exception as e:
-                print(f"Error extracting page text: {str(e)}")
+                error("ARXIV", "Page extracting failed", str(e))
                 continue
             
         return "\n".join(text_parts)
     except Exception as e:
-        print(f"Error extracting PDF text: {str(e)}")
+        error("ARXIV", "PDF extracting failed", str(e))
         return ""
 
 def parse_arxiv_query(url: str) -> str:
@@ -68,7 +68,7 @@ class ArxivConnector(FeedConnector):
             # Extract search query from URL
             query = parse_arxiv_query(url)
             
-            print(f"Query: {query}")
+            info("ARXIV", "Query", query)
 
             # Search Arxiv
             search = arxiv.Search(
@@ -77,11 +77,11 @@ class ArxivConnector(FeedConnector):
                 sort_by=arxiv.SortCriterion.SubmittedDate
             )
             
-            print(f"Search: {search}")
+            info("ARXIV", "Search", search)
             
             results = []
             for paper in search.results():
-                print(f"Paper: {paper}")
+                info("ARXIV", "Paper", paper)
                 # Create a basic result entry with minimal info, mark for further processing
                 entry = {
                     'url': paper.pdf_url,  # Use the PDF URL for direct access in the next step
@@ -97,7 +97,7 @@ Summary: {paper.summary}""",
             return results
             
         except Exception as e:
-            print(f"Error fetching Arxiv papers: {str(e)}")
+            error("ARXIV", "Fetching papers failed", str(e))
             return []
 
 ArxivConnector.connect_signals()

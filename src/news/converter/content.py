@@ -1,14 +1,15 @@
 """
-Content converter taking the content from the most recent article version. (default)
+Content converter that simply uses the article content as is.
 """
-from .converter_interface import Converter
-from api.db.article_db import get_article
+from ..converter.converter_interface import Converter
 from api.models.topic import Topic
+from api.db.article_db import get_article
+from utils.logging import error
 
 class Content(Converter):
     @staticmethod
     def can_handle(type: str) -> bool:
-        return type == 'content'
+        return type == "content"
     
     @staticmethod
     def convert_representation(type: str, topic: Topic) -> bool:
@@ -20,5 +21,5 @@ class Content(Converter):
             return True
             
         except Exception as e:
-            print(f"Error converting {type}: {str(e)}")
+            error("CONVERT", "Content conversion failed", f"Error converting {type}: {str(e)}")
             return False 

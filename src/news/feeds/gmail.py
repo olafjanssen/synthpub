@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import urlparse
 from .feed_connector import FeedConnector
-from api.signals import news_feed_update_requested, news_feed_item_found
+from utils.logging import error
 
 # Gmail API configuration
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
@@ -103,7 +103,7 @@ def fetch_gmail_content(max_results: int = 50) -> List[Dict[str, str]]:
         return email_contents
         
     except Exception as e:
-        print(f"Error fetching Gmail content: {str(e)}")
+        error("GMAIL", "Content fetch failed", f"Error fetching Gmail content: {str(e)}")
         return [] 
 
 class GmailConnector(FeedConnector):
@@ -136,7 +136,7 @@ class GmailConnector(FeedConnector):
                 # For the gmail:// URL, fetch the message list
                 return fetch_gmail_content()
         except Exception as e:
-            print(f"Error fetching Gmail content: {str(e)}")
+            error("GMAIL", "Content fetch failed", f"Error fetching Gmail content: {str(e)}")
             return []
 
 GmailConnector.connect_signals()

@@ -3,6 +3,7 @@ import os
 import random
 import requests
 from typing import Optional, Dict, List, Any
+from utils.logging import warning, error
 
 def get_pexels_key() -> str:
     """Get Pexels API key from environment variables."""
@@ -22,7 +23,7 @@ def search_images(query: str, per_page: int = 10) -> Dict[str, Any]:
     api_key = get_pexels_key()
     
     if not api_key:
-        print("Pexels API key not found in environment variables")
+        warning("PEXELS", "Missing API key", "Pexels API key not found in environment variables")
         return {}
         
     headers = {
@@ -36,7 +37,7 @@ def search_images(query: str, per_page: int = 10) -> Dict[str, Any]:
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching images from Pexels: {e}")
+        error("PEXELS", "API request failed", f"Error fetching images from Pexels: {e}")
         return {}
 
 def get_random_thumbnail(text: str) -> Dict[str, Optional[str]]:

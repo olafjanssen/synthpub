@@ -11,8 +11,8 @@ import threading
 import uvicorn
 import requests
 from api.app import app
-import http.server
 import yaml
+from utils.logging import info, error
 
 def load_environment():
     """Load environment variables from settings.yaml"""
@@ -84,7 +84,7 @@ class SynthPubApp:
             os.environ['FRONTEND_PATH'] = frontend_path
             os.environ['DB_PATH'] = db_path
 
-            print(f"DB_PATH: {db_path}")
+            info("APP", "Environment setup", f"DB_PATH: {db_path}")
             
             # Create and show the window
             self.create_window()
@@ -93,7 +93,7 @@ class SynthPubApp:
             webview.start(debug=True)
             
         except Exception as e:
-            print(f"Error starting application: {e}")
+            error("APP", "Startup failed", f"Error starting application: {e}")
             sys.exit(1)
 
 def main():
