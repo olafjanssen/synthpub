@@ -4,81 +4,71 @@ Log routes for the API.
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import Dict, List, Any
 import asyncio
-import queue
-import threading
 import time
-from utils.logging import get_recent_logs, log_event, info, debug, error
+from contextlib import asynccontextmanager
+from utils.logging import get_recent_logs, info, debug, error
+from api.signals import log_event as log_signal
 
 router = APIRouter()
 
 # Store active WebSocket connections
 active_connections: List[WebSocket] = []
-# Global queue for log messages
-log_queue = queue.Queue()
 
-# Background thread to process synchronous queue and distribute to websockets
-def start_queue_processor():
-    """Process messages from the queue and distribute to all WebSocket connections."""
-    async def send_to_websockets(log_entry):
-        # Make a copy to avoid concurrent modification issues
-        connections = list(active_connections)
-        
-        for websocket in connections:
-            try:
-                await websocket.send_json({"type": "log", "log": log_entry})
-            except Exception as e:
-                error("WEBSOCKET", "Send failed", str(e))
-                # Connection probably closed, will be removed later
-                pass
-    
-    info("SYSTEM", "Starting WebSocket distributor", "Log message relay")
-    while True:
-        try:
-            # Get log from queue (blocks until an item is available)
-            log_entry = log_queue.get()
-            
-            # If we have connections, create a task to send the message
-            if active_connections:
-                # Create an event loop for async operations
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    # Run until complete
-                    loop.run_until_complete(send_to_websockets(log_entry))
-                finally:
-                    loop.close()
-            
-            # Mark item as processed
-            log_queue.task_done()
-        except Exception as e:
-            error("SYSTEM", "Queue processing error", str(e))
-            # Sleep briefly to avoid tight loops in case of persistent errors
-            time.sleep(0.1)
+# Keep track of the main event loop
+main_event_loop = None
 
-# Start the background thread for queue processing
-queue_thread = threading.Thread(target=start_queue_processor, daemon=True)
-queue_thread.start()
-
-# Setup signal receiver for new logs - must be synchronous
+# Handler for log events
 def handle_log(sender, **kwargs):
-    """Handle new log events synchronously."""
-    log_entry = kwargs.get('log_entry', sender)
-    # Add to synchronous queue
-    log_queue.put(log_entry)
+    """Handle log event from the signal system."""
+    # Extract log data
+    log_data = kwargs.get('log_entry', {})
+    
+    # Add timestamp if not present
+    if 'timestamp' not in log_data:
+        log_data['timestamp'] = time.time()
+    
+    # Send log to all active websocket connections
+    if main_event_loop is not None and not main_event_loop.is_closed():
+        try:
+            # Make a copy to avoid concurrent modification issues
+            connections = list(active_connections)
+            
+            for websocket in connections:
+                asyncio.run_coroutine_threadsafe(
+                    send_log_to_websocket(websocket, log_data),
+                    main_event_loop
+                )
+        except Exception as e:
+            print(f"Error sending log: {e}")
+    else:
+        # Fallback - log to console only
+        print(f"Log event without event loop: {log_data}")
 
-# Register the signal handler
-log_event.connect(handle_log)
-info("SYSTEM", "Log handler registered", "WebSocket relay ready")
+async def send_log_to_websocket(websocket: WebSocket, log_data: Dict[str, Any]):
+    """Send a log entry to a specific websocket."""
+    try:
+        await websocket.send_json({"type": "log", "log": log_data})
+    except Exception as e:
+        debug("WEBSOCKET", "Send failed", str(e))
+        # Connection probably closed, remove it
+        if websocket in active_connections:
+            active_connections.remove(websocket)
 
 @router.get("/logs")
-async def get_logs(user_only: bool = True, count: int = 100):
-    """Get recent logs."""
-    logs = get_recent_logs(min_level="INFO" if user_only else "DEBUG", max_count=count)
+async def get_logs(min_level: str = "DEBUG", count: int = 100):
+    """Return recent logs."""
+    logs = get_recent_logs(min_level=min_level, max_count=count)
     return logs
 
 @router.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
     """WebSocket endpoint for real-time log updates."""
+    global main_event_loop
+    
+    # Store the main event loop for later use
+    if main_event_loop is None:
+        main_event_loop = asyncio.get_running_loop()
+    
     client_info = f"{websocket.client.host}:{websocket.client.port}"
     debug("WEBSOCKET", "New connection", client_info)
     
@@ -98,12 +88,27 @@ async def websocket_logs(websocket: WebSocket):
             data = await websocket.receive_text()
             # You could process client messages here if needed
             if data == "ping":
-                await websocket.send_text("pong")
+                await websocket.send_json({"type": "pong", "timestamp": time.time()})
     except WebSocketDisconnect:
-        # Remove connection when disconnected
+        debug("WEBSOCKET", "Client disconnected", client_info)
+        # Remove from the active connections
         if websocket in active_connections:
             active_connections.remove(websocket)
-            debug("WEBSOCKET", "Client disconnected", f"{len(active_connections)} connections remaining")
+        debug("WEBSOCKET", "Client disconnected", f"{len(active_connections)} connections remaining")
+
+# Define lifespan for this router
+@asynccontextmanager
+async def lifespan(app):
+    # Startup: register log handler
+    global main_event_loop
+    main_event_loop = asyncio.get_running_loop()
+    log_signal.connect(handle_log)
+    info("SYSTEM", "Starting WebSocket distributor", "Log message relay")
     
-    # Return after disconnection
-    return 
+    yield
+    
+    # Shutdown: cleanup if needed
+    log_signal.disconnect(handle_log)
+
+# Expose lifespan to be used by the main application
+router.lifespan = lifespan

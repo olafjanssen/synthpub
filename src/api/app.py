@@ -30,8 +30,17 @@ async def lifespan(app: FastAPI):
                 os.environ[key] = value
 
     info("SYSTEM", "Server starting", "SynthPub API")
+    
+    # Start background processes
     start_update_processor()
-    yield
+    
+    # Run log router's lifespan if it exists
+    if hasattr(log_router, 'lifespan'):
+        async with log_router.lifespan(app):
+            yield
+    else:
+        yield
+    
     info("SYSTEM", "Server stopping", "SynthPub API")
     # Add any cleanup code here if needed
 

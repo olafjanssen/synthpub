@@ -353,7 +353,7 @@
             errorFilter.addEventListener('change', applyFilters);
             
             // Initial load of logs via REST API
-            fetch('/api/logs/logs?user_only=true')
+            fetch('/api/logs/logs')
                 .then(response => response.json())
                 .then(logs => {
                     logs.forEach(log => {

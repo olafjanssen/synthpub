@@ -12,6 +12,11 @@ from typing import Dict, List, Any
 from pathlib import Path
 from loguru import logger
 from blinker import signal
+from api.db.common import get_db_path
+
+def DB_PATH():
+    return get_db_path('logs')
+
 
 # Create signal for log events
 try:
@@ -20,9 +25,7 @@ except ImportError:
     log_event = signal('log-event')
 
 # Configure log directory in the database folder
-db_path = os.environ.get('DB_PATH', 'db')
-log_dir = Path(db_path) / "logs"
-log_dir.mkdir(exist_ok=True, parents=True)
+DB_PATH().mkdir(exist_ok=True, parents=True)
 
 # Remove default logger
 logger.remove()
@@ -33,7 +36,7 @@ logger.add(sys.stderr, level="INFO",
 
 # Add file logger with rotation
 logger.add(
-    str(log_dir / "synthpub.log"), 
+    str(DB_PATH() / "synthpub.log"), 
     rotation="10 MB", 
     retention="1 week", 
     level="DEBUG",
@@ -41,7 +44,7 @@ logger.add(
 )
 
 # Print initialization message
-logger.info(f"Logging system initialized - logs stored in: {log_dir.absolute()}")
+logger.info("Logging system initialized")
 
 # Store recent logs in memory for quick retrieval
 MAX_LOGS = 200
