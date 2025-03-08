@@ -8,33 +8,34 @@ import random
 
 # Import logging functions
 from utils.logging import (
-    debug, info, warning, error, critical, 
-    user_info, user_warning, user_error,
-    get_recent_logs, get_user_logs
+    debug, info, warning, error, critical,
+    get_recent_logs
 )
 
 def generate_log_messages():
     """Generate a variety of log messages for testing."""
     print("Generating log messages...")
     
-    # Generate system logs
-    debug("This is a debug message for system")
-    info("This is an info message for system")
-    warning("This is a warning message for system")
-    error("This is an error message for system")
-    critical("This is a critical message for system")
+    # Generate system logs of different levels
+    debug("TEST", "Debug message", "Details only visible in debug mode")
+    info("TEST", "Info message", "System running normally")
+    warning("TEST", "Warning message", "Resource usage at 85%")
+    error("TEST", "Error message", "Connection failed to external API")
+    critical("TEST", "Critical message", "Database connection lost")
     
-    # Generate user-facing logs (these should appear in the web interface)
-    user_info("TEST - Info message: System running normally")
-    time.sleep(1)  # Small delay to space out messages
-    user_warning("TEST - Warning message: Resource usage high")
-    time.sleep(1)
-    user_error("TEST - Error message: External service unreachable")
+    # Generate logs for different components
+    info("TOPIC", "Created", f"Topic {random.randint(1, 100)}")
+    time.sleep(0.5)  # Small delay to space out messages
+    info("ARTICLE", "Generation complete", "AI Ethics in 2023")
+    time.sleep(0.5)
+    warning("FEED", "Connection slow", "news.example.com (2.5s)")
+    time.sleep(0.5)
+    error("PUBLISH", "Failed", "Twitter API rate limit exceeded")
     
     print("Log messages generated.")
-    print("Recent user logs:")
-    for log in get_user_logs()[-3:]:
-        print(f"{log['timestamp'][:19]} | {log['level']} | {log['message']}")
+    print("Recent logs:")
+    for log in get_recent_logs()[-5:]:
+        print(f"{log['timestamp'][:19]} | {log['component']} | {log['action']} | {log.get('detail', '')}")
 
 if __name__ == "__main__":
     print("=== Log Message Testing Tool ===")

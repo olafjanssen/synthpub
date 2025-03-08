@@ -1,97 +1,79 @@
 """
-Logging module for SynthPub using loguru.
+Simplified logging module for SynthPub using loguru.
 
-This module provides two main types of logging:
-1. System logging - for debugging and system operations (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-2. User logging - for displaying to end users in the web interface (USER_INFO, USER_WARNING, USER_ERROR)
+A unified logging approach that provides clear, structured logs for both
+developers and users without unnecessary duplication.
 """
 import os
 import sys
 import json
 from datetime import datetime
-from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Any
 from pathlib import Path
 from loguru import logger
 from blinker import signal
 
-# Try to import from api.signals if available, otherwise create a new signal
+# Create signal for log events
 try:
     from api.signals import log_event
 except ImportError:
-    # Create signal for log events
     log_event = signal('log-event')
 
-# Custom log levels for user-facing logs
-USER_INFO = 25     # Between INFO and WARNING
-USER_WARNING = 35  # Between WARNING and ERROR
-USER_ERROR = 45    # Between ERROR and CRITICAL
-
-# Define log level names
-logger.level("USER_INFO", no=USER_INFO, color="<blue>", icon="🔵")
-logger.level("USER_WARNING", no=USER_WARNING, color="<yellow>", icon="🟡")
-logger.level("USER_ERROR", no=USER_ERROR, color="<red>", icon="🔴")
-
-# Configure system log file
-log_dir = Path("logs")
-log_dir.mkdir(exist_ok=True)
+# Configure log directory in the database folder
+db_path = os.environ.get('DB_PATH', 'db')
+log_dir = Path(db_path) / "logs"
+log_dir.mkdir(exist_ok=True, parents=True)
 
 # Remove default logger
 logger.remove()
 
 # Add console logger for development
-logger.add(sys.stderr, level="INFO")
+logger.add(sys.stderr, level="INFO", 
+          format="<level>{level}</level> | <green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{message}</level>")
 
-# Add file logger for system logs with rotation - include ALL logs
+# Add file logger with rotation
 logger.add(
-    str(log_dir / "system.log"), 
+    str(log_dir / "synthpub.log"), 
     rotation="10 MB", 
     retention="1 week", 
-    level="DEBUG",  # Capture all logs including user logs
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
-)
-
-# Add file logger for user logs with rotation
-logger.add(
-    str(log_dir / "user.log"), 
-    rotation="10 MB", 
-    retention="1 week", 
-    level="USER_INFO",
-    filter=lambda record: record["level"].no >= USER_INFO,
+    level="DEBUG",
     format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}"
 )
 
 # Print initialization message
-logger.info(f"Logging system initialized with custom levels: USER_INFO={USER_INFO}, USER_WARNING={USER_WARNING}, USER_ERROR={USER_ERROR}")
-logger.info(f"Log files will be stored in: {log_dir.absolute()}")
+logger.info(f"Logging system initialized - logs stored in: {log_dir.absolute()}")
 
 # Store recent logs in memory for quick retrieval
-MAX_LOGS = 100
+MAX_LOGS = 200
 recent_logs: List[Dict[str, Any]] = []
 
-def format_log_entry(record: Dict[str, Any]) -> Dict[str, Any]:
-    """Format a log record for the web interface."""
-    return {
-        "timestamp": datetime.now().isoformat(),
-        "level": record["level"].name,
-        "message": record["message"],
-        "level_no": record["level"].no
-    }
-
-def log_with_signal(level: str, message: str, **kwargs) -> None:
-    """Log a message and emit a signal for real-time updates."""
-    # Get the log level number
-    level_no = logger.level(level).no
+def log(component: str, action: str, detail: str = "", level: str = "INFO", **kwargs) -> None:
+    """
+    Log a message with a consistent format.
     
-    # Log the message using loguru
-    logger.log(level, message, **kwargs)
+    Args:
+        component: The system component (e.g., TOPIC, ARTICLE)
+        action: The action being performed (e.g., Created, Updated)
+        detail: Additional details about the action
+        level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        **kwargs: Additional data to store with the log
+    """
+    # Create message with consistent format
+    message = f"{component} - {action}"
+    if detail:
+        message += f": {detail}"
+    
+    # Log using loguru
+    logger.log(level, message)
     
     # Create log entry
     log_entry = {
         "timestamp": datetime.now().isoformat(),
         "level": level,
+        "component": component,
+        "action": action,
+        "detail": detail,
         "message": message,
-        "level_no": level_no,
         "extra": kwargs
     }
     
@@ -100,48 +82,32 @@ def log_with_signal(level: str, message: str, **kwargs) -> None:
     if len(recent_logs) > MAX_LOGS:
         recent_logs.pop(0)
     
-    # Emit signal for WebSocket - sending all user-facing logs
-    if level_no >= USER_INFO:  # Only emit signal for user-facing logs
-        # Send log entry to all handlers
-        log_event.send(log_entry=log_entry)  # Use 'log_entry' as a named parameter
+    # Emit signal for WebSocket - all logs are now real-time
+    log_event.send(log_entry=log_entry)
 
-# Define convenience functions for logging
-def debug(message: str, **kwargs) -> None:
-    """Log a debug message (system only)."""
-    log_with_signal("DEBUG", message, **kwargs)
+# Convenience functions
+def debug(component: str, action: str, detail: str = "", **kwargs) -> None:
+    """Log a debug message."""
+    log(component, action, detail, "DEBUG", **kwargs)
 
-def info(message: str, **kwargs) -> None:
-    """Log an info message (system only)."""
-    log_with_signal("INFO", message, **kwargs)
+def info(component: str, action: str, detail: str = "", **kwargs) -> None:
+    """Log an info message."""
+    log(component, action, detail, "INFO", **kwargs)
 
-def warning(message: str, **kwargs) -> None:
-    """Log a warning message (system only)."""
-    log_with_signal("WARNING", message, **kwargs)
+def warning(component: str, action: str, detail: str = "", **kwargs) -> None:
+    """Log a warning message."""
+    log(component, action, detail, "WARNING", **kwargs)
 
-def error(message: str, **kwargs) -> None:
-    """Log an error message (system only)."""
-    log_with_signal("ERROR", message, **kwargs)
+def error(component: str, action: str, detail: str = "", **kwargs) -> None:
+    """Log an error message."""
+    log(component, action, detail, "ERROR", **kwargs)
 
-def critical(message: str, **kwargs) -> None:
-    """Log a critical message (system only)."""
-    log_with_signal("CRITICAL", message, **kwargs)
+def critical(component: str, action: str, detail: str = "", **kwargs) -> None:
+    """Log a critical message."""
+    log(component, action, detail, "CRITICAL", **kwargs)
 
-def user_info(message: str, **kwargs) -> None:
-    """Log a user-facing info message."""
-    log_with_signal("USER_INFO", message, **kwargs)
-
-def user_warning(message: str, **kwargs) -> None:
-    """Log a user-facing warning message."""
-    log_with_signal("USER_WARNING", message, **kwargs)
-
-def user_error(message: str, **kwargs) -> None:
-    """Log a user-facing error message."""
-    log_with_signal("USER_ERROR", message, **kwargs)
-
-def get_recent_logs(min_level: int = 0) -> List[Dict[str, Any]]:
+# Function to get recent logs
+def get_recent_logs(min_level: str = "DEBUG", max_count: int = 100) -> List[Dict[str, Any]]:
     """Get recent logs, optionally filtered by minimum level."""
-    return [log for log in recent_logs if log["level_no"] >= min_level]
-
-def get_user_logs() -> List[Dict[str, Any]]:
-    """Get recent user-facing logs."""
-    return get_recent_logs(min_level=USER_INFO) 
+    logs = [log for log in recent_logs if logger.level(log["level"]).no >= logger.level(min_level).no]
+    return logs[-max_count:] if max_count > 0 else logs 

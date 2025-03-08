@@ -9,7 +9,7 @@ from curator.article_generator import generate_article
 from api.models.feed_item import FeedItem
 from typing import Optional
 from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated, convert_requested, article_generation_requested
-from utils.logging import debug, info, warning, error, user_info, user_warning, user_error
+from utils.logging import debug, info, warning, error
 import threading
 from queue import Queue
 import news.feeds
@@ -24,13 +24,11 @@ feed_item_queue = Queue()  # New queue for feed items
 def handle_topic_update(sender, topic_id):
     """Signal handler for topic update requests."""
     update_queue.put(topic_id)
-    debug(f"Topic update request queued for {topic_id} from {sender}")
-    user_info(f"TOPIC - Update requested: {topic_id}")
+    debug("TOPIC", "Update queued", f"ID: {topic_id}, Sender: {sender}")
 
 def handle_topic_publishing(sender):
     """Signal handler for topic publishing requests."""
-    info(f"Publishing topic {sender.id}")
-    user_info(f"PUBLISH - Started: {sender.name}")
+    info("TOPIC", "Publishing", sender.name)
     
     # Process feeds
     topic = sender
@@ -38,22 +36,22 @@ def handle_topic_publishing(sender):
         # split publish_url into piped elements
         commands = [cmd.strip() for cmd in publish_url.split('|')]
 
-        debug("Default conversion: content")
+        debug("CONVERT", "Default conversion", "content")
         convert_requested.send(topic, type="content")
 
         for cmd in commands:
             if cmd.startswith('convert://'):
-                info(f"Converting to {cmd}")
-                convert_requested.send(topic, type=cmd.split('://', 1)[1].strip())
+                conversion_type = cmd.split('://', 1)[1].strip()
+                info("CONVERT", conversion_type, f"Topic: {topic.name}")
+                convert_requested.send(topic, type=conversion_type)
             else:
-                info(f"Publishing to {cmd}")
+                info("PUBLISH", cmd, f"Topic: {topic.name}")
                 publish_requested.send(topic, publish_url=cmd)
 
 def handle_article_generation(sender, topic_id: str, topic_name: str, topic_description: str):
     """Signal handler for article generation requests."""
     try:
-        info(f"Generating article for topic {topic_id}")
-        user_info(f"ARTICLE - Generation started: {topic_name}")
+        info("ARTICLE", "Generation started", topic_name)
         
         # Generate article content
         content = generate_article(topic_name, topic_description)
@@ -70,15 +68,12 @@ def handle_article_generation(sender, topic_id: str, topic_name: str, topic_desc
         if topic:
             topic.article = article.id
             save_topic(topic)
-            info(f"Article generated and saved for topic {topic_id}")
-            user_info(f"ARTICLE - Generated: {topic_name}")
+            info("ARTICLE", "Generated", topic_name)
         else:
-            warning(f"Topic {topic_id} not found when updating with new article")
-            user_warning(f"ARTICLE - Topic not found: {topic_name}")
+            warning("ARTICLE", "Topic not found", f"ID: {topic_id}, Name: {topic_name}")
             
     except Exception as e:
-        error(f"Error generating article: {str(e)}")
-        user_error(f"ARTICLE - Generation failed: {topic_name}")
+        error("ARTICLE", "Generation failed", f"{topic_name}: {str(e)}")
 
 def process_update_queue():
     """Process queued topic updates and feed items."""
@@ -87,10 +82,10 @@ def process_update_queue():
             # Check for pending topic updates
             if not update_queue.empty():
                 topic_id = update_queue.get()
-                info(f"Processing update for topic {topic_id}")
+                info("TOPIC", "Processing update", topic_id)
                 topic = update_topic(topic_id)
                 if topic:
-                    user_info(f"TOPIC - Updated: {topic.name}")
+                    info("TOPIC", "Updated", topic.name)
             
             # Check for pending feed items
             if not feed_item_queue.empty():
@@ -102,12 +97,13 @@ def process_update_queue():
                 time.sleep(0.1)
                 
         except Exception as e:
-            error(f"Error processing queue item: {str(e)}")
+            error("SYSTEM", "Queue processing error", str(e))
 
 def process_queued_feed_item(feed_item_data):
     """Process a feed item from the queue."""
     try:
-        debug(f"Processing feed item: {feed_item_data['feed_item'].url}")
+        feed_item = feed_item_data['feed_item']
+        debug("FEED", "Processing item", feed_item.url)
         handle_feed_item(
             sender=feed_item_data['sender'],
             feed_url=feed_item_data['feed_url'],
@@ -115,15 +111,15 @@ def process_queued_feed_item(feed_item_data):
             content=feed_item_data['content']
         )
     except Exception as e:
-        error(f"Error processing feed item: {str(e)}")
+        error("FEED", "Processing error", str(e))
 
 def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     """Signal handler for feed item found."""
-    info(f"Feed item found for {feed_url}: {feed_item.url}")
+    info("FEED", "Item found", f"{feed_url} ({feed_item.url})")
 
     # If this item needs further processing, send a new feed update request
     if feed_item.needs_further_processing:
-        debug(f"Item needs further processing: {feed_item.url}")
+        debug("FEED", "Further processing needed", feed_item.url)
         news_feed_update_requested.send(sender, feed_url=feed_item.url)
         return
 
@@ -132,12 +128,12 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
 
     # Skip if already processed
     if (feed_item.url, feed_item.content_hash) in processed_items:
-        debug(f"Skipping feed item {feed_item.url} - already processed")
+        debug("FEED", "Skipping processed item", feed_item.url)
         return
 
     current_article = get_article(topic.article)
     if not current_article:
-        error(f"Article not found for topic {topic.name}")
+        error("ARTICLE", "Not found", f"Topic: {topic.name}")
         raise HTTPException(status_code=404, detail="Article not found")
 
     # Process single feed item
@@ -155,7 +151,7 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     # Update current article if content was relevant
     if updated_article:
         topic.article = updated_article.id
-        user_info(f"CONTENT - New content added: {topic.name}")
+        info("CONTENT", "New content added", f"Topic: {topic.name}")
 
     # Save updated topic
     topic_updated.send(topic)
@@ -166,7 +162,7 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
 
 def queue_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     """Queue a feed item for processing."""
-    debug(f"Queuing feed item: {feed_item.url}")
+    debug("FEED", "Queuing item", feed_item.url)
     feed_item_queue.put({
         'sender': sender,
         'feed_url': feed_url,
@@ -185,8 +181,7 @@ def start_update_processor():
     # Start queue processor thread
     processor_thread = threading.Thread(target=process_update_queue, daemon=True)
     processor_thread.start()
-    info("Topic update processor started")
-    user_info("SYSTEM - Content processor started")
+    info("SYSTEM", "Content processor started", "Topic updater ready")
     
     return processor_thread
 
@@ -199,7 +194,7 @@ def process_feed_item(
     """Process a single feed item for a topic."""
     # Skip if content not relevant
     if not filter_relevance(topic.name, topic.description, current_article.content, feed_content):
-        debug(f"Feed item '{feed_item.url}' not relevant to topic '{topic.name}'")
+        debug("FEED", "Content not relevant", f"Item: {feed_item.url}, Topic: {topic.name}")
         return None
         
     # Update article with new content
@@ -210,7 +205,7 @@ def process_feed_item(
         feed_item=feed_item
     )
     
-    info(f"Updated article for topic '{topic.name}' with content from '{feed_item.url}'")
+    info("ARTICLE", "Updated with new content", f"Topic: {topic.name}, Source: {feed_item.url}")
     
     return updated_article
 
@@ -220,20 +215,19 @@ def update_topic(topic_id: str) -> Optional[Topic]:
         # Load topic
         topic = get_topic(topic_id)
         if not topic:
-            warning(f"Topic {topic_id} not found")
+            warning("TOPIC", "Not found", topic_id)
             raise HTTPException(status_code=404, detail="Topic not found")
                 
         # Process feeds
-        info(f"Updating topic: {topic.name}")
-        user_info(f"FEEDS - Searching for content: {topic.name}")
+        info("TOPIC", "Updating", topic.name)
         
         for feed_url in topic.feed_urls:
-            info(f"Processing feed {feed_url}")
+            info("FEED", "Processing", f"URL: {feed_url}, Topic: {topic.name}")
             news_feed_update_requested.send(topic, feed_url=feed_url)
         return topic
         
     except Exception as e:
-        error(f"Error updating topic: {str(e)}")
+        error("TOPIC", "Update error", f"{topic_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") 
     
     

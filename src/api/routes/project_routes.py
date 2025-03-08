@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException
 from uuid import uuid4
 from typing import List
-from utils.logging import error, warning, info, user_info, user_error, user_warning
+from utils.logging import error, warning, info
 
 from api.models.project import Project, ProjectCreate, ProjectUpdate
 from api.db.project_db import (
@@ -55,8 +55,7 @@ async def create_project_route(project: ProjectCreate):
         )
         return project_data
     except Exception as e:
-        error(f"PROJECT - Creation error: {str(e)}")
-        user_error(f"PROJECT - Creation failed")
+        error("PROJECT", "Creation error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("/projects/", response_model=List[Project])
@@ -109,8 +108,7 @@ async def update_project_route(project_id: str, project_update: ProjectUpdate):
         
         return updated_project
     except Exception as e:
-        error(f"PROJECT - Update error: {str(e)}")
-        user_error(f"PROJECT - Update failed")
+        error("PROJECT", "Update error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.delete("/projects/{project_id}")
@@ -129,8 +127,7 @@ async def delete_project_route(project_id: str):
             try:
                 mark_topic_deleted(topic_id)
             except Exception as e:
-                warning(f"PROJECT - Topic deletion error: {topic_id} - {str(e)}")
-                user_warning(f"PROJECT - Topic deletion failed")
+                warning("PROJECT", "Topic deletion error", f"ID: {topic_id}, Error: {str(e)}")
                 # Continue with other topics even if one fails
                 
         # Then delete the project itself
@@ -141,8 +138,7 @@ async def delete_project_route(project_id: str):
         return {"message": "Project and its topics deleted successfully"}
         
     except Exception as e:
-        error(f"PROJECT - Deletion error: {str(e)}")
-        user_error(f"PROJECT - Deletion failed")
+        error("PROJECT", "Deletion error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/projects/{project_id}/topics/{topic_id}", response_model=Project)

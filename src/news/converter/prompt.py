@@ -5,6 +5,7 @@ from .converter_interface import Converter
 from api.models.topic import Topic
 from langchain.prompts import PromptTemplate
 from curator.llm_utils import get_llm
+from utils.logging import debug, info, error, warning
 
 
 class Prompt(Converter):
@@ -16,8 +17,10 @@ class Prompt(Converter):
     @staticmethod
     def convert_representation(type: str, topic: Topic) -> bool:
         try:            
+            info("PROMPT", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
             
+            debug("PROMPT", "Getting LLM", "Using article_refinement model")
             llm = get_llm('article_refinement')
         
             prompt = PromptTemplate.from_template("""
@@ -46,12 +49,15 @@ class Prompt(Converter):
 Now, generate the full radio news script, keeping it engaging, informative, and tailored to the audience.
 """)
 
+            debug("PROMPT", "Invoking LLM", f"Content length: {len(content)}")
             converted_content = llm.invoke(prompt.format(content=content)).content.strip()
+            debug("PROMPT", "LLM response received", f"Output length: {len(converted_content)}")
 
             topic.add_representation(type, converted_content)
+            info("PROMPT", "Conversion complete", f"Topic: {topic.name}")
 
             return True
             
         except Exception as e:
-            print(f"Error converting {type}: {str(e)}")
+            error("PROMPT", "Conversion failed", f"Topic: {topic.name}, Error: {str(e)}")
             return False 

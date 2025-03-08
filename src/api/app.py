@@ -15,7 +15,7 @@ from .routes.log_routes import router as log_router
 from contextlib import asynccontextmanager
 from curator.topic_updater import start_update_processor
 from pathlib import Path
-from utils.logging import info, debug, user_info
+from utils.logging import info, debug
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,16 +25,14 @@ async def lifespan(app: FastAPI):
         with open("settings.yaml", 'r') as f:
             settings = yaml.safe_load(f)
             env_vars = settings.get("env_vars", {})
-            debug(f"Loaded environment variables: {list(env_vars.keys())}")
+            debug("CONFIG", "Environment variables", f"Found {len(env_vars)} variables")
             for key, value in env_vars.items():
                 os.environ[key] = value
 
-    info("Starting SynthPub API server")
-    user_info("SYSTEM - Server started")
+    info("SYSTEM", "Server starting", "SynthPub API")
     start_update_processor()
     yield
-    info("Shutting down SynthPub API server")
-    user_info("SYSTEM - Server stopping")
+    info("SYSTEM", "Server stopping", "SynthPub API")
     # Add any cleanup code here if needed
 
 app = FastAPI(title="SynthPub API", lifespan=lifespan)
@@ -65,7 +63,7 @@ app.include_router(api_router)
 # Mount the frontend static files
 frontend_dir = Path(__file__).parent.parent.parent / "frontend"
 if frontend_dir.exists():
-    info(f"Mounting frontend files from {frontend_dir}")
+    info("SYSTEM", "Mounting frontend", str(frontend_dir))
     app.mount("/", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 else:
-    info(f"Frontend directory not found at {frontend_dir}")
+    info("SYSTEM", "Frontend directory not found", str(frontend_dir))

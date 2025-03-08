@@ -8,6 +8,7 @@ from xml.dom import minidom
 
 from api.models import Topic
 from news.converter.converter_interface import Converter
+from utils.logging import debug, info, error, warning
 
 class PodcastEpisodeRSSConverter(Converter):
     """Converter for generating and updating podcast RSS feeds with episodes."""
@@ -30,20 +31,20 @@ class PodcastEpisodeRSSConverter(Converter):
             bool: True if conversion succeeded
         """
         # Parse the type string to get the RSS URL and MP3 URL
-        print(f"Type string: {type_str}")
+        debug("PODCAST", "Parsing type string", type_str)
         parts = type_str.split("/", 1)
-        print(f"Parts: {parts}")
+        debug("PODCAST", "Type parts", str(parts))
         if len(parts) < 2:
-            print(f"Invalid type format. Expected 'podcast-episode-rss/path/to/rss.xml,mp3_url', got '{type_str}'")
+            error("PODCAST", "Invalid format", f"Expected 'podcast-episode-rss/path/to/rss.xml,mp3_url', got '{type_str}'")
             return False
         
         # Parse the URL parts - separate RSS and MP3 URLs by comma
         url_parts = parts[1].split(",", 1)
-        print(f"URL parts: {url_parts}")
+        debug("PODCAST", "URL parts", str(url_parts))
         rss_url = url_parts[0]
         mp3_url = url_parts[1] if len(url_parts) > 1 else None
         
-        print(f"RSS URL: {rss_url}, MP3 URL: {mp3_url}")
+        info("PODCAST", "Processing", f"RSS URL: {rss_url}, MP3 URL: {mp3_url}")
         
         # Check if RSS file exists
         existing_rss = None
@@ -63,7 +64,7 @@ class PodcastEpisodeRSSConverter(Converter):
                     with open(rss_url, 'r', encoding='utf-8') as f:
                         existing_rss = f.read()
         except Exception as e:
-            print(f"Could not fetch existing RSS: {str(e)}")
+            warning("PODCAST", "RSS fetch failed", str(e))
             # Continue with creating a new RSS
         
         # Calculate MP3 file size from previous representations
@@ -75,7 +76,7 @@ class PodcastEpisodeRSSConverter(Converter):
         # Store the RSS XML in the topic's representation
         topic.add_representation(type_str, rss_xml)
         
-        print(f"Podcast RSS generated/updated for topic {topic.id}")
+        info("PODCAST", "RSS updated", f"Topic: {topic.name}, ID: {topic.id}")
         return True
     
     @staticmethod
@@ -136,7 +137,7 @@ class PodcastEpisodeRSSConverter(Converter):
                 # Find the channel element
                 channel = rss.find("channel")
                 if channel is None:
-                    print("Invalid RSS: no channel element found")
+                    error("PODCAST", "Invalid RSS", "No channel element found")
                     # Create a new RSS instead
                     return PodcastEpisodeRSSConverter._create_new_rss(topic, episode_item)
                 
@@ -166,7 +167,7 @@ class PodcastEpisodeRSSConverter(Converter):
                 return pretty_xml
                 
             except Exception as e:
-                print(f"Error updating existing RSS: {str(e)}")
+                error("PODCAST", "RSS update failed", str(e))
                 # Fall back to creating a new RSS
                 return PodcastEpisodeRSSConverter._create_new_rss(topic, episode_item)
         else:
@@ -235,7 +236,7 @@ class PodcastEpisodeRSSConverter(Converter):
         
         # Use the provided MP3 URL or fallback to a placeholder
         if not mp3_url:
-            print(f"Warning: No MP3 URL provided for topic {topic.id}")
+            warning("PODCAST", "No MP3 URL", f"Topic: {topic.name}, ID: {topic.id}")
             mp3_url = f"https://example.com/{topic.id}.mp3"  # Placeholder
             
         # Add the MP3 enclosure

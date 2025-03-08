@@ -7,7 +7,7 @@ import asyncio
 import queue
 import threading
 import time
-from utils.logging import get_recent_logs, get_user_logs, log_event, info, debug, error
+from utils.logging import get_recent_logs, log_event, info, debug, error
 
 router = APIRouter()
 
@@ -22,18 +22,16 @@ def start_queue_processor():
     async def send_to_websockets(log_entry):
         # Make a copy to avoid concurrent modification issues
         connections = list(active_connections)
-        if connections:
-            debug(f"LOG - Sending to {len(connections)} clients: {log_entry['message'][:30]}...")
         
         for websocket in connections:
             try:
                 await websocket.send_json({"type": "log", "log": log_entry})
             except Exception as e:
-                error(f"LOG - WebSocket send error: {str(e)}")
+                error("WEBSOCKET", "Send failed", str(e))
                 # Connection probably closed, will be removed later
                 pass
     
-    info("LOG - Starting distributor thread")
+    info("SYSTEM", "Starting WebSocket distributor", "Log message relay")
     while True:
         try:
             # Get log from queue (blocks until an item is available)
@@ -53,7 +51,7 @@ def start_queue_processor():
             # Mark item as processed
             log_queue.task_done()
         except Exception as e:
-            error(f"LOG - Queue processing error: {str(e)}")
+            error("SYSTEM", "Queue processing error", str(e))
             # Sleep briefly to avoid tight loops in case of persistent errors
             time.sleep(0.1)
 
@@ -67,37 +65,30 @@ def handle_log(sender, **kwargs):
     log_entry = kwargs.get('log_entry', sender)
     # Add to synchronous queue
     log_queue.put(log_entry)
-    debug(f"LOG - Queued: {log_entry['message'][:30]}...")
 
 # Register the signal handler
 log_event.connect(handle_log)
-info("LOG - Event handler registered")
+info("SYSTEM", "Log handler registered", "WebSocket relay ready")
 
 @router.get("/logs")
-async def get_logs(user_only: bool = False, count: int = 100):
+async def get_logs(user_only: bool = True, count: int = 100):
     """Get recent logs."""
-    if user_only:
-        logs = get_user_logs()[:count]
-        debug(f"LOG - Returning {len(logs)} user logs")
-        return logs
-    else:
-        logs = get_recent_logs()[:count]
-        debug(f"LOG - Returning {len(logs)} system logs")
-        return logs
+    logs = get_recent_logs(min_level="INFO" if user_only else "DEBUG", max_count=count)
+    return logs
 
 @router.websocket("/ws/logs")
 async def websocket_logs(websocket: WebSocket):
     """WebSocket endpoint for real-time log updates."""
     client_info = f"{websocket.client.host}:{websocket.client.port}"
-    info(f"LOG - New connection from {client_info}")
+    debug("WEBSOCKET", "New connection", client_info)
     
     await websocket.accept()
     active_connections.append(websocket)
-    info(f"LOG - Connection accepted: {len(active_connections)} active")
+    debug("WEBSOCKET", "Connection accepted", f"{len(active_connections)} active connections")
     
     # Send initial logs
-    initial_logs = get_user_logs()
-    info(f"LOG - Sending {len(initial_logs)} initial logs")
+    initial_logs = get_recent_logs(min_level="INFO", max_count=50)
+    debug("WEBSOCKET", "Sending initial logs", f"{len(initial_logs)} logs to {client_info}")
     await websocket.send_json({"type": "initial", "logs": initial_logs})
     
     try:
@@ -108,12 +99,11 @@ async def websocket_logs(websocket: WebSocket):
             # You could process client messages here if needed
             if data == "ping":
                 await websocket.send_text("pong")
-                debug(f"LOG - Ping received from {client_info}")
     except WebSocketDisconnect:
         # Remove connection when disconnected
         if websocket in active_connections:
             active_connections.remove(websocket)
-            info(f"LOG - Client disconnected: {len(active_connections)} remaining")
+            debug("WEBSOCKET", "Client disconnected", f"{len(active_connections)} connections remaining")
     
     # Return after disconnection
     return 

@@ -22,17 +22,25 @@
             border-radius: 4px;
             font-family: monospace;
         }
-        .log-entry-USER_INFO {
+        .log-entry-DEBUG {
+            background-color: #e9ecef;
+            border-left: 4px solid #6c757d;
+        }
+        .log-entry-INFO {
             background-color: #cfe2ff;
             border-left: 4px solid #0d6efd;
         }
-        .log-entry-USER_WARNING {
+        .log-entry-WARNING, .log-entry-WARN {
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
         }
-        .log-entry-USER_ERROR {
+        .log-entry-ERROR {
             background-color: #f8d7da;
             border-left: 4px solid #dc3545;
+        }
+        .log-entry-CRITICAL {
+            background-color: #f8d7da;
+            border-left: 4px solid #6f42c1;
         }
         .log-timestamp {
             color: #6c757d;
@@ -47,16 +55,34 @@
             font-size: 0.85em;
             font-weight: bold;
             color: white;
+            min-width: 60px;
+            text-align: center;
         }
-        .log-level-USER_INFO {
+        .log-level-DEBUG {
+            background-color: #6c757d;
+        }
+        .log-level-INFO {
             background-color: #0d6efd;
         }
-        .log-level-USER_WARNING {
+        .log-level-WARNING, .log-level-WARN {
             background-color: #ffc107;
             color: #212529;
         }
-        .log-level-USER_ERROR {
+        .log-level-ERROR {
             background-color: #dc3545;
+        }
+        .log-level-CRITICAL {
+            background-color: #6f42c1;
+        }
+        .log-component {
+            font-weight: bold;
+            color: #212529;
+        }
+        .log-action {
+            color: #495057;
+        }
+        .log-detail {
+            color: #495057;
         }
         .log-message {
             font-size: 1em;
@@ -105,15 +131,15 @@
             <div>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" id="infoFilter" checked>
-                    <label class="form-check-label" for="infoFilter">Info</label>
+                    <label class="form-check-label" for="infoFilter">Debug & Info</label>
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" id="warningFilter" checked>
-                    <label class="form-check-label" for="warningFilter">Warning</label>
+                    <label class="form-check-label" for="warningFilter">Warnings</label>
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" id="errorFilter" checked>
-                    <label class="form-check-label" for="errorFilter">Error</label>
+                    <label class="form-check-label" for="errorFilter">Errors & Critical</label>
                 </div>
             </div>
             <div class="form-check form-check-inline log-auto-scroll">
@@ -175,15 +201,35 @@
                 
                 const level = document.createElement('span');
                 level.className = `log-level log-level-${log.level}`;
-                level.textContent = log.level.replace('USER_', '');
+                level.textContent = log.level;
                 
+                const component = document.createElement('span');
+                component.className = 'log-component';
+                component.textContent = log.component || '';
+                
+                const action = document.createElement('span');
+                action.className = 'log-action';
+                action.textContent = log.action ? ` - ${log.action}` : '';
+                
+                const detail = document.createElement('span');
+                detail.className = 'log-detail';
+                detail.textContent = log.detail ? `: ${log.detail}` : '';
+                
+                // For backward compatibility
                 const message = document.createElement('span');
                 message.className = 'log-message';
-                message.textContent = log.message;
-                
-                entry.appendChild(timestamp);
-                entry.appendChild(level);
-                entry.appendChild(message);
+                if (log.message && !log.component) {
+                    message.textContent = log.message;
+                    entry.appendChild(timestamp);
+                    entry.appendChild(level);
+                    entry.appendChild(message);
+                } else {
+                    entry.appendChild(timestamp);
+                    entry.appendChild(level);
+                    entry.appendChild(component);
+                    entry.appendChild(action);
+                    entry.appendChild(detail);
+                }
                 
                 return entry;
             }
@@ -194,11 +240,11 @@
                 entries.forEach(entry => {
                     const level = entry.dataset.level;
                     
-                    if (level === 'USER_INFO' && !infoFilter.checked) {
+                    if (level === 'DEBUG' && !infoFilter.checked) {
                         entry.style.display = 'none';
-                    } else if (level === 'USER_WARNING' && !warningFilter.checked) {
+                    } else if ((level === 'WARNING' || level === 'WARN') && !warningFilter.checked) {
                         entry.style.display = 'none';
-                    } else if (level === 'USER_ERROR' && !errorFilter.checked) {
+                    } else if ((level === 'ERROR' || level === 'CRITICAL') && !errorFilter.checked) {
                         entry.style.display = 'none';
                     } else {
                         entry.style.display = 'block';

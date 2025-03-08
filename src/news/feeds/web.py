@@ -6,6 +6,7 @@ from typing import Dict, List
 from .feed_connector import FeedConnector
 import requests
 from bs4 import BeautifulSoup
+from utils.logging import debug, info, error, warning
 # Chrome user agent string
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -60,5 +61,5 @@ class WebConnector(FeedConnector):
             content = fetch_webpage(url)  # Your existing function
             return [content]
         except Exception as e:
-            print(f"Error fetching webpage {url}: {str(e)}")
+            error("WEB", "Fetch failed", f"URL: {url}, Error: {str(e)}")
             return []

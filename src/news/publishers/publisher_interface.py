@@ -1,8 +1,9 @@
-"""Base interface for publishers."""
+"""Publisher interface for publishing content."""
 from typing import Dict, Protocol
 from typing_extensions import runtime_checkable
 from api.signals import topic_published, publish_requested
 from api.models import Topic
+from utils.logging import debug, info, error
 
 @runtime_checkable
 class Publisher(Protocol):
@@ -30,14 +31,14 @@ class Publisher(Protocol):
     @classmethod
     def handle_publish_requested(cls, sender, publish_url: str):
         """Handle feed update request signal."""
-        print(f"Trying handling publish request for {publish_url} as {cls.__name__}")
+        debug("PUBLISH", "Checking handler", f"URL: {publish_url}, Handler: {cls.__name__}")
         if cls.can_handle(publish_url):
-            print(f"Can handle publish request for {publish_url} as {cls.__name__}")
+            info("PUBLISH", "Using handler", f"URL: {publish_url}, Handler: {cls.__name__}")
             try:
                 cls.publish_content(publish_url, sender)
                 topic_published.send(sender, publish_url=publish_url)
             except Exception as e:
-                print(f"Error publishing {publish_url}: {str(e)}")
+                error("PUBLISH", "Failed", f"URL: {publish_url}, Error: {str(e)}")
 
     @classmethod
     def connect_signals(cls):

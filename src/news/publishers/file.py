@@ -4,10 +4,12 @@ from urllib.parse import unquote, urlparse
 from typing import Dict
 from .publisher_interface import Publisher
 from api.models.topic import Topic
+from utils.logging import debug, info, error, warning
 
 def parse_file_url(url: str) -> Path:
     """Parse a file:// URL and return the filesystem path."""
     if not url.startswith("file://"):
+        error("FILE", "Invalid URL", f"URL must start with file://, got {url}")
         raise ValueError("URL must start with file://")
         
     path = url[7:]  # Remove file://
@@ -22,20 +24,24 @@ class FilePublisher(Publisher):
     @staticmethod
     def write_content(path: Path, content: str, is_binary: bool = False) -> None:
         """Write content to file, handling both text and binary data."""
+        debug("FILE", "Creating directory", str(path.parent))
         path.parent.mkdir(parents=True, exist_ok=True)
         
         if is_binary:
             # Convert hex string back to bytes
+            debug("FILE", "Writing binary content", f"Path: {path}, Size: {len(content)//2} bytes")
             binary_data = bytes.fromhex(content)
             with open(path, 'wb') as f:
                 f.write(binary_data)
         else:
+            debug("FILE", "Writing text content", f"Path: {path}, Size: {len(content)} chars")
             with open(path, 'w', encoding='utf-8') as f:
                 f.write(content)
     
     @staticmethod
     def publish_content(url: str, topic: Topic) -> bool:
         try:
+            info("FILE", "Publishing content", f"URL: {url}, Topic: {topic.name}")
             file_path = parse_file_url(url)
             
             # Get the most recent representation
@@ -45,10 +51,10 @@ class FilePublisher(Publisher):
             is_binary = rep.metadata.get('binary', False)
                         
             FilePublisher.write_content(file_path, rep.content, is_binary)
-            print(f"Published {rep.type} content to {file_path}")
+            info("FILE", "Published successfully", f"Type: {rep.type}, Path: {file_path}")
 
             return True
             
         except Exception as e:
-            print(f"Error publishing to file {url}: {str(e)}")
+            error("FILE", "Publishing failed", f"URL: {url}, Error: {str(e)}")
             return False 

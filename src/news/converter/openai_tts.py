@@ -11,6 +11,7 @@ import numpy as np
 import wave
 import io
 from pydub import AudioSegment
+from utils.logging import debug, info, error, warning
 
 class OpenAITTS(Converter):
     
@@ -37,18 +38,21 @@ class OpenAITTS(Converter):
         if current_sentence:
             sentences.append(' '.join(current_sentence))
         
+        debug("TTS", "Text split", f"Split into {len(sentences)} chunks")
         return sentences
 
     @classmethod
     def generate_audio(cls, text: str, voice: str = "echo") -> AudioSegment:
+        """Generate audio for a piece of text using OpenAI TTS."""
         # Initialize as class variables
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
+            error("TTS", "API key missing", "OPENAI_API_KEY not found in environment variables")
             raise ValueError("OPENAI_API_KEY not found in environment variables")
             
         client = OpenAI(api_key=api_key)
 
-        """Generate audio for a piece of text using OpenAI TTS."""
+        debug("TTS", "Generating audio", f"Text length: {len(text)}, Voice: {voice}")
         response = client.audio.speech.create(
             model="tts-1",
             voice=voice,
@@ -58,6 +62,7 @@ class OpenAITTS(Converter):
         
         # Convert response content to AudioSegment
         audio_segment = AudioSegment.from_mp3(io.BytesIO(response.content))
+        debug("TTS", "Audio generated", f"Duration: {len(audio_segment)/1000}s")
         return audio_segment
 
     @staticmethod
@@ -66,15 +71,18 @@ class OpenAITTS(Converter):
     
     @classmethod
     def convert_representation(cls, type: str, topic: Topic) -> bool:
-        try:            
+        try:
+            info("TTS", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
             
             # Split content into manageable chunks
             sentences = cls.split_into_sentences(content)
+            info("TTS", "Processing chunks", f"Chunks: {len(sentences)}")
             
             # Generate audio for each chunk
             audio_segments = []
-            for sentence in sentences:
+            for i, sentence in enumerate(sentences):
+                debug("TTS", "Processing chunk", f"{i+1}/{len(sentences)}")
                 audio_segment = cls.generate_audio(sentence)
                 audio_segments.append(audio_segment)
             
@@ -87,9 +95,11 @@ class OpenAITTS(Converter):
             audio_bytes = buffer.getvalue()
             
             # Add audio representation
+            total_duration = len(combined_audio) / 1000  # in seconds
+            info("TTS", "Conversion complete", f"Topic: {topic.name}, Duration: {total_duration:.1f}s")
             topic.add_representation(type, audio_bytes.hex(), {"format": "mp3", "binary": True})
             return True
             
         except Exception as e:
-            print(f"Error converting {type}: {str(e)}")
+            error("TTS", "Conversion failed", f"Topic: {topic.name}, Error: {str(e)}")
             return False 

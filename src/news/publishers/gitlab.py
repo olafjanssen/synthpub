@@ -6,12 +6,15 @@ import requests
 from .publisher_interface import Publisher
 from api.models.topic import Topic
 from api.db.article_db import get_article
+from utils.logging import debug, info, error, warning
 
 def get_api_key():
     """Get Gitlab token API key from environment variables"""
     api_key = os.getenv('GITLAB_TOKEN')
     if not api_key:
+        error("GITLAB", "Missing API key", "GITLAB_TOKEN environment variable not found")
         raise ValueError("GITLAB_TOKEN environment variable not found in settings")
+    debug("GITLAB", "API key loaded", "Token available")
     return api_key
 
 
@@ -21,14 +24,16 @@ def parse_gitlab_url(url: str) -> tuple[str, str, str]:
     Example URL: gitlab://gitlab_host/project_id/branch/path/to/file.md
     """
     if not url.startswith("gitlab://"):
+        error("GITLAB", "Invalid URL", f"URL must start with gitlab://, got {url}")
         raise ValueError("URL must start with gitlab://")
         
     parsed = urlparse(url)
     parts = parsed.path.strip("/").split("/")
 
-    print(f"Parsed: {parsed}")
+    debug("GITLAB", "URL parsed", f"Host: {parsed.netloc}, Path parts: {len(parts)}")
     
     if len(parts) < 3:
+        error("GITLAB", "Invalid URL", "URL must include host, project, branch, and file path")
         raise ValueError("URL must include host, project, branch, and file path")
     
     host = parsed.netloc
@@ -36,6 +41,7 @@ def parse_gitlab_url(url: str) -> tuple[str, str, str]:
     branch = parts[1]
     file_path = "/".join(parts[2:])
     
+    debug("GITLAB", "URL components", f"Host: {host}, Project: {project_id}, Branch: {branch}, Path: {file_path}")
     return host, project_id, branch, file_path
 
 class GitLabPublisher(Publisher):
@@ -48,55 +54,56 @@ class GitLabPublisher(Publisher):
     
     @staticmethod
     def publish_content(url: str, topic: Topic) -> bool:
-        TOKEN = get_api_key()
-            
         try:
-            # Parse the GitLab URL components
+            info("GITLAB", "Publishing content", f"URL: {url}, Topic: {topic.name}")
             host, project_id, branch, file_path = parse_gitlab_url(url)
             
-            # Get the article content
-            article = get_article(topic.article)
-            content = article.content
+            # Get the API base URL
+            api_base = GitLabPublisher.API_BASE(host)
             
-            # Encode content in base64 (required by GitLab API)
-            content_base64 = base64.b64encode(content.encode()).decode()
+            # Get the GitLab token from environment variables
+            token = get_api_key()
             
-            # Prepare the API request
+            # Get the most recent representation
+            rep = topic.representations[-1]
+            
+            # Prepare the content
+            content = rep.content
+            
+            # API URLs
+            commit_url = f"{api_base}/projects/{project_id}/repository/commits"
+            info("GITLAB", "Creating commit", f"Project: {project_id}, Branch: {branch}, File: {file_path}")
+            
+            # Create a commit with the new content
             headers = {
-                "Authorization": f"Bearer {TOKEN}",
-                "Content-Type": "application/json"
+                'PRIVATE-TOKEN': token,
+                'Content-Type': 'application/json'
             }
-            # URL encode the file path for GitLab API
-            encoded_path = requests.utils.quote(file_path, safe='')
-            commit_url = f"{GitLabPublisher.API_BASE(host)}/projects/{project_id}/repository/files/{encoded_path}?ref={branch}"
-            print(f"Publishing to {commit_url}")
-
-            # Check if file exists
-            response = requests.get(commit_url, headers=headers)
-            file_exists = response.status_code == 200
             
-            print(f"Response: {response}")
-
-            # Prepare commit data
+            # Build the commit data
             commit_data = {
-                "branch": branch,
-                "content": content_base64,
-                "commit_message": f"Update {file_path} via publisher",
-                "encoding": "base64"
+                'branch': branch,
+                'commit_message': f'Update {file_path} via SynthPub',
+                'actions': [
+                    {
+                        'action': 'update',
+                        'file_path': file_path,
+                        'content': content
+                    }
+                ]
             }
+            debug("GITLAB", "Commit data prepared", f"Message: {commit_data['commit_message']}")
             
-            print(f"Commit data: {commit_data}")
+            # Make the request
+            response = requests.post(commit_url, headers=headers, json=commit_data)
             
-            # Create or update file
-            if file_exists:
-                response = requests.put(commit_url, headers=headers, json=commit_data)
+            if response.status_code >= 200 and response.status_code < 300:
+                info("GITLAB", "Published successfully", f"Status: {response.status_code}, File: {file_path}")
+                return True
             else:
-                response = requests.post(commit_url, headers=headers, json=commit_data)
-            
-            print(f"Response: {response}")
-
-            return response.status_code in (200, 201)
+                error("GITLAB", "API error", f"Status: {response.status_code}, Response: {response.text}")
+                return False
             
         except Exception as e:
-            print(f"Error publishing to GitLab {url}: {str(e)}")
+            error("GITLAB", "Publishing failed", f"URL: {url}, Error: {str(e)}")
             return False

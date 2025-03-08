@@ -3,6 +3,7 @@ from typing import Dict, Protocol
 from typing_extensions import runtime_checkable
 from api.signals import topic_converted, convert_requested
 from api.models import Topic
+from utils.logging import debug, info, error
 
 @runtime_checkable
 class Converter(Protocol):
@@ -29,18 +30,19 @@ class Converter(Protocol):
 
     @classmethod
     def handle_convert_requested(cls, sender, type: str):
-        """Handle feed update request signal."""
+        """Handle conversion request signal."""
+        debug("CONVERT", "Checking handler", f"Type: {type}, Handler: {cls.__name__}")
         if cls.can_handle(type):
-            print(f"Can handle convert request for {type} as {cls.__name__}")
+            info("CONVERT", "Using handler", f"Type: {type}, Handler: {cls.__name__}")
             try:
                 cls.convert_representation(type, sender)
                 topic_converted.send(sender, type=type)
             except Exception as e:
-                print(f"Error converting {type}: {str(e)}")
+                error("CONVERT", "Failed", f"Type: {type}, Error: {str(e)}")
         else:
-            print(f"Cannot handle convert request for {type} as {cls.__name__}")
+            debug("CONVERT", "No suitable handler", f"Type: {type}, Handler: {cls.__name__}")
             
     @classmethod
     def connect_signals(cls):
-        """Connect to feed update signals."""
+        """Connect to conversion signals."""
         convert_requested.connect(cls.handle_convert_requested) 
