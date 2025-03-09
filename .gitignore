@@ -168,6 +168,8 @@ cython_debug/
 db/topics/
 db/articles/
 db/projects/
+db/logs/
+db/prompts
 db/_cache/
 settings.toml
 settings.yaml

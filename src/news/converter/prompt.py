@@ -1,18 +1,20 @@
 """
-Content converter using a generic llm prompt.
+Content converter using a prompt from the prompt database.
 """
 from .converter_interface import Converter
 from api.models.topic import Topic
 from langchain.prompts import PromptTemplate
 from curator.llm_utils import get_llm
 from utils.logging import debug, info, error, warning
+from api.db.prompt_db import get_prompt
 
 
 class Prompt(Converter):
     
     @staticmethod
     def can_handle(type: str) -> bool:
-        return type == 'prompt'
+        # Check if type starts with 'prompt/' followed by a prompt ID
+        return type.startswith('prompt')
     
     @staticmethod
     def convert_representation(type: str, topic: Topic) -> bool:
@@ -20,34 +22,31 @@ class Prompt(Converter):
             info("PROMPT", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
             
+            # Parse type to extract prompt_id
+            # Format is either 'prompt' (using default) or 'prompt/prompt_id'
+            prompt_id = None
+            if '/' in type:
+                _, prompt_id = type.split('/', 1)
+            
+            # Get prompt from database or use default
+            template_text = None
+            if prompt_id:
+                prompt_obj = get_prompt(prompt_id)
+                if prompt_obj:
+                    info("PROMPT", "Using prompt from database", f"Prompt: {prompt_obj.name}")
+                    template_text = prompt_obj.template
+                else:
+                    warning("PROMPT", "Prompt not found", f"Prompt ID: {prompt_id}, using default")
+            
+            # Use default prompt if no prompt_id or prompt not found
+            if not template_text:
+                info("PROMPT", "Using default prompt", "No prompt ID specified or prompt not found")
+                template_text = "{content}"
+            
             debug("PROMPT", "Getting LLM", "Using article_refinement model")
             llm = get_llm('article_refinement')
         
-            prompt = PromptTemplate.from_template("""
-    You are a professional radio news writer creating an engaging news segment for an international audience in Eindhoven, Netherlands. Your task is to write a clear, concise, and lively radio news script in approximately 150 words.
-
-### 🔹 Audience Profile:
-- Educated listeners, interested in a deeper understanding of current events.
-- Internationally oriented locals or expatriates living in or near Eindhoven.
-- Likely to be **distracted while listening**, so use **short and easy-to-follow sentences**.
-
-### 🔹 Tone & Style:
-- **If the news is about technology, crime, or health**, use a **serious and trustworthy tone**.
-- **For other news (e.g., local events, culture, lifestyle, light politics)**, use a **humorous and entertaining tone** to keep it engaging.
-- The style should feel **like a natural radio broadcast**, ensuring clarity and impact.
-
-### 🔹 Structure:
-1. **Start with a catchy headline** that grabs attention.
-2. **Play a short jingle** to set the tone.
-3. **Mention the news source explicitly** if it's from a single outlet (e.g., "According to TU Eindhoven...").
-4. **Provide essential details (Who, What, Where, When, Why?)** in an engaging, conversational way.
-5. **Give background context** to help listeners understand its importance.
-
-### 🔹 Topic:
-{content}
-
-Now, generate the full radio news script, keeping it engaging, informative, and tailored to the audience.
-""")
+            prompt = PromptTemplate.from_template(template_text)
 
             debug("PROMPT", "Invoking LLM", f"Content length: {len(content)}")
             converted_content = llm.invoke(prompt.format(content=content)).content.strip()
