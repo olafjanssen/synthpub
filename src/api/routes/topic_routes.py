@@ -172,7 +172,7 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
             setattr(topic, key, value)
         
         # Save updated topic
-        updated_topic = update_topic(topic)
+        updated_topic = update_topic(topic_id, update_data)
         info("TOPIC", "Updated", topic.name)
         return updated_topic
     except Exception as e:
