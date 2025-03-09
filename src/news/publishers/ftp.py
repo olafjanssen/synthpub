@@ -92,6 +92,8 @@ class FTPPublisher(Publisher):
             # Connect to FTP server
             debug("FTP", "Connecting", f"Host: {host}")
             with FTP(host) as ftp:
+                ftp.set_debuglevel(2)
+                ftp.set_pasv(False)
                 ftp.login(username, password)
                 debug("FTP", "Logged in", f"Username: {username}")
                 
