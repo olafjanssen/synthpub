@@ -23,6 +23,7 @@ arxiv
 PyPDF2
 
 # converters
+piper-tts
 numpy
 pydub
 

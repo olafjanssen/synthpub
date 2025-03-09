@@ -1,0 +1,5 @@
+# Requirements for Piper TTS
+piper-tts>=1.0.0
+pydub>=0.25.1
+numpy>=1.20.0
+requests>=2.25.0 
