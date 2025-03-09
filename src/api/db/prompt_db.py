@@ -3,9 +3,11 @@ Simple database operations for prompts using plain Markdown files.
 """
 from pathlib import Path
 from typing import Dict, Optional, List
+import shutil
+import os
 from api.models import Prompt
 from .common import get_db_path
-from utils.logging import error, debug
+from utils.logging import error, debug, info
 
 # In-memory cache for prompts
 _prompt_cache: Dict[str, Prompt] = {}
@@ -15,9 +17,42 @@ def _ensure_cache():
     """Initialize cache if not already done."""
     global _cache_initialized
     if not _cache_initialized:
+        ensure_db_exists()
+        _copy_default_prompts()
         prompts = _load_all_prompts_from_disk()
         _prompt_cache.update({prompt.id: prompt for prompt in prompts})
         _cache_initialized = True
+
+def _copy_default_prompts():
+    """Copy default prompts from resources/prompts to DB_PATH/prompts if they don't exist."""
+    try:
+        # Get the resources directory (assuming it's at project root or src level)
+        resources_path = Path(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))) / "resources" / "prompts"
+        # If resources/prompts doesn't exist, try one level up
+        if not resources_path.exists():
+            resources_path = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))) / "resources" / "prompts"
+        
+        if not resources_path.exists():
+            debug("PROMPT_DB", "Default prompts not found", f"Path: {resources_path}")
+            return
+        
+        # Get destination path
+        dest_path = DB_PATH()
+        
+        # Copy each file if it doesn't exist in destination
+        count = 0
+        for src_file in resources_path.glob("*.md"):
+            dest_file = dest_path / src_file.name
+            if not dest_file.exists():
+                shutil.copy2(src_file, dest_file)
+                count += 1
+                debug("PROMPT_DB", "Copied default prompt", f"File: {src_file.name}")
+        
+        if count > 0:
+            info("PROMPT_DB", "Default prompts initialized", f"Copied {count} prompts")
+    
+    except Exception as e:
+        error("PROMPT_DB", "Failed to copy default prompts", f"Error: {str(e)}")
 
 def _load_all_prompts_from_disk() -> List[Prompt]:
     """Internal function to load prompts directly from disk."""

@@ -41,7 +41,13 @@ class Prompt(Converter):
             # Use default prompt if no prompt_id or prompt not found
             if not template_text:
                 info("PROMPT", "Using default prompt", "No prompt ID specified or prompt not found")
-                template_text = "{content}"
+                template_text = """
+Write a well-crafted response about the following content:
+
+{content}
+
+Use a clear, concise style appropriate for the content.
+"""
             
             debug("PROMPT", "Getting LLM", "Using article_refinement model")
             llm = get_llm('article_refinement')
