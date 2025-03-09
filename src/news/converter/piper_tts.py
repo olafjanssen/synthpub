@@ -3,7 +3,7 @@ Content converter using Piper TTS to generate long-form audio from articles loca
 """
 from .converter_interface import Converter
 from api.models.topic import Topic
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import io
 import os
 import wave
@@ -167,9 +167,18 @@ class PiperTTS(Converter):
             raise
 
     @classmethod
-    def generate_audio(cls, text: str, voice_key: str = "en_US-lessac-medium") -> AudioSegment:
-        """Generate audio for a piece of text using Piper TTS."""
-        debug("PIPER_TTS", "Generating audio", f"Text length: {len(text)}, Voice: {voice_key}")
+    def generate_audio(cls, text: str, voice_key: str = "en_US-lessac-medium", speaker_id: Optional[int] = None) -> AudioSegment:
+        """Generate audio for a piece of text using Piper TTS.
+        
+        Args:
+            text: The text to convert to speech
+            voice_key: The voice model to use
+            speaker_id: Optional speaker ID for multi-speaker models
+            
+        Returns:
+            AudioSegment containing the generated speech
+        """
+        debug("PIPER_TTS", "Generating audio", f"Text length: {len(text)}, Voice: {voice_key}, Speaker ID: {speaker_id}")
         
         # Get the voice model
         voice = cls.get_voice(voice_key)
@@ -182,7 +191,7 @@ class PiperTTS(Converter):
             # Open the WAV file for writing
             with wave.open(wav_file_path, "w") as wav_file:
                 # Synthesize audio directly to the WAV file
-                voice.synthesize(text, wav_file)
+                voice.synthesize(text, wav_file, speaker_id=speaker_id)
             
             # Load the generated audio file
             audio_segment = AudioSegment.from_wav(wav_file_path)
@@ -202,7 +211,7 @@ class PiperTTS(Converter):
 
     @staticmethod
     def can_handle(type: str) -> bool:
-        return type == 'piper-tts'
+        return type.startswith('piper-tts')
     
     @classmethod
     def convert_representation(cls, type: str, topic: Topic) -> bool:
@@ -210,10 +219,20 @@ class PiperTTS(Converter):
             info("PIPER_TTS", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
             
-            # Get voice from metadata or use default
+            # Get voice from URL or use default
             voice_key = "en_US-lessac-medium"
-            if hasattr(topic, 'metadata') and topic.metadata and 'voice' in topic.metadata:
-                voice_key = topic.metadata['voice']
+            speaker_id = None
+            
+            # Parse type string for voice_key and optional speaker_id
+            if "/" in type:
+                parts = type.split("/", 1)[1].split(":")
+                voice_key = parts[0]
+                
+                # Extract speaker_id if provided
+                if len(parts) > 1 and parts[1].isdigit():
+                    speaker_id = int(parts[1])
+            
+            info("PIPER_TTS", "Using voice", f"Voice: {voice_key}, Speaker ID: {speaker_id}")
             
             # Split content into manageable chunks
             sentences = cls.split_into_sentences(content)
@@ -223,7 +242,7 @@ class PiperTTS(Converter):
             audio_segments = []
             for i, sentence in enumerate(sentences):
                 debug("PIPER_TTS", "Processing chunk", f"{i+1}/{len(sentences)}")
-                audio_segment = cls.generate_audio(sentence, voice_key)
+                audio_segment = cls.generate_audio(sentence, voice_key, speaker_id)
                 audio_segments.append(audio_segment)
             
             # Concatenate all audio segments
@@ -241,6 +260,7 @@ class PiperTTS(Converter):
                 "format": "mp3", 
                 "binary": True,
                 "voice": voice_key,
+                "speaker_id": speaker_id,
                 "duration_seconds": total_duration
             })
             return True
