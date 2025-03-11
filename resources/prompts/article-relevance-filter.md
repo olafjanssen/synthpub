@@ -9,4 +9,10 @@ Existing article:
 New content to evaluate:
 {new_context}
 
-Answer starting with YES or NO (without extra formatting): Is the new content relevant according to the topic description or the existing article? and then a short explanation. 
+Determine if the new content is relevant to the topic or existing article. Consider the following:
+1. Does it provide new information about the topic?
+2. Does it expand on concepts mentioned in the existing article?
+3. Does it provide context, examples, or details that would enhance the article?
+4. Is it directly related to the topic described?
+
+Provide your assessment in a structured format with a boolean value for relevance and an explanation. 

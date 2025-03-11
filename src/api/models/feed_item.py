@@ -1,6 +1,6 @@
 """Feed item model definitions."""
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 
 class FeedItem(BaseModel):
@@ -9,6 +9,7 @@ class FeedItem(BaseModel):
     accessed_at: datetime
     content_hash: str
     is_relevant: bool = False
+    relevance_explanation: str = ""
     needs_further_processing: bool = False
 
     @classmethod
@@ -23,7 +24,7 @@ class FeedItem(BaseModel):
         """
         return cls(
             url=url,
-            accessed_at=datetime.utcnow(),
+            accessed_at=datetime.now(timezone.utc),
             content_hash=hashlib.sha256(content.encode()).hexdigest(),
             needs_further_processing=needs_further_processing
         ) 

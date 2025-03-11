@@ -83,7 +83,7 @@ def process_update_queue():
             if not update_queue.empty():
                 topic_id = update_queue.get()
                 debug("TOPIC", "Processing update", topic_id)
-                topic = update_topic(topic_id)
+                update_topic(topic_id)
             
             # Check for pending feed items
             if not feed_item_queue.empty():
@@ -190,8 +190,12 @@ def process_feed_item(
     feed_item: FeedItem
 ) -> Optional[Article]:
     """Process a single feed item for a topic."""
+    
     # Skip if content not relevant
-    if not filter_relevance(topic.name, topic.description, current_article.content, feed_content):
+    is_relevant, explanation = filter_relevance(topic.name, topic.description, current_article.content, feed_content)
+    feed_item.relevance_explanation = explanation
+    
+    if not is_relevant:
         debug("FEED", "Content not relevant", f"Item: {feed_item.url}, Topic: {topic.name}")
         return None
         

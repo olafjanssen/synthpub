@@ -1,7 +1,6 @@
 """
 Database operations for topics using individual YAML files.
 """
-from pathlib import Path
 from typing import Dict, Optional, List
 import yaml
 import uuid
@@ -35,28 +34,30 @@ def _load_all_topics_from_disk() -> List[Topic]:
     """Internal function to load topics directly from disk."""
     ensure_db_exists()
     topics = []
-    for file in DB_PATH().glob("*.yaml"):
+    for file in db_path().glob("*.yaml"):
         if not file.name.startswith('_'):
             with open(file, "r", encoding="utf-8") as f:
                 topics.append(Topic(**yaml.safe_load(f)))
     return topics
 
-def DB_PATH():
+def db_path():
     return get_db_path('topics')
 
 def ensure_db_exists():
     """Create the topics directory if it doesn't exist."""
-    DB_PATH().mkdir(parents=True, exist_ok=True)
+    db_path().mkdir(parents=True, exist_ok=True)
 
 def save_topic(topic: Topic) -> None:
     """Save topic to individual YAML file and update cache."""
     ensure_db_exists()
     
-    filename = DB_PATH() / f"{topic.id}.yaml"
+    filename = db_path() / f"{topic.id}.yaml"
     topic_dict = topic.model_dump()
     
-    if 'feed_items' in topic_dict:
-        for item in topic_dict['feed_items']:
+    if 'processed_feeds' in topic_dict:
+        for item in topic_dict['processed_feeds']:
+            if 'needs_further_processing' in item:
+                del item['needs_further_processing']
             if 'accessed_at' in item:
                 item['accessed_at'] = item['accessed_at'].isoformat()
     
@@ -106,11 +107,11 @@ def mark_topic_deleted(topic_id: str) -> bool:
             warning("DB", "Article deletion failed", f"Failed to delete article {topic.article}: {str(e)}")
             # Continue with topic deletion even if article deletion fails
     
-    filename = DB_PATH() / f"{topic_id}.yaml"
+    filename = db_path() / f"{topic_id}.yaml"
     if not filename.exists():
         return False
     
-    new_filename = DB_PATH() / f"_{topic_id}.yaml"
+    new_filename = db_path() / f"_{topic_id}.yaml"
     move(filename, new_filename)
     
     # Remove from cache

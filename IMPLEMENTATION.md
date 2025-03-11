@@ -113,3 +113,17 @@ SynthPub includes a comprehensive logging system that provides:
 
 1. **System Logs** - Internal debug, info, warning, and error messages for developers
 2. **User Logs** - Clear, concise messages displayed to end users in the web interface
+
+## Prompt Templates
+
+SynthPub uses customizable prompt templates stored as Markdown files in the `resources/prompts` directory. These templates are used for various LLM operations:
+
+- `article-generation.md`: Template for generating new articles
+- `article-refinement.md`: Template for refining existing articles with new context
+- `article-relevance-filter.md`: Template for determining if new content is relevant to an existing article
+
+You can modify these templates to customize the behavior of the LLM operations. The templates are loaded automatically when the application starts.
+
+### Structured Output Parsing
+
+For certain operations like relevance filtering, SynthPub uses Pydantic models to enforce structured output from LLMs. This ensures consistent and reliable responses that can be easily processed by the application. The output format instructions are automatically appended to the prompt templates at runtime.
