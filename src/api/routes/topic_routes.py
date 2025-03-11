@@ -42,13 +42,12 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
         
         # Create a new article if requested
         article_id = None
-        if topic.generate_article:
-            background_tasks.add_task(
-                request_article_generation,
-                topic_id,
-                topic.name,
-                topic.description
-            )
+        background_tasks.add_task(
+            request_article_generation,
+            topic_id,
+            topic.name,
+            topic.description
+        )
         
         # Get thumbnail if not provided
         thumbnail_url = topic.thumbnail_url
