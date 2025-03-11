@@ -27,7 +27,7 @@ DB_PATH().mkdir(exist_ok=True, parents=True)
 logger.remove()
 
 # Add console logger for development
-logger.add(sys.stderr, level="INFO", 
+logger.add(sys.stderr, level="DEBUG", 
           format="<level>{level}</level> | <green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{message}</level>")
 
 # Add file logger with rotation
