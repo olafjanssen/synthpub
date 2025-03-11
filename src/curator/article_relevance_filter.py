@@ -4,6 +4,7 @@ Article refiner module for updating existing articles with new context.
 from langchain.prompts import PromptTemplate
 from .llm_utils import get_llm
 from utils.logging import debug
+from api.db.prompt_db import get_prompt
 
 def filter_relevance(topic_title: str, topic_description: str, article: str, new_context: str) -> bool:
     """
@@ -18,21 +19,12 @@ def filter_relevance(topic_title: str, topic_description: str, article: str, new
     Returns:
         bool: True if the new context is relevant
     """
-    prompt = PromptTemplate(
-        template="""You are evaluating if new content is relevant to the following topic and existing article.
-
-        Topic title: {topic_title}
-        Topic description: {topic_description}
-        
-        Existing article:
-        {article}
-
-        New content to evaluate:
-        {new_context}
-
-        Answer starting with YES or NO (without extra formatting): Is the new content relevant according to the topic description or the existing article? and then a short explanation.""",
-        input_variables=["topic_title", "topic_description", "article", "new_context"]
-    )
+    # Get the prompt template from the database
+    prompt_data = get_prompt('article-relevance-filter')
+    if not prompt_data:
+        raise ValueError("Article relevance filter prompt not found in the database")
+    
+    prompt = PromptTemplate.from_template(prompt_data.template)
     
     llm = get_llm('article_refinement')
     response = llm.invoke(prompt.format(

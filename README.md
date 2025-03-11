@@ -32,6 +32,16 @@ llm:
 db_path: ../db
 ```
 
+## Prompt Templates
+
+SynthPub uses customizable prompt templates stored as Markdown files in the `resources/prompts` directory. These templates are used for various LLM operations:
+
+- `article-generation.md`: Template for generating new articles
+- `article-refinement.md`: Template for refining existing articles with new context
+- `article-relevance-filter.md`: Template for determining if new content is relevant to an existing article
+
+You can modify these templates to customize the behavior of the LLM operations. The templates are loaded automatically when the application starts.
+
 ## API Usage Examples
 
 Run the API with hosted front-edn:

@@ -3,6 +3,7 @@ Article refiner module for updating existing articles with new context.
 """
 from langchain.prompts import PromptTemplate
 from .llm_utils import get_llm
+from api.db.prompt_db import get_prompt
 
 def refine_article(topic_title: str, topic_description: str, article: str, new_context: str) -> str:
     """
@@ -19,25 +20,12 @@ def refine_article(topic_title: str, topic_description: str, article: str, new_c
     """
     llm = get_llm('article_refinement')
     
-    prompt = PromptTemplate.from_template(
-        """
-        You are an expert content writer for a Wikipedia-like article.
-
-        Topic title: {topic_title}
-        Topic description: {topic_description}
-
-        Here is an existing article for this topic:
-
-        {article}
-
-        Given this new context:
-        {new_context}
-
-Please create an updated version of the article that incorporates 
-the new information while maintaining the same concise style. Try to keep as much as the original article as possible.
-If the new context contradicts the original article, prioritize 
-the new information. Keep it within 300-500 words."""
-    )
+    # Get the prompt template from the database
+    prompt_data = get_prompt('article-refinement')
+    if not prompt_data:
+        raise ValueError("Article refinement prompt not found in the database")
+    
+    prompt = PromptTemplate.from_template(prompt_data.template)
     
     return llm.invoke(prompt.format(
         topic_title=topic_title,
