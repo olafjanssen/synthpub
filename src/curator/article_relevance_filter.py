@@ -41,9 +41,7 @@ def filter_relevance(topic_title: str, topic_description: str, article: str, new
         input_variables=["topic_title", "topic_description", "article", "new_context"],
         partial_variables={"format_instructions": parser.get_format_instructions()}
     )
-    
-    debug("FILTER", "Prompt Template", prompt.template)
-    
+        
     # Format the prompt with our variables
     formatted_prompt = prompt.format(
         topic_title=topic_title,
@@ -51,14 +49,10 @@ def filter_relevance(topic_title: str, topic_description: str, article: str, new
         article=article,
         new_context=new_context
     )
-    
-    debug("FILTER", "Formatted Prompt", formatted_prompt)
-    
+        
     # Get the LLM and invoke it
     llm = get_llm('article_refinement')
     response_text = llm.invoke(formatted_prompt).content
-    
-    debug("FILTER", "Raw Response", response_text)
     
     try:
         # Parse the response into the Pydantic model
