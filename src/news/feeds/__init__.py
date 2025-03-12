@@ -16,6 +16,5 @@ CONNECTORS = [
     ArxivConnector,
 ]
 
-# Connect signals for all connectors
-for connector in CONNECTORS:
-    connector.connect_signals()
+# Note: We no longer connect signals for connectors here
+# The connectors are now accessed directly through the CONNECTORS list

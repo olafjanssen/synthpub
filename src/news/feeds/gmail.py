@@ -139,5 +139,3 @@ class GmailConnector(FeedConnector):
         except Exception as e:
             error("GMAIL", "Content fetch failed", f"Error fetching Gmail content: {str(e)}")
             return []
-
-GmailConnector.connect_signals()

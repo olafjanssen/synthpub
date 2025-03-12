@@ -100,4 +100,3 @@ Summary: {paper.summary}""",
             error("ARXIV", "Fetching papers failed", str(e))
             return []
 
-ArxivConnector.connect_signals()

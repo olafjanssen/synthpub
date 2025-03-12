@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from api.models.topic import Topic
 from api.models.feed_item import FeedItem
 from typing import Optional, Dict, Any
-from api.signals import topic_update_requested, news_feed_update_requested, news_feed_item_found, publish_requested, convert_requested
+from api.signals import topic_update_requested, news_feed_item_found, publish_requested, convert_requested
 from utils.logging import debug, info, warning, error
 import threading
 from queue import Queue
@@ -12,6 +12,7 @@ import news.converter
 import time
 from api.db.topic_db import get_topic, save_topic
 from api.db.article_db import get_article, update_article, create_article
+from api.db.cache_manager import get_all_connectors
 
 # Import the Runnable steps directly
 from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ArticleGeneratorStep
@@ -88,10 +89,10 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     """Signal handler for feed item found."""
     debug("FEED", "Item found", f"{feed_url} ({feed_item.url})")
 
-    # If this item needs further processing, send a new feed update request
+    # If this item needs further processing, process it directly with connectors
     if feed_item.needs_further_processing:
         debug("FEED", "Further processing needed", feed_item.url)
-        news_feed_update_requested.send(sender, feed_url=feed_item.url)
+        process_feed_url(sender, feed_item.url)
         return
 
     topic = sender
@@ -172,6 +173,32 @@ def process_feed_item(
     except Exception as e:
         error("CURATOR", "Error processing feed item", str(e))
 
+def process_feed_url(sender, feed_url: str):
+    """
+    Process a feed URL directly using available connectors.
+    
+    Args:
+        sender: The topic or other object that requested the feed processing
+        feed_url: The URL to process
+    """
+    debug("FEED", "Processing URL", feed_url)
+    
+    # Get all available connectors
+    connectors = get_all_connectors()
+    
+    # Find a connector that can handle this URL
+    for connector_class in connectors:
+        if connector_class.can_handle(feed_url):
+            debug("FEED", "Using connector", f"{connector_class.__name__} for {feed_url}")
+            try:
+                # Directly call the handler method that was previously triggered by the signal
+                connector_class.handle_feed_update(sender, feed_url)
+                return
+            except Exception as e:
+                error("FEED", "Connector error", f"{connector_class.__name__}: {str(e)}")
+    
+    warning("FEED", "No connector found", f"URL: {feed_url}")
+
 def update_topic(topic_id: str) -> Optional[Topic]:
     """Update topic article based on feed content."""
     try:
@@ -186,7 +213,7 @@ def update_topic(topic_id: str) -> Optional[Topic]:
         
         for feed_url in topic.feed_urls:
             info("FEED", "Processing", f"URL: {feed_url}, Topic: {topic.name}")
-            news_feed_update_requested.send(topic, feed_url=feed_url)
+            process_feed_url(topic, feed_url)
         return topic
         
     except Exception as e:

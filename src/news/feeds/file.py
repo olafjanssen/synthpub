@@ -139,5 +139,3 @@ class FileConnector(FeedConnector):
         except Exception as e:
             error("FILE", "URL processing failed", f"Error processing file URL {url}: {str(e)}")
             return []
-
-FileConnector.connect_signals()

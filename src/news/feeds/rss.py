@@ -8,7 +8,6 @@ from datetime import datetime
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlparse
 from .feed_connector import FeedConnector
-from api.signals import news_feed_update_requested, news_feed_item_found
 from utils.logging import debug, info, error, warning
 
 def get_pub_date(entry) -> datetime:
@@ -93,4 +92,3 @@ class RSSConnector(FeedConnector):
             error("RSS", "Fetch failed", f"URL: {url}, Error: {str(e)}")
             return []
 
-RSSConnector.connect_signals()

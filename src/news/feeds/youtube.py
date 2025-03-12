@@ -145,5 +145,3 @@ class YouTubeConnector(FeedConnector):
         except Exception as e:
             error("YOUTUBE", "Fetching content failed", str(e))
             return []
-
-YouTubeConnector.connect_signals()
