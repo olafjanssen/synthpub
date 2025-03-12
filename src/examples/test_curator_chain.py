@@ -73,7 +73,7 @@ def main():
         # Run the chain with our test data
         info("TEST", "Running content processing", "Starting process")
         result = chain.invoke({
-            "topic": topic,
+            "topic_id": topic.id,
             "feed_content": feed_content,
             "feed_item": feed_item
         })
@@ -82,7 +82,7 @@ def main():
         info("TEST", "Chain completed", f"Result: {result.get('result', False)}")
 
         result = chain.invoke({
-            "topic": topic,
+            "topic_id": topic.id,
             "feed_content": feed_content2,
             "feed_item": feed_item2
         })

@@ -9,6 +9,7 @@ from api.models.article import Article
 from api.models.feed_item import FeedItem
 from utils.logging import warning, debug
 from api.db.article_db import get_article
+from api.db.topic_db import get_topic
 from curator.steps.chain_errors import ChainStopError
 
 class InputCreatorStep(Runnable):
@@ -19,7 +20,7 @@ class InputCreatorStep(Runnable):
         Create a dictionary with all input values needed for the chain.
         
         Args:
-            inputs: Dictionary with topic, article, and feed content
+            inputs: Dictionary with topic_id, feed_content, and feed_item
             config: Optional configuration for the runnable
             
         Returns:
@@ -27,23 +28,24 @@ class InputCreatorStep(Runnable):
         """
         debug("CURATOR", "Preparing curating inputs")
         
-        # Extract the model objects from the input
-        topic : Topic = inputs.get("topic")
-        
+        # Extract the topic_id from the input
+        topic_id = inputs.get("topic_id")
+        if not topic_id:
+            raise ChainStopError("No topic_id provided", step="input_creator")
+            
+        # Load the topic from the database
+        topic = get_topic(topic_id)
+        if not topic:
+            raise ChainStopError(f"Topic not found: {topic_id}", step="input_creator")
+
         # Get the current article if one exists
-        if not topic.article:
-            # For topics without articles, we'll create a new one in the ArticleGeneratorStep
-            return {
-                **inputs,
-                "existing_article": None
-            }
-        
         article = get_article(topic.article)
-        if not article:
+        if topic.article and not article:
             warning("CURATOR", "Referenced article not found", f"Topic: {topic.name}, Article ID: {topic.article}")
             raise ChainStopError(f"Referenced article not found: {topic.article}", step="input_creator", topic=topic)
             
         return {
                 **inputs,
+                "topic": topic,
                 "existing_article": article,
             }             

@@ -4,22 +4,18 @@ from uuid import uuid4
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from api.db.topic_db import load_topics, mark_topic_deleted, update_topic, get_topic, save_topic
 from typing import List
-from api.signals import topic_update_requested, article_generation_requested
+from api.signals import topic_update_requested
 from curator.topic_updater import handle_topic_publishing
 from services.pexels_service import get_random_thumbnail
 from utils.logging import error, info, debug
+from curator.topic_updater import process_feed_item
+
 
 router = APIRouter()
 
-def request_article_generation(topic_id: str, topic_name: str, topic_description: str):
+def request_article_generation(topic_id: str):
     """Background task to request article generation."""
-    debug("ARTICLE", "Generation requested", f"Topic: {topic_name}")
-    article_generation_requested.send(
-        'api', 
-        topic_id=topic_id,
-        topic_name=topic_name,
-        topic_description=topic_description
-    )
+    process_feed_item(topic_id)
 
 def request_topic_update(topic_id: str):
     """Background task to request topic update."""
@@ -37,16 +33,7 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
     try:
         # Generate a unique ID for the topic
         topic_id = str(uuid4())
-        
-        # Create a new article if requested
-        article_id = None
-        background_tasks.add_task(
-            request_article_generation,
-            topic_id,
-            topic.name,
-            topic.description
-        )
-        
+                
         # Get thumbnail if not provided
         thumbnail_url = topic.thumbnail_url
         if not thumbnail_url or thumbnail_url.lower() in ["auto", "none", ""]:
@@ -60,7 +47,7 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
             description=topic.description,
             feed_urls=topic.feed_urls,
             publish_urls=topic.publish_urls,
-            article=article_id,
+            article=None,
             processed_feeds=[],
             thumbnail_url=thumbnail_url
         )
@@ -72,6 +59,8 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
         # Trigger update if feeds are provided
         if topic.feed_urls:
             background_tasks.add_task(request_topic_update, topic_id)
+        else:
+            background_tasks.add_task(request_article_generation, topic_id)
             
         return topic_data
     except Exception as e:
