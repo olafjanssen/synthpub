@@ -1,8 +1,11 @@
-from langchain_ollama import ChatOllama
-from langchain_openai import ChatOpenAI
-from langchain_mistralai.chat_models import ChatMistralAI
+from langchain.chat_models import init_chat_model
+from langchain_core.rate_limiters import InMemoryRateLimiter
+from langchain_core.caches import InMemoryCache
+from langchain.globals import set_llm_cache
 import os
 import yaml
+
+set_llm_cache(InMemoryCache())
 
 def load_llm_settings():
     """Load LLM settings from settings.yaml"""
@@ -29,29 +32,31 @@ def get_llm(task: str):
     model_name = task_settings.get("model_name", "gpt-4")
     max_tokens = task_settings.get("max_tokens", 800)
     
-    if provider == "ollama":
-        return ChatOllama(model=model_name, num_predict=max_tokens)
-    elif provider == "openai":
-        # Get API key from environment variable
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY not found in environment variables")
+    # Create rate limiter
+    rate_limiter = InMemoryRateLimiter(
+        requests_per_second=0.75,
+    )
+    
+    # Map providers to their API key environment variables
+    provider_api_keys = {
+        "openai": "OPENAI_API_KEY",
+        "mistralai": "MISTRAL_API_KEY",
+    }
         
-        return ChatOpenAI(
-            model_name=model_name,
-            max_tokens=max_tokens,
-            openai_api_key=api_key
-        )
-    elif provider == "mistral":
-        # Get API key from environment variable
-        api_key = os.getenv("MISTRAL_API_KEY")
+    # Prepare API key if needed
+    api_key = None
+    api_key_env = provider_api_keys[provider]
+    if api_key_env:
+        api_key = os.getenv(api_key_env)
         if not api_key:
-            raise ValueError("MISTRAL_API_KEY not found in environment variables")
-        
-        return ChatMistralAI(
-            model_name=model_name,
-            max_tokens=max_tokens,
-            mistral_api_key=api_key
-        )
-    else:
-        raise ValueError("Unsupported LLM provider specified in the configuration.")
+            raise ValueError(f"{api_key_env} not found in environment variables")
+    
+    # Initialize the chat model using the generalized method
+    return init_chat_model(
+        provider=provider,
+        model=model_name,
+        api_key=api_key,
+        max_tokens=max_tokens,
+        rate_limiter=rate_limiter,
+        temperature=0,
+    )
