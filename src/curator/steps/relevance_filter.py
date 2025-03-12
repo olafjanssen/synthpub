@@ -1,18 +1,19 @@
 """
 Relevance filter step for the curator chain.
 """
-from langchain.schema.runnable import Runnable
+from langchain_core.runnables import Runnable
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any
 
 from api.models.topic import Topic
 from api.models.article import Article
 from api.models.feed_item import FeedItem
 from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
-from utils.logging import debug, info
+from api.db.topic_db import save_topic
+from utils.logging import debug, warning
 
 class RelevanceResponse(BaseModel):
     """Model for the relevance filter response."""
@@ -20,78 +21,77 @@ class RelevanceResponse(BaseModel):
     explanation: str = Field(description="Explanation of why the content is or is not relevant")
 
 class RelevanceFilterStep(Runnable):
-    """Runnable step that filters content for relevance to topic."""
+    """Runnable step that filters content based on relevance to the topic."""
     
     def invoke(self, inputs: Dict[str, Any], config=None) -> Dict[str, Any]:
         """
-        Process inputs through the relevance filter step.
+        Check if feed content is relevant to the topic and article.
         
         Args:
-            inputs: Dictionary with topic, article, and feed content information
-            config: Optional configuration for the runnable
-            
+            chain_input: Dictionary with topic, feed content, and other info
+        
         Returns:
-            Dictionary with original inputs and relevance information added
+            Updated chain input with relevance flag
         """
-        topic_title = inputs["topic_title"]
-        topic_description = inputs["topic_description"]
-        article = inputs["article"]
-        new_context = inputs["new_context"]
-        feed_item = inputs["feed_item"]
+
+        # Skip refinement if the chain should stop
+        if inputs.get("should_stop", False):
+            return inputs
+
+        topic: Topic = inputs["topic"]
+        existing_article : Article = inputs["existing_article"]
+        feed_content : str = inputs["feed_content"]
+        feed_item : FeedItem = inputs["feed_item"]
+        
+        
+        # Short-circuit if feed content is empty or missing (for new topics without content)
+        if not feed_content or not feed_item:
+            debug("CURATOR", "Relevance filter step", f"No feed content for {topic.name}, skipping relevance check")
+            inputs["should_stop"] = True
+            return inputs
+                        
+            
+        # Now we know we have an article and feed content
+        debug("CURATOR", "Checking relevance", f"Topic: {topic.name}, Feed: {feed_item.url}")
+                
+        # Use LLM to determine relevance
+        llm = get_llm('relevance_filter')
         
         # Get the prompt template from the database
         prompt_data = get_prompt('article-relevance-filter')
         if not prompt_data:
-            raise ValueError("Article relevance filter prompt not found in the database")
-        
-        # Create a Pydantic output parser
+            warning("CURATOR", "Prompt not found", "article-relevance-filter prompt not found in database")
+            inputs["should_stop"] = True
+            return inputs
+            
+        # Set up the parser
         parser = PydanticOutputParser(pydantic_object=RelevanceResponse)
-        
-        # Create the prompt template with format instructions as partial variables
+                
         prompt = PromptTemplate(
-            template=prompt_data.template + "\n\n{format_instructions}",
+            template=prompt_data.template + "\n\n {format_instructions}",
             input_variables=["topic_title", "topic_description", "article", "new_context"],
-            partial_variables={"format_instructions": parser.get_format_instructions()}
+            partial_variables={"format_instructions": parser.get_format_instructions()},
         )
+
+        relevance_chain = prompt | llm | parser
+
+        response = relevance_chain.invoke({
+            "topic_title": topic.name,
+            "topic_description": topic.description,
+            "article": existing_article.content,
+            "new_context": feed_content
+        })
             
-        # Format the prompt with our variables
-        formatted_prompt = prompt.format(
-            topic_title=topic_title,
-            topic_description=topic_description,
-            article=article,
-            new_context=new_context
-        )
-            
-        # Get the LLM and invoke it
-        llm = get_llm('article_refinement')
-        response_text = llm.invoke(formatted_prompt).content
+        debug("CURATOR", f"Content relevance: {response.is_relevant}", f"Topic: {topic.name}, Reason: {response.explanation}")
         
-        # Parse the response
-        try:
-            # Parse the response into the Pydantic model
-            parsed_response = parser.parse(response_text)
-            is_relevant = parsed_response.is_relevant
-            explanation = parsed_response.explanation
-            debug("FILTER", "Parsed Response", f"is_relevant: {is_relevant}, explanation: {explanation}")
-        except Exception as e:
-            # Fallback to the original parsing method if the structured parsing fails
-            debug("FILTER", "Parsing Error", str(e))
-            is_relevant = "YES" in response_text.strip().upper()
-            explanation = response_text.strip()
+        # Update chain input with relevance flag and explanation
+        inputs["is_relevant"] = response.is_relevant
+        inputs["relevance_explanation"] = response.explanation
+        inputs["should_stop"] = not response.is_relevant
         
-        # Store explanation in feed item
-        feed_item.relevance_explanation = explanation
+        feed_item.is_relevant = response.is_relevant
+        feed_item.relevance_explanation = response.explanation
+        topic.processed_feeds.append(feed_item)
         
-        if not is_relevant:
-            debug("CURATOR", "Content not relevant", 
-                  f"Topic: {topic_title}, Item: {feed_item.url}")
-        else:
-            info("CURATOR", "Content is relevant", 
-                 f"Topic: {topic_title}, Item: {feed_item.url}")
-        
-        # Pass both the result and the inputs to the next step
-        return {
-            **inputs,
-            "is_relevant": is_relevant,
-            "relevance_explanation": explanation
-        } 
+        save_topic(topic)
+        return inputs 

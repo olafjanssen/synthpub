@@ -7,7 +7,9 @@ from typing import Dict, Any
 from api.models.topic import Topic
 from api.models.article import Article
 from api.models.feed_item import FeedItem
-
+from utils.logging import warning
+from api.db.article_db import get_article
+from utils.logging import debug
 class InputCreatorStep(Runnable):
     """Runnable step that creates the input dictionary for the chain."""
     
@@ -22,18 +24,20 @@ class InputCreatorStep(Runnable):
         Returns:
             Dictionary with all necessary inputs for downstream steps
         """
-        topic = inputs["topic"]
-        current_article = inputs["current_article"]
-        feed_content = inputs["feed_content"]
-        feed_item = inputs["feed_item"]
+        debug("CURATOR", "Preparing curating inputs")
         
+        # Extract the model objects from the input
+        topic : Topic = inputs.get("topic")
+        
+        # Get the current article if one exists
+        if not topic.article:
+            return inputs
+        
+        article = get_article(topic.article)
+        if not article:
+            warning("CURATOR", "Referenced article not found", f"Topic: {topic.name}, Article ID: {topic.article}")
+            inputs["should_stop"] = True
         return {
-            "topic_title": topic.name,
-            "topic_description": topic.description,
-            "article": current_article.content,
-            "new_context": feed_content,
-            "topic": topic,
-            "current_article": current_article,
-            "feed_content": feed_content,
-            "feed_item": feed_item
-        } 
+                **inputs,
+                "existing_article": article,
+            }             

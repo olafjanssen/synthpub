@@ -27,16 +27,20 @@ class ArticleRefinerStep(Runnable):
         Returns:
             Dictionary with original inputs and refined content added
         """
-        # Skip refinement if content is not relevant
-        if not inputs["is_relevant"]:
+        # Skip refinement if the chain should stop
+        if inputs.get("should_stop", False):
             return inputs
         
-        topic_title = inputs["topic_title"]
-        topic_description = inputs["topic_description"]
-        article = inputs["article"]
-        new_context = inputs["new_context"]
-        feed_item = inputs["feed_item"]
-        current_article = inputs["current_article"]
+        # Extract data from model objects
+        topic: Topic = inputs["topic"]
+        current_article: Article = inputs["existing_article"]
+        feed_content : str = inputs["feed_content"]
+        feed_item : FeedItem = inputs["feed_item"]
+        
+        # Extract properties needed for the prompt
+        topic_title = topic.name
+        topic_description = topic.description
+        article_content = current_article.content
         
         try:
             # Get the LLM
@@ -54,8 +58,8 @@ class ArticleRefinerStep(Runnable):
             refined_content = llm.invoke(prompt.format(
                 topic_title=topic_title,
                 topic_description=topic_description,
-                article=article,
-                new_context=new_context
+                article=article_content,
+                new_context=feed_content
             )).content
             
             # Update the article in the database
@@ -70,13 +74,11 @@ class ArticleRefinerStep(Runnable):
             
             return {
                 **inputs,
-                "refined_content": refined_content,
-                "success": True
+                "refined_article": updated_article,
             }
         except Exception as e:
             error("CURATOR", "Failed to refine article", str(e))
             return {
                 **inputs,
-                "refined_content": None,
-                "success": False
+                "should_stop": True,
             } 

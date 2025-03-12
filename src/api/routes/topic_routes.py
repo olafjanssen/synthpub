@@ -3,8 +3,6 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from uuid import uuid4
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from api.db.topic_db import load_topics, mark_topic_deleted, update_topic, get_topic, save_topic
-from api.db.article_db import create_article
-from curator.article_generator import generate_article
 from typing import List
 from api.signals import topic_update_requested, article_generation_requested
 from curator.topic_updater import handle_topic_publishing

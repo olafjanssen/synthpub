@@ -4,12 +4,13 @@ Result processor step for the curator chain.
 from langchain.schema.runnable import Runnable
 from typing import Dict, Any, Union
 
+from api.models.topic import Topic
 from utils.logging import debug
 
 class ResultProcessorStep(Runnable):
     """Runnable step that processes the chain results into a boolean value."""
     
-    def invoke(self, inputs: Dict[str, Any], config=None) -> bool:
+    def invoke(self, inputs: Dict[str, Any], config=None) -> Dict[str, Any]:
         """
         Process chain results into a boolean value.
         
@@ -18,10 +19,13 @@ class ResultProcessorStep(Runnable):
             config: Optional configuration for the runnable
             
         Returns:
-            Boolean indicating if the content was relevant and successfully processed
+            Dictionary with original inputs and result flag added
         """
-        topic_name = inputs["topic"].name if "topic" in inputs else "Unknown"
-        result = inputs["is_relevant"] and inputs.get("success", False)
+        topic: Topic = inputs["topic"]
+        result = inputs.get("is_relevant", False) and not inputs.get("should_stop", False)
         
-        debug("CURATOR", f"Chain result: {result}", f"Topic: {topic_name}")
-        return result 
+        debug("CURATOR", f"Chain result: {result}", f"Topic: {topic.name}")
+        return {
+            **inputs,
+            "result": result
+        }

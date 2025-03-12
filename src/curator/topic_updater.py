@@ -3,10 +3,9 @@ from api.models.topic import Topic
 from api.models.article import Article
 from api.db.topic_db import get_topic, save_topic
 from api.db.article_db import get_article, update_article, create_article
-from curator.article_generator import generate_article
 from api.models.feed_item import FeedItem
-from typing import Optional
-from api.signals import topic_update_requested, topic_updated, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated, convert_requested, article_generation_requested
+from typing import Optional, Dict, Any
+from api.signals import topic_update_requested, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated, convert_requested, article_generation_requested
 from utils.logging import debug, info, warning, error
 import threading
 from queue import Queue
@@ -16,7 +15,7 @@ import news.converter
 import time
 
 # Import the Runnable steps directly
-from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ResultProcessorStep
+from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ResultProcessorStep, ArticleGeneratorStep
 
 # Add queue for handling updates
 update_queue = Queue()
@@ -52,27 +51,17 @@ def handle_topic_publishing(sender):
 def handle_article_generation(sender, topic_id: str, topic_name: str, topic_description: str):
     """Signal handler for article generation requests."""
     try:
-        info("ARTICLE", "Generation started", topic_name)
-        
-        # Generate article content
-        content = generate_article(topic_name, topic_description)
-        
-        # Create article in the database
-        article = create_article(
-            title=topic_name,
-            topic_id=topic_id,
-            content=content
-        )
-        
-        # Update the topic with the new article ID
+        # Get the topic
         topic = get_topic(topic_id)
-        if topic:
-            topic.article = article.id
-            save_topic(topic)
-            info("ARTICLE", "Generated", topic_name)
-        else:
+        if not topic:
             warning("ARTICLE", "Topic not found", f"ID: {topic_id}, Name: {topic_name}")
+            return
             
+        chain = create_curator_chain()
+        
+        # Execute the chain with just the topic
+        chain.invoke({"topic": topic})
+        
     except Exception as e:
         error("ARTICLE", "Generation failed", f"{topic_name}: {str(e)}")
 
@@ -130,33 +119,11 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
         debug("FEED", "Skipping processed item", feed_item.url)
         return
 
-    current_article = get_article(topic.article)
-    if not current_article:
-        error("ARTICLE", "Not found", f"Topic: {topic.name}")
-        raise HTTPException(status_code=404, detail="Article not found")
-
-    # Process single feed item
-    updated_article = process_feed_item(
-        topic=topic,
-        current_article=current_article,
-        feed_content=content,
-        feed_item=feed_item,
-    )
-    
-    # Mark relevance and add to processed feeds
-    feed_item.is_relevant = updated_article is not None
-    topic.processed_feeds.append(feed_item)
-    
-    # Update current article if content was relevant
-    if updated_article:
-        topic.article = updated_article.id
-        info("CONTENT", "New content added", f"Topic: {topic.name}")
-
-    # Save updated topic
-    topic_updated.send(topic)
-
-    # Publish updated article
-    if updated_article:
+    # Process feed item through the curator chain
+    process_feed_item(topic, content, feed_item)
+        
+    # Publish updated article if content was relevant
+    if feed_item.is_relevant:
         article_updated.send(topic)
 
 def queue_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
@@ -184,16 +151,11 @@ def start_update_processor():
     
     return processor_thread
 
-def process_feed_item(
-    topic: Topic,
-    current_article: Article,
-    feed_content: str,
-    feed_item: FeedItem
-) -> Optional[Article]:
-    """Process a single feed item for a topic."""
-    
+def create_curator_chain():
+    """Create the LCEL curator chain."""
     # Initialize step components
     input_creator = InputCreatorStep()
+    article_generator = ArticleGeneratorStep()
     relevance_filter = RelevanceFilterStep()
     article_refiner = ArticleRefinerStep()
     result_processor = ResultProcessorStep()
@@ -201,27 +163,42 @@ def process_feed_item(
     # Create the LCEL chain
     chain = (
         input_creator 
+        | article_generator
         | relevance_filter 
         | article_refiner 
         | result_processor
     )
     
+    return chain
+
+def process_feed_item(
+    topic: Topic,
+    feed_content: str,
+    feed_item: FeedItem
+) -> Dict[str, Any]:
+    """
+    Process a single feed item for a topic through the curator chain.
+    
+    Args:
+        topic: The topic being processed
+        feed_content: The content from the feed
+        feed_item: The feed item being processed
+        
+    Returns:
+        Dict: The result of processing the feed item
+    """
+    chain = create_curator_chain()
+    
     # Execute the chain
-    is_relevant = chain.invoke(
+    result = chain.invoke(
         {
             "topic": topic,
-            "current_article": current_article,
             "feed_content": feed_content,
             "feed_item": feed_item
         }
     )
     
-    # Return updated article if content was relevant
-    if is_relevant:
-        updated_article = get_article(current_article.id)
-        return updated_article
-    
-    return None
+    return result
 
 def update_topic(topic_id: str) -> Optional[Topic]:
     """Update topic article based on feed content."""
@@ -231,7 +208,7 @@ def update_topic(topic_id: str) -> Optional[Topic]:
         if not topic:
             warning("TOPIC", "Not found", topic_id)
             raise HTTPException(status_code=404, detail="Topic not found")
-                
+                        
         # Process feeds
         info("TOPIC", "Updating", topic.name)
         

@@ -6,7 +6,7 @@ import yaml
 import uuid
 from datetime import datetime
 from shutil import move
-from api.signals import topic_updated, topic_saved
+from api.signals import topic_saved
 from api.models import Topic
 from api.models.feed_item import FeedItem
 from .common import get_db_path
@@ -152,5 +152,3 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
         except Exception as e:
             error("DB", "Feed item parsing", f"Error parsing feed item: {e}")
     return feed_items
-
-topic_updated.connect(save_topic)
