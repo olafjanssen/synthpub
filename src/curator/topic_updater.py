@@ -3,8 +3,6 @@ from api.models.topic import Topic
 from api.models.article import Article
 from api.db.topic_db import get_topic, save_topic
 from api.db.article_db import get_article, update_article, create_article
-from curator.article_relevance_filter import filter_relevance
-from curator.article_refiner import refine_article
 from curator.article_generator import generate_article
 from api.models.feed_item import FeedItem
 from typing import Optional
@@ -16,6 +14,7 @@ import news.feeds
 import news.publishers
 import news.converter   
 import time
+from curator.lcel_curator_chain import process_curator_chain
 
 # Add queue for handling updates
 update_queue = Queue()
@@ -191,25 +190,20 @@ def process_feed_item(
 ) -> Optional[Article]:
     """Process a single feed item for a topic."""
     
-    # Skip if content not relevant
-    is_relevant, explanation = filter_relevance(topic.name, topic.description, current_article.content, feed_content)
-    feed_item.relevance_explanation = explanation
-    
-    if not is_relevant:
-        debug("FEED", "Content not relevant", f"Item: {feed_item.url}, Topic: {topic.name}")
-        return None
-        
-    # Update article with new content
-    refined_content = refine_article(topic.name, topic.description, current_article.content, feed_content)
-    updated_article = update_article(
-        article_id=current_article.id,
-        content=refined_content,
-        feed_item=feed_item
+    # Process through LCEL curator chain
+    is_relevant = process_curator_chain(
+        topic,
+        current_article,
+        feed_content,
+        feed_item
     )
     
-    info("ARTICLE", "Updated with new content", f"Topic: {topic.name}, Source: {feed_item.url}")
+    # Return updated article if content was relevant
+    if is_relevant:
+        updated_article = get_article(current_article.id)
+        return updated_article
     
-    return updated_article
+    return None
 
 def update_topic(topic_id: str) -> Optional[Topic]:
     """Update topic article based on feed content."""

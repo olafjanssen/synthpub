@@ -40,6 +40,11 @@ class Topic(TopicBase):
     created_at: datetime = datetime.now()
     updated_at: Optional[datetime] = None
 
+    def __init__(self, **data):
+        """Initialize a topic."""
+        super().__init__(**data)
+        self.processed_feeds = self.processed_feeds or []
+
     def add_representation(self, type: str, content: str, metadata: Dict = {}) -> None:
         """Add a new representation to the topic."""
         self.representations.append(
