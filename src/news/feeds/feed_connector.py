@@ -1,7 +1,6 @@
 """Base interface for feed connectors."""
-from typing import List, Dict, Protocol
+from typing import List, Dict, Protocol, Callable, Any
 from typing_extensions import runtime_checkable
-from api.signals import news_feed_item_found
 from api.models.feed_item import FeedItem
 from api.db.cache_manager import get_from_cache, add_to_cache
 from utils.logging import debug, info, error, warning
@@ -44,6 +43,9 @@ class FeedConnector(Protocol):
         2. For final content items (like web pages or individual files):
            - Creates FeedItem objects and sends them for processing
         """
+        # Import here to avoid circular imports
+        from curator.topic_updater import add_feed_item_to_queue
+        
         debug("FEED", "Checking handler", f"URL: {feed_url}, Handler: {cls.__name__}")
         if cls.can_handle(feed_url):
             debug("FEED", "Using handler", f"URL: {feed_url}, Handler: {cls.__name__}")
@@ -78,7 +80,7 @@ class FeedConnector(Protocol):
                         needs_further_processing=needs_further_processing
                     )
                     
-                    # Send signal to queue the item (same for both cases)
-                    news_feed_item_found.send(sender, feed_url=feed_url, feed_item=feed_item, content=item_content)
+                    # Directly add to queue instead of using signals
+                    add_feed_item_to_queue(sender, feed_url=feed_url, feed_item=feed_item, content=item_content)
             except Exception as e:
                 error("FEED", "Processing error", f"URL: {feed_url}, Error: {str(e)}")

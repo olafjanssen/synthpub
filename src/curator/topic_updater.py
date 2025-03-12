@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from api.models.topic import Topic
 from api.models.feed_item import FeedItem
 from typing import Optional, Dict, Any
-from api.signals import topic_update_requested, news_feed_item_found, publish_requested, convert_requested
+from api.signals import topic_update_requested, publish_requested, convert_requested
 from utils.logging import debug, info, warning, error
 import threading
 from queue import Queue
@@ -86,7 +86,7 @@ def process_queued_feed_item(feed_item_data):
         error("FEED", "Processing error", str(e))
 
 def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
-    """Signal handler for feed item found."""
+    """Handler for feed items."""
     debug("FEED", "Item found", f"{feed_url} ({feed_item.url})")
 
     # If this item needs further processing, process it directly with connectors
@@ -103,8 +103,8 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     # Always trigger publishing after processing
     handle_topic_publishing(topic)
 
-def queue_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
-    """Queue a feed item for processing."""
+def add_feed_item_to_queue(sender, feed_url: str, feed_item: FeedItem, content: str):
+    """Add a feed item to the processing queue."""
     debug("FEED", "Queuing item", feed_item.url)
     feed_item_queue.put({
         'sender': sender,
@@ -117,7 +117,6 @@ def start_update_processor():
     """Start the update processor thread."""
     # Connect signal handlers
     topic_update_requested.connect(handle_topic_update)
-    news_feed_item_found.connect(queue_feed_item)
     
     # Start queue processor thread
     processor_thread = threading.Thread(target=process_update_queue, daemon=True)
