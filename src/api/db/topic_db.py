@@ -6,7 +6,6 @@ import yaml
 import uuid
 from datetime import datetime
 from shutil import move
-from api.signals import topic_saved
 from api.models import Topic
 from api.models.feed_item import FeedItem
 from .common import get_db_path
@@ -66,8 +65,6 @@ def save_topic(topic: Topic) -> None:
     
     # Update cache
     _topic_cache[topic.id] = topic
-
-    topic_saved.send(topic)
 
 def get_topic(topic_id: str) -> Optional[Topic]:
     """Retrieve topic by id from cache or disk."""

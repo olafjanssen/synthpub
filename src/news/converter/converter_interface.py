@@ -1,7 +1,7 @@
 """Base interface for publishers."""
 from typing import Dict, Protocol
 from typing_extensions import runtime_checkable
-from api.signals import topic_converted, convert_requested
+from api.signals import convert_requested
 from api.models import Topic
 from utils.logging import debug, info, error
 
@@ -36,7 +36,6 @@ class Converter(Protocol):
             debug("CONVERT", "Using handler", f"Type: {type}, Handler: {cls.__name__}")
             try:
                 cls.convert_representation(type, sender)
-                topic_converted.send(sender, type=type)
             except Exception as e:
                 error("CONVERT", "Failed", f"Type: {type}, Error: {str(e)}")
         else:

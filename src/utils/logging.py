@@ -10,18 +10,13 @@ from typing import Dict, List, Any
 from loguru import logger
 from blinker import signal
 from api.db.common import get_db_path
+from api.routes.log_routes import handle_log
 
-def DB_PATH():
+def db_path():
     return get_db_path('logs')
 
-# Create signal for log events
-try:
-    from api.signals import log_event
-except ImportError:
-    log_event = signal('log-event')
-
 # Configure log directory in the database folder
-DB_PATH().mkdir(exist_ok=True, parents=True)
+db_path().mkdir(exist_ok=True, parents=True)
 
 # Remove default logger
 logger.remove()
@@ -32,7 +27,7 @@ logger.add(sys.stderr, level="DEBUG",
 
 # Add file logger with rotation
 logger.add(
-    str(DB_PATH() / "synthpub.log"), 
+    str(db_path() / "synthpub.log"), 
     rotation="10 MB", 
     retention="1 week", 
     level="DEBUG",
@@ -81,8 +76,8 @@ def log(component: str, action: str, detail: str = "", level: str = "INFO", **kw
     if len(recent_logs) > MAX_LOGS:
         recent_logs.pop(0)
     
-    # Emit signal for WebSocket - all logs are now real-time
-    log_event.send(log_entry=log_entry)
+    # Emit WebSocket message
+    handle_log(log_entry)
 
 # Convenience functions
 def debug(component: str, action: str, detail: str = "", **kwargs) -> None:

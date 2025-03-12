@@ -1,7 +1,7 @@
 """Publisher interface for publishing content."""
 from typing import Dict, Protocol
 from typing_extensions import runtime_checkable
-from api.signals import topic_published, publish_requested
+from api.signals import publish_requested
 from api.models import Topic
 from utils.logging import debug, info, error
 
@@ -36,7 +36,6 @@ class Publisher(Protocol):
             debug("PUBLISH", "Using handler", f"URL: {publish_url}, Handler: {cls.__name__}")
             try:
                 cls.publish_content(publish_url, sender)
-                topic_published.send(sender, publish_url=publish_url)
             except Exception as e:
                 error("PUBLISH", "Failed", f"URL: {publish_url}, Error: {str(e)}")
 

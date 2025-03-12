@@ -6,8 +6,7 @@ from typing import Dict, List, Any
 import asyncio
 import time
 from contextlib import asynccontextmanager
-from utils.logging import get_recent_logs, info, debug
-from api.signals import log_event as log_signal
+import utils.logging as logging
 
 router = APIRouter()
 
@@ -18,10 +17,8 @@ active_connections: List[WebSocket] = []
 main_event_loop = None
 
 # Handler for log events
-def handle_log(sender, **kwargs):
+def handle_log(log_data: Dict[str, Any]):
     """Handle log event from the signal system."""
-    # Extract log data
-    log_data = kwargs.get('log_entry', {})
     
     # Add timestamp if not present
     if 'timestamp' not in log_data:
@@ -54,7 +51,7 @@ async def send_log_to_websocket(websocket: WebSocket, log_data: Dict[str, Any]):
     try:
         await websocket.send_json({"type": "log", "log": log_data})
     except Exception as e:
-        debug("WEBSOCKET", "Send failed", str(e))
+        logging.debug("WEBSOCKET", "Send failed", str(e))
         # Connection probably closed, remove it
         if websocket in active_connections:
             active_connections.remove(websocket)
@@ -62,7 +59,7 @@ async def send_log_to_websocket(websocket: WebSocket, log_data: Dict[str, Any]):
 @router.get("/logs")
 async def get_logs(min_level: str = "INFO", count: int = 100):
     """Return recent logs."""
-    logs = get_recent_logs(min_level=min_level, max_count=count)
+    logs = logging.get_recent_logs(min_level=min_level, max_count=count)
     return logs
 
 @router.websocket("/ws/logs")
@@ -75,15 +72,15 @@ async def websocket_logs(websocket: WebSocket):
         main_event_loop = asyncio.get_running_loop()
     
     client_info = f"{websocket.client.host}:{websocket.client.port}"
-    debug("WEBSOCKET", "New connection", client_info)
+    logging.debug("WEBSOCKET", "New connection", client_info)
     
     await websocket.accept()
     active_connections.append(websocket)
-    debug("WEBSOCKET", "Connection accepted", f"{len(active_connections)} active connections")
+    logging.debug("WEBSOCKET", "Connection accepted", f"{len(active_connections)} active connections")
     
     # Send initial logs
-    initial_logs = get_recent_logs(min_level="INFO", max_count=50)
-    debug("WEBSOCKET", "Sending initial logs", f"{len(initial_logs)} logs to {client_info}")
+    initial_logs = logging.get_recent_logs(min_level="INFO", max_count=50)
+    logging.debug("WEBSOCKET", "Sending initial logs", f"{len(initial_logs)} logs to {client_info}")
     await websocket.send_json({"type": "initial", "logs": initial_logs})
     
     try:
@@ -95,11 +92,11 @@ async def websocket_logs(websocket: WebSocket):
             if data == "ping":
                 await websocket.send_json({"type": "pong", "timestamp": time.time()})
     except WebSocketDisconnect:
-        debug("WEBSOCKET", "Client disconnected", client_info)
+        logging.debug("WEBSOCKET", "Client disconnected", client_info)
         # Remove from the active connections
         if websocket in active_connections:
             active_connections.remove(websocket)
-        debug("WEBSOCKET", "Client disconnected", f"{len(active_connections)} connections remaining")
+        logging.debug("WEBSOCKET", "Client disconnected", f"{len(active_connections)} connections remaining")
 
 # Define lifespan for this router
 @asynccontextmanager
@@ -107,12 +104,8 @@ async def lifespan(app):
     # Startup: register log handler
     global main_event_loop
     main_event_loop = asyncio.get_running_loop()
-    log_signal.connect(handle_log)
-    debug("SYSTEM", "Starting WebSocket distributor", "Log message relay")
+    logging.debug("SYSTEM", "Starting WebSocket distributor", "Log message relay")
     yield
     
-    # Shutdown: cleanup if needed
-    log_signal.disconnect(handle_log)
-
 # Expose lifespan to be used by the main application
 router.lifespan = lifespan
