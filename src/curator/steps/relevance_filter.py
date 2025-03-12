@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, Tuple
 from api.models.topic import Topic
 from api.models.article import Article
 from api.models.feed_item import FeedItem
-from curator.llm_utils import get_llm
+from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 from utils.logging import debug, info
 

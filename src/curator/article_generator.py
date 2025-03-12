@@ -1,6 +1,6 @@
 """Article generator using LLM."""
 from langchain.prompts import PromptTemplate
-from .llm_utils import get_llm
+from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 
 def generate_article(topic_title: str, topic_description: str) -> str:

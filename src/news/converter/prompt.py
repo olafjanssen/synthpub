@@ -4,7 +4,7 @@ Content converter using a prompt from the prompt database.
 from .converter_interface import Converter
 from api.models.topic import Topic
 from langchain.prompts import PromptTemplate
-from curator.llm_utils import get_llm
+from services.llm_service import get_llm
 from utils.logging import debug, info, error, warning
 from api.db.prompt_db import get_prompt
 

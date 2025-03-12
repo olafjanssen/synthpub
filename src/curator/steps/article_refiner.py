@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from api.models.topic import Topic
 from api.models.article import Article
 from api.models.feed_item import FeedItem
-from curator.llm_utils import get_llm
+from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 from api.db.article_db import update_article
 from utils.logging import info, error
