@@ -14,7 +14,9 @@ import news.feeds
 import news.publishers
 import news.converter   
 import time
-from curator.lcel_curator_chain import process_curator_chain
+
+# Import the Runnable steps directly
+from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ResultProcessorStep
 
 # Add queue for handling updates
 update_queue = Queue()
@@ -190,12 +192,28 @@ def process_feed_item(
 ) -> Optional[Article]:
     """Process a single feed item for a topic."""
     
-    # Process through LCEL curator chain
-    is_relevant = process_curator_chain(
-        topic,
-        current_article,
-        feed_content,
-        feed_item
+    # Initialize step components
+    input_creator = InputCreatorStep()
+    relevance_filter = RelevanceFilterStep()
+    article_refiner = ArticleRefinerStep()
+    result_processor = ResultProcessorStep()
+    
+    # Create the LCEL chain
+    chain = (
+        input_creator 
+        | relevance_filter 
+        | article_refiner 
+        | result_processor
+    )
+    
+    # Execute the chain
+    is_relevant = chain.invoke(
+        {
+            "topic": topic,
+            "current_article": current_article,
+            "feed_content": feed_content,
+            "feed_item": feed_item
+        }
     )
     
     # Return updated article if content was relevant

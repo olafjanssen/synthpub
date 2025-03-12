@@ -16,35 +16,6 @@ from utils.logging import info, error
 class ArticleRefinerStep(Runnable):
     """Runnable step that refines article content if relevant."""
     
-    def _refine_article(self, topic_title: str, topic_description: str, article: str, new_context: str) -> str:
-        """
-        Refine an existing article with new context.
-        
-        Args:
-            topic_title: Title of the topic to write about
-            topic_description: Description and context for the topic to write about
-            article: Original article text
-            new_context: New information to incorporate
-            
-        Returns:
-            str: Refined article text
-        """
-        llm = get_llm('article_refinement')
-        
-        # Get the prompt template from the database
-        prompt_data = get_prompt('article-refinement')
-        if not prompt_data:
-            raise ValueError("Article refinement prompt not found in the database")
-        
-        prompt = PromptTemplate.from_template(prompt_data.template)
-        
-        return llm.invoke(prompt.format(
-            topic_title=topic_title,
-            topic_description=topic_description,
-            article=article,
-            new_context=new_context
-        )).content
-    
     def invoke(self, inputs: Dict[str, Any], config=None) -> Dict[str, Any]:
         """
         Process inputs through the article refiner step.
@@ -68,13 +39,24 @@ class ArticleRefinerStep(Runnable):
         current_article = inputs["current_article"]
         
         try:
-            # Refine article content
-            refined_content = self._refine_article(
-                topic_title,
-                topic_description,
-                article,
-                new_context
-            )
+            # Get the LLM
+            llm = get_llm('article_refinement')
+            
+            # Get the prompt template from the database
+            prompt_data = get_prompt('article-refinement')
+            if not prompt_data:
+                raise ValueError("Article refinement prompt not found in the database")
+            
+            # Create and format the prompt
+            prompt = PromptTemplate.from_template(prompt_data.template)
+            
+            # Invoke the LLM to refine the article
+            refined_content = llm.invoke(prompt.format(
+                topic_title=topic_title,
+                topic_description=topic_description,
+                article=article,
+                new_context=new_context
+            )).content
             
             # Update the article in the database
             updated_article = update_article(

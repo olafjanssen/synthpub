@@ -132,33 +132,10 @@ For certain operations like relevance filtering, SynthPub uses Pydantic models t
 
 SynthPub implements a modular, composable curator chain architecture for processing and filtering content from feeds. The implementation uses LangChain Expression Language (LCEL) with individual Runnable components:
 
-1. **Chain Components**:
-   - Each step in the curator chain is implemented as a separate `Runnable` class
-   - Components can be combined and reordered easily without changing the underlying code
-   - Each component focuses on a single responsibility:
-     - `InputCreatorStep`: Prepares and normalizes input data for processing
-     - `RelevanceFilterStep`: Determines if content is relevant to the topic
-     - `ArticleRefinerStep`: Refines the article with new relevant content
-     - `ResultProcessorStep`: Transforms chain results into the required output format
-
-2. **LCEL Chain**:
-   - Components are linked together using the `|` operator
-   - Data flows through the chain sequentially, with each step receiving the output of the previous step
-   - The chain is defined with a clear, declarative syntax:
-     ```python
-     chain = (
-         input_creator 
-         | relevance_filter 
-         | article_refiner 
-         | result_processor
-     )
-     ```
-
-3. **Advantages**:
-   - Clean separation of concerns with each component focused on a single task
-   - Easy to extend by adding new components or modifying existing ones
-   - Simplified testing as each component can be tested in isolation
-   - Clear data flow through the chain makes debugging easier
-   - Modular design allows for easy customization without changing core functionality
-
-This architecture replaces the previous signal-based system with a more direct, functional approach that is easier to understand and maintain while providing the same capabilities.
+- Each step in the curator chain is implemented as a separate `Runnable` class
+- Components can be combined and reordered easily without changing the underlying code
+- Each component focuses on a single responsibility:
+  - `InputCreatorStep`: Prepares and normalizes input data for processing
+  - `RelevanceFilterStep`: Determines if content is relevant to the topic
+  - `ArticleRefinerStep`: Refines the article with new relevant content
+  - `ResultProcessorStep`: Transforms chain results into the required output format

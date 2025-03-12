@@ -22,20 +22,23 @@ class RelevanceResponse(BaseModel):
 class RelevanceFilterStep(Runnable):
     """Runnable step that filters content for relevance to topic."""
     
-    def _filter_relevance(self, topic_title: str, topic_description: str, article: str, new_context: str) -> Tuple[bool, str]:
+    def invoke(self, inputs: Dict[str, Any], config=None) -> Dict[str, Any]:
         """
-        Determine if new context is relevant to the existing article.
+        Process inputs through the relevance filter step.
         
         Args:
-            topic_title: Title of the topic to write about
-            topic_description: Description and context for the topic to write about
-            article: Current article text
-            new_context: New text to evaluate
+            inputs: Dictionary with topic, article, and feed content information
+            config: Optional configuration for the runnable
             
         Returns:
-            bool: True if the new context is relevant
-            str: Explanation of why the content is or is not relevant
+            Dictionary with original inputs and relevance information added
         """
+        topic_title = inputs["topic_title"]
+        topic_description = inputs["topic_description"]
+        article = inputs["article"]
+        new_context = inputs["new_context"]
+        feed_item = inputs["feed_item"]
+        
         # Get the prompt template from the database
         prompt_data = get_prompt('article-relevance-filter')
         if not prompt_data:
@@ -63,40 +66,18 @@ class RelevanceFilterStep(Runnable):
         llm = get_llm('article_refinement')
         response_text = llm.invoke(formatted_prompt).content
         
+        # Parse the response
         try:
             # Parse the response into the Pydantic model
             parsed_response = parser.parse(response_text)
-            debug("FILTER", "Parsed Response", f"is_relevant: {parsed_response.is_relevant}, explanation: {parsed_response.explanation}")
-            return (parsed_response.is_relevant, parsed_response.explanation)
+            is_relevant = parsed_response.is_relevant
+            explanation = parsed_response.explanation
+            debug("FILTER", "Parsed Response", f"is_relevant: {is_relevant}, explanation: {explanation}")
         except Exception as e:
             # Fallback to the original parsing method if the structured parsing fails
             debug("FILTER", "Parsing Error", str(e))
             is_relevant = "YES" in response_text.strip().upper()
-            return is_relevant, response_text.strip()
-    
-    def invoke(self, inputs: Dict[str, Any], config=None) -> Dict[str, Any]:
-        """
-        Process inputs through the relevance filter step.
-        
-        Args:
-            inputs: Dictionary with topic, article, and feed content information
-            config: Optional configuration for the runnable
-            
-        Returns:
-            Dictionary with original inputs and relevance information added
-        """
-        topic_title = inputs["topic_title"]
-        topic_description = inputs["topic_description"]
-        article = inputs["article"]
-        new_context = inputs["new_context"]
-        feed_item = inputs["feed_item"]
-        
-        is_relevant, explanation = self._filter_relevance(
-            topic_title, 
-            topic_description, 
-            article, 
-            new_context
-        )
+            explanation = response_text.strip()
         
         # Store explanation in feed item
         feed_item.relevance_explanation = explanation
