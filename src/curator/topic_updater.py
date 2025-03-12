@@ -95,18 +95,11 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
         return
 
     topic = sender
-    processed_items = {(item.url, item.content_hash): item for item in topic.processed_feeds}
-
-    # Skip if already processed
-    if (feed_item.url, feed_item.content_hash) in processed_items:
-        debug("FEED", "Skipping processed item", feed_item.url)
-        return
 
     # Process feed item through the curator chain
-    process_feed_item(topic, content, feed_item)
+    process_feed_item(topic.id, content, feed_item)
     
     # Always trigger publishing after processing
-    # The chain will handle relevance internally and update the topic accordingly
     handle_topic_publishing(topic)
 
 def queue_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):

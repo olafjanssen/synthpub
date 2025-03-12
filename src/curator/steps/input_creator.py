@@ -38,6 +38,13 @@ class InputCreatorStep(Runnable):
         if not topic:
             raise ChainStopError(f"Topic not found: {topic_id}", step="input_creator")
 
+        processed_items = {(item.url, item.content_hash): item for item in topic.processed_feeds}
+
+        # Skip if already processed
+        feed_item : FeedItem = inputs.get("feed_item")
+        if feed_item and (feed_item.url,feed_item.content_hash) in processed_items:
+            raise ChainStopError(f"Feed item already processed: {feed_item.url}", step="input_creator", topic=topic)
+
         # Get the current article if one exists
         article = get_article(topic.article)
         if topic.article and not article:
