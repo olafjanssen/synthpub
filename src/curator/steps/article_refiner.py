@@ -12,6 +12,8 @@ from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 from api.db.article_db import update_article
 from utils.logging import info, error
+from api.db.topic_db import save_topic
+from curator.steps.chain_errors import ChainStopError
 
 class ArticleRefinerStep(Runnable):
     """Runnable step that refines article content if relevant."""
@@ -27,10 +29,6 @@ class ArticleRefinerStep(Runnable):
         Returns:
             Dictionary with original inputs and refined content added
         """
-        # Skip refinement if the chain should stop
-        if inputs.get("should_stop", False):
-            return inputs
-        
         # Extract data from model objects
         topic: Topic = inputs["topic"]
         current_article: Article = inputs["existing_article"]
@@ -49,7 +47,7 @@ class ArticleRefinerStep(Runnable):
             # Get the prompt template from the database
             prompt_data = get_prompt('article-refinement')
             if not prompt_data:
-                raise ValueError("Article refinement prompt not found in the database")
+                raise ChainStopError("Article refinement prompt not found in the database", step="article_refiner")
             
             # Create and format the prompt
             prompt = PromptTemplate.from_template(prompt_data.template)
@@ -68,17 +66,16 @@ class ArticleRefinerStep(Runnable):
                 content=refined_content,
                 feed_item=feed_item
             )
-            
+            topic.article = updated_article.id
+            save_topic(topic)
+
             info("CURATOR", "Article refined", 
                  f"Topic: {topic_title}, Source: {feed_item.url}")
             
             return {
                 **inputs,
-                "refined_article": updated_article,
+                "refined_article": updated_article
             }
         except Exception as e:
             error("CURATOR", "Failed to refine article", str(e))
-            return {
-                **inputs,
-                "should_stop": True,
-            } 
+            raise ChainStopError(f"Failed to refine article: {str(e)}", step="article_refiner", feed_item=feed_item) 

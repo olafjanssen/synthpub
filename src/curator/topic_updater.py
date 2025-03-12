@@ -1,11 +1,8 @@
 from fastapi import HTTPException
 from api.models.topic import Topic
-from api.models.article import Article
-from api.db.topic_db import get_topic, save_topic
-from api.db.article_db import get_article, update_article, create_article
 from api.models.feed_item import FeedItem
 from typing import Optional, Dict, Any
-from api.signals import topic_update_requested, news_feed_update_requested, news_feed_item_found, publish_requested, article_updated, convert_requested, article_generation_requested
+from api.signals import topic_update_requested, news_feed_update_requested, news_feed_item_found, publish_requested, convert_requested, article_generation_requested
 from utils.logging import debug, info, warning, error
 import threading
 from queue import Queue
@@ -13,9 +10,12 @@ import news.feeds
 import news.publishers
 import news.converter   
 import time
+from api.db.topic_db import get_topic, save_topic
+from api.db.article_db import get_article, update_article, create_article
 
 # Import the Runnable steps directly
-from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ResultProcessorStep, ArticleGeneratorStep
+from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ArticleGeneratorStep
+from curator.steps.chain_errors import ChainStopError
 
 # Add queue for handling updates
 update_queue = Queue()
@@ -121,10 +121,8 @@ def handle_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
 
     # Process feed item through the curator chain
     process_feed_item(topic, content, feed_item)
-        
-    # Publish updated article if content was relevant
-    if feed_item.is_relevant:
-        article_updated.send(topic)
+    
+    handle_topic_publishing(topic)
 
 def queue_feed_item(sender, feed_url: str, feed_item: FeedItem, content: str):
     """Queue a feed item for processing."""
@@ -141,7 +139,6 @@ def start_update_processor():
     # Connect signal handlers
     topic_update_requested.connect(handle_topic_update)
     news_feed_item_found.connect(queue_feed_item)
-    article_updated.connect(handle_topic_publishing)
     article_generation_requested.connect(handle_article_generation)
     
     # Start queue processor thread
@@ -158,7 +155,6 @@ def create_curator_chain():
     article_generator = ArticleGeneratorStep()
     relevance_filter = RelevanceFilterStep()
     article_refiner = ArticleRefinerStep()
-    result_processor = ResultProcessorStep()
     
     # Create the LCEL chain
     chain = (
@@ -166,7 +162,6 @@ def create_curator_chain():
         | article_generator
         | relevance_filter 
         | article_refiner 
-        | result_processor
     )
     
     return chain
@@ -175,7 +170,7 @@ def process_feed_item(
     topic: Topic,
     feed_content: str,
     feed_item: FeedItem
-) -> Dict[str, Any]:
+) -> None:
     """
     Process a single feed item for a topic through the curator chain.
     
@@ -183,22 +178,22 @@ def process_feed_item(
         topic: The topic being processed
         feed_content: The content from the feed
         feed_item: The feed item being processed
-        
-    Returns:
-        Dict: The result of processing the feed item
     """
     chain = create_curator_chain()
     
     # Execute the chain
-    result = chain.invoke(
-        {
-            "topic": topic,
-            "feed_content": feed_content,
-            "feed_item": feed_item
-        }
-    )
-    
-    return result
+    try:
+        chain.invoke(
+            {
+                "topic": topic,
+                "feed_content": feed_content,
+                "feed_item": feed_item
+            }
+        )
+    except ChainStopError as e:
+        debug("CURATOR", "Chain stopped", f"Topic: {topic.name}, Reason: {e.message}")
+    except Exception as e:
+        error("CURATOR", "Error processing feed item", str(e))
 
 def update_topic(topic_id: str) -> Optional[Topic]:
     """Update topic article based on feed content."""

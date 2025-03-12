@@ -12,6 +12,7 @@ from api.db.article_db import create_article
 from api.db.topic_db import save_topic
 from utils.logging import info, error, debug
 from api.models.article import Article
+from curator.steps.chain_errors import ChainStopError
 
 class ArticleGeneratorStep(Runnable):
     """Runnable step that generates a new article if one doesn't exist yet."""
@@ -27,10 +28,6 @@ class ArticleGeneratorStep(Runnable):
         Returns:
             Dictionary with original inputs and possibly a new article
         """
-
-        # Skip refinement if the chain should stop
-        if inputs.get("should_stop", False):
-            return inputs
 
         # Extract the model objects from the input
         topic : Topic = inputs["topic"]
@@ -53,7 +50,7 @@ class ArticleGeneratorStep(Runnable):
             # Get the prompt template from the database
             prompt_data = get_prompt('article-generation')
             if not prompt_data:
-                raise ValueError("Article generation prompt not found in the database")
+                raise ChainStopError("Article generation prompt not found in the database", step="article_generator", topic=topic)
             
             # Create and format the prompt
             prompt = PromptTemplate.from_template(prompt_data.template)
@@ -85,4 +82,4 @@ class ArticleGeneratorStep(Runnable):
             }
         except Exception as e:
             error("GENERATOR", "Failed to generate article", str(e))
-            return inputs
+            raise ChainStopError(f"Failed to generate article: {str(e)}", step="article_generator", topic=topic)

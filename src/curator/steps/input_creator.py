@@ -7,9 +7,10 @@ from typing import Dict, Any
 from api.models.topic import Topic
 from api.models.article import Article
 from api.models.feed_item import FeedItem
-from utils.logging import warning
+from utils.logging import warning, debug
 from api.db.article_db import get_article
-from utils.logging import debug
+from curator.steps.chain_errors import ChainStopError
+
 class InputCreatorStep(Runnable):
     """Runnable step that creates the input dictionary for the chain."""
     
@@ -31,12 +32,17 @@ class InputCreatorStep(Runnable):
         
         # Get the current article if one exists
         if not topic.article:
-            return inputs
+            # For topics without articles, we'll create a new one in the ArticleGeneratorStep
+            return {
+                **inputs,
+                "existing_article": None
+            }
         
         article = get_article(topic.article)
         if not article:
             warning("CURATOR", "Referenced article not found", f"Topic: {topic.name}, Article ID: {topic.article}")
-            inputs["should_stop"] = True
+            raise ChainStopError(f"Referenced article not found: {topic.article}", step="input_creator", topic=topic)
+            
         return {
                 **inputs,
                 "existing_article": article,
