@@ -25,8 +25,8 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Updated state with refined_article
     """
-    # Update step status
-    new_state = {**state, "current_step": "article_refiner"}
+    # Create a new state starting with the current state
+    new_state = {**state}
     
     # Extract needed data from state
     topic = state.get("topic")

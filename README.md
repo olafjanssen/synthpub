@@ -86,11 +86,13 @@ curl -X POST http://localhost:8000/api/topics/AI%20Ethics/convert \
 Uses the Piper TTS library for local, offline text-to-speech conversion. Voice models are automatically downloaded from Hugging Face when needed.
 
 1. Install the Piper Python library:
+
    ```bash
    pip install piper-tts requests
    ```
 
 2. Convert a topic's text to speech:
+
    ```bash
    # Convert a topic's text to speech using Piper TTS
    curl -X POST http://localhost:8000/api/topics/AI%20Ethics/convert \
@@ -99,6 +101,7 @@ Uses the Piper TTS library for local, offline text-to-speech conversion. Voice m
    ```
 
 3. Specify a voice (optional):
+
    ```bash
    # Convert a topic's text to speech using a specific voice
    curl -X POST http://localhost:8000/api/topics/AI%20Ethics/convert \

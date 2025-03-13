@@ -10,6 +10,7 @@ New content to evaluate:
 {new_context}
 
 Determine if the new content is relevant to the topic or existing article. Consider the following:
+
 1. Does it provide new information about the topic?
 2. Does it expand on concepts mentioned in the existing article?
 3. Does it provide context, examples, or details that would enhance the article?

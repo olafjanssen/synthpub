@@ -25,7 +25,7 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
     debug("CURATOR", "Preparing curator inputs")
     
     # Create new state starting with current state
-    new_state = {**state, "current_step": "input_creator"}
+    new_state = {**state}
     
     # Extract the topic_id (this is the only required input)
     topic_id = state.get("topic_id")

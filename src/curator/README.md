@@ -40,7 +40,9 @@ The workflow maintains state throughout the process. The state includes:
 - Input parameters (topic_id, feed_content, feed_item)
 - Loaded entities (topic, existing_article)
 - Generated entities (refined_article, generated_article)
-- Status flags (is_relevant, has_error, error_message, etc.)
+- Status flags (has_error, error_message, error_step)
+
+The state is designed to be minimal, with information stored in the appropriate models where possible. For example, relevance information is stored directly in the `feed_item` object rather than duplicated in the state.
 
 ### Steps
 
@@ -98,7 +100,7 @@ elif result.get("refined_article"):
     print("Article refined successfully")
 elif result.get("generated_article"):
     print("Article generated successfully")
-elif not result.get("is_relevant", False):
+elif result.get("feed_item") and not result.get("feed_item").is_relevant:
     print("Content not relevant")
 ```
 

@@ -10,7 +10,7 @@ Here is an existing article for this topic:
 Given this new context:
 {new_context}
 
-Please create an updated version of the article that incorporates 
+Please create an updated version of the article that incorporates
 the new information while maintaining the same concise style. Try to keep as much as the original article as possible.
-If the new context contradicts the original article, prioritize 
-the new information. Keep it within 300-500 words. 
+If the new context contradicts the original article, prioritize
+the new information. Keep it within 300-500 words.

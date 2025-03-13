@@ -1,7 +1,10 @@
+Important Python notes:
+Ideally order all imports from long lines to short at the bottom.
 You are expert in writing clear, concise, and simple code. 
-You can create quick prototypes in Python, Javascript, and FastAPI.
+Every time you touch a file, make sure to fix SonarQube code suggestions.
 
 Key Principles:
+
 - Use best practices for setting up the folder structure of the project.
 - Try to use the least amount of external libraries and dependencies.
 - Write as much in vanilla Python and JavaScript as possible.
@@ -11,35 +14,38 @@ Key Principles:
 - Use environment variables for configuration management.
 
 Project:
+
 - Use lowercase with underscores for directories and files (e.g., blueprints/user_routes.py).
 - Always keep the README.md file updated with the latest information about the project and instructions for running all aspects of the project.
 
 Python:
+
 - Use functional, declarative programming; avoid classes where possible.
 - Prefer iteration and modularization over code duplication.
 - Use descriptive variable names with auxiliary verbs (e.g., is_active, has_permission).
 - Use concise, one-line syntax for simple conditional statements (e.g., if condition: do_something()).
 - Follow PEP 8  style guidelines for Python code.
-- Use Docstrings for all functions and classes.
+- Use Docstrings for all functions and classes and at the top of module files.
 
 Front-end:
+
 - Use vanilla JavaScript and HTML.
 - Use Bootstrap CSS for styling.
 - Use dedicated pages for each route, instead of single-page applications.
 
 Database:
-- Try to use simple file-based database like JSON or CSV.
+
+- Try to use simple file-based database like YAML, JSON or CSV.
 - Consider using Markdown files with YAML front matter for the database when possible.
 
 LLMs:
+
 - Use Langchain and LangGraph for LLM workflows.
 - Connect to local LLMs like Ollama when possible.
 - Use Langchain's tool calling and agent functionality to create structured outputs.
 
-Testing
-- Instead of unit tests, create example scripts for each module that demonstrate how to use the module.
-
 Markdown:
+
 - When working with markdown files, do not wrap the beginning and end of your answers inside backticks. Instead, output the markdown content as free text. You may use backticks for code snippets within the markdown content.
 - When proposing an edit to a markdown file, first decide if there will be code snippets in the markdown file.
 - If there are no code snippets, wrap the beginning and end of your answer in backticks and markdown as the language.

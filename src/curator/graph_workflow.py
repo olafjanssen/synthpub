@@ -32,11 +32,9 @@ class CuratorState(TypedDict, total=False):
     generated_article: Optional[Article]
     
     # Status flags
-    is_relevant: bool
     has_error: bool
     error_message: str
     error_step: str
-    current_step: str
 
 # Create the graph
 def create_curator_graph() -> Callable:
@@ -89,14 +87,27 @@ def process_feed_item(
         "topic_id": topic_id,
         "feed_content": feed_content,
         "feed_item": feed_item,
-        "has_error": False,
-        "is_relevant": False,
-        "current_step": "start"
+        "has_error": False
     }
     
     # Execute the graph
     try:
-        result = graph.invoke(initial_state)        
+        result = graph.invoke(initial_state)
+        
+        # Log outcome based on final state
+        if result.get("has_error"):
+            error("CURATOR", f"Processing failed in {result.get('error_step')}", 
+                  result.get("error_message", "Unknown error"))
+        elif result.get("refined_article"):
+            info("CURATOR", "Article refined successfully", 
+                 f"Topic: {result.get('topic').name if result.get('topic') else topic_id}")
+        elif result.get("generated_article"):
+            info("CURATOR", "Article generated successfully", 
+                 f"Topic: {result.get('topic').name if result.get('topic') else topic_id}")
+        elif result.get("feed_item") and not result.get("feed_item").is_relevant:
+            info("CURATOR", "Content not relevant", 
+                 f"Topic: {result.get('topic').name if result.get('topic') else topic_id}")
+        
         return result
     except Exception as e:
         error("CURATOR", "Graph execution failed", str(e))

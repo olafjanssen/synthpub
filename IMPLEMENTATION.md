@@ -70,6 +70,7 @@ SynthPub uses a queue-based architecture for processing content feeds:
    - `process_update_queue()`: Worker that processes items from both topic and feed queues
 
 This approach provides several advantages:
+
 - Each connector decides per-item whether further processing is needed
 - Processing is determined at the item level, not the connector level
 - Caching happens at every level, optimizing network requests
@@ -80,7 +81,7 @@ This approach provides several advantages:
 
 The system includes several connectors that handle aggregate feeds containing multiple individual items:
 
-1. **RSS Connector**: 
+1. **RSS Connector**:
    - Extracts links from RSS feeds and marks them for further processing
    - Web content is then fetched by the appropriate connector when processing each link
    - Cached for 1 hour (3600 seconds)

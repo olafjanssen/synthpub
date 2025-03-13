@@ -51,8 +51,8 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Updated state with generated_article if one was created
     """
-    # Update step status
-    new_state = {**state, "current_step": "article_generator"}
+    # Create a new state starting with the current state
+    new_state = {**state}
     
     # Extract the topic from state
     topic = state.get("topic")

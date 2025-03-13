@@ -39,7 +39,8 @@ def is_relevant(true_node: str = "refine_article", false_node: str = "end", erro
             debug("CURATOR", "Stopping due to error", state.get("error_message", "Unknown error"))
             return error_node
         
-        if not state.get("is_relevant", False):
+        feed_item = state.get("feed_item")
+        if not feed_item or not feed_item.is_relevant:
             debug("CURATOR", "Content not relevant, stopping workflow")
             return false_node
         
@@ -58,8 +59,8 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Updated state with is_relevant flag
     """
-    # Update step status
-    new_state = {**state, "current_step": "news_relevance"}
+    # Create a new state starting with the current state
+    new_state = {**state}
     
     # Extract needed data from state
     topic = state.get("topic")
@@ -95,9 +96,6 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
         topic.processed_feeds.append(feed_item)
         save_topic(topic)
         
-        # Update the state with relevance result
-        new_state["is_relevant"] = relevance_result.is_relevant
-        
         # If content is not relevant, add explanation but don't set has_error
         if not relevance_result.is_relevant:
             new_state["error_message"] = relevance_result.explanation
@@ -111,7 +109,6 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
         new_state["has_error"] = True
         new_state["error_message"] = f"Failed to check relevance: {error_message}"
         new_state["error_step"] = "news_relevance"
-        new_state["is_relevant"] = False
         return new_state
 
 def determine_relevance(
