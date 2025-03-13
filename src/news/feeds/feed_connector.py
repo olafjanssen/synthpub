@@ -33,7 +33,7 @@ class FeedConnector(Protocol):
         ...
 
     @classmethod
-    def handle_feed_update(cls, sender, feed_url: str):
+    def handle_feed_update(cls, topic_id: str, feed_url: str):
         """
         Handle feed update request.
         
@@ -42,6 +42,10 @@ class FeedConnector(Protocol):
            - Directly processes each item URL with the appropriate connector
         2. For final content items (like web pages or individual files):
            - Creates FeedItem objects and sends them for processing
+        
+        Args:
+            topic_id: The topic ID
+            feed_url: The URL to process
         """
         # Import here to avoid circular imports
         from curator.topic_updater import add_feed_item_to_queue
@@ -80,7 +84,7 @@ class FeedConnector(Protocol):
                         needs_further_processing=needs_further_processing
                     )
                     
-                    # Directly add to queue instead of using signals
-                    add_feed_item_to_queue(sender, feed_url=feed_url, feed_item=feed_item, content=item_content)
+                    # Directly add to queue with the topic's ID
+                    add_feed_item_to_queue(topic_id, feed_item, item_content)
             except Exception as e:
                 error("FEED", "Processing error", f"URL: {feed_url}, Error: {str(e)}")
