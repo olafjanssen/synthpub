@@ -9,7 +9,7 @@ import os
 
 from api.models.topic import Topic
 from api.models.feed_item import FeedItem
-from curator.topic_updater import create_curator_chain
+from curator.graph_workflow import create_curator_graph
 from utils.logging import info, debug, error
 from api.db.topic_db import save_topic
 from api.db.article_db import get_article
@@ -66,13 +66,14 @@ def main():
         in a new study published in the Journal of Climate Research.
         """
 
+        save_topic(topic)
 
         # Create the curator chain
-        chain = create_curator_chain()
+        graph = create_curator_graph()
         
         # Run the chain with our test data
         info("TEST", "Running content processing", "Starting process")
-        result = chain.invoke({
+        result = graph.invoke({
             "topic_id": topic.id,
             "feed_content": feed_content,
             "feed_item": feed_item
@@ -81,7 +82,7 @@ def main():
         # Display results
         info("TEST", "Chain completed", f"Result: {result.get('result', False)}")
 
-        result = chain.invoke({
+        result = graph.invoke({
             "topic_id": topic.id,
             "feed_content": feed_content2,
             "feed_item": feed_item2

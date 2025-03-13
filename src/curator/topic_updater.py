@@ -14,9 +14,11 @@ from api.db.topic_db import get_topic, save_topic
 from api.db.article_db import get_article, update_article, create_article
 from api.db.cache_manager import get_all_connectors
 
-# Import the Runnable steps directly
+# Import the LangGraph-based implementation
+from curator.graph_workflow import process_feed_item as graph_process_feed_item
+
+# Import step modules (for backwards compatibility)
 from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ArticleGeneratorStep
-from curator.steps.chain_errors import ChainStopError
 
 # Single processing queue for all items
 # Each item is a tuple (topic_id, content, feed_item)
@@ -118,52 +120,30 @@ def start_update_processor():
     
     return processor_thread
 
-def create_curator_chain():
-    """Create the LCEL curator chain."""
-    # Initialize step components
-    input_creator = InputCreatorStep()
-    article_generator = ArticleGeneratorStep()
-    relevance_filter = RelevanceFilterStep()
-    article_refiner = ArticleRefinerStep()
-    
-    # Create the LCEL chain
-    chain = (
-        input_creator 
-        | article_generator
-        | relevance_filter 
-        | article_refiner 
-    )
-    
-    return chain
-
 def process_feed_item(
     topic_id: str,
     feed_content: str = None,
     feed_item: FeedItem = None
 ) -> None:
     """
-    Process a single feed item for a topic through the curator chain.
+    Process a single feed item for a topic through the curator workflow.
     
     Args:
         topic_id: The ID of the topic
         feed_content: The content from the feed
         feed_item: The feed item being processed
     """
-    chain = create_curator_chain()
+    # Use the new LangGraph implementation
+    result = graph_process_feed_item(
+        topic_id=topic_id,
+        feed_content=feed_content,
+        feed_item=feed_item
+    )
     
-    # Execute the chain
-    try:
-        chain.invoke(
-            {
-                "topic_id": topic_id,
-                "feed_content": feed_content,
-                "feed_item": feed_item
-            }
-        )
-    except ChainStopError as e:
-        debug("CURATOR", "Chain stopped", f"Reason: {e.message}")
-    except Exception as e:
-        error("CURATOR", "Error processing feed item", str(e))
+    # Handle the result as needed (most handling is done in the graph implementation)
+    if result.get("has_error"):
+        debug("CURATOR", "Processing failed", 
+              f"Step: {result.get('error_step')}, Error: {result.get('error_message')}")
 
 def process_feed_url(topic_id: str, feed_url: str):
     """

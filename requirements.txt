@@ -1,5 +1,7 @@
 langchain
 langchain-community
+langgraph
+graphviz
 six==1.16.0
 pyyaml==6.0.1
 requests==2.31.0

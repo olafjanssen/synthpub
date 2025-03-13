@@ -1,7 +1,8 @@
 """
-Article refiner step for the curator chain.
+Article refiner step for the curator workflow.
+
+This module refines existing articles with new relevant content.
 """
-from langchain.schema.runnable import Runnable
 from langchain.prompts import PromptTemplate
 from typing import Dict, Any, Optional
 
@@ -11,71 +12,109 @@ from api.models.feed_item import FeedItem
 from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 from api.db.article_db import update_article
-from utils.logging import info, error
+from utils.logging import info, error, debug
 from api.db.topic_db import save_topic
-from curator.steps.chain_errors import ChainStopError
 
-class ArticleRefinerStep(Runnable):
-    """Runnable step that refines article content if relevant."""
+def process(state: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Refine an existing article with new relevant content.
     
-    def invoke(self, inputs: Dict[str, Any], config=None) -> Dict[str, Any]:
-        """
-        Process inputs through the article refiner step.
+    Args:
+        state: Current workflow state with topic, article, and feed content
         
-        Args:
-            inputs: Dictionary with topic, article, feed content and relevance information
-            config: Optional configuration for the runnable
-            
-        Returns:
-            Dictionary with original inputs and refined content added
-        """
-        # Extract data from model objects
-        topic: Topic = inputs["topic"]
-        current_article: Article = inputs["existing_article"]
-        feed_content : str = inputs["feed_content"]
-        feed_item : FeedItem = inputs["feed_item"]
+    Returns:
+        Updated state with refined_article
+    """
+    # Update step status
+    new_state = {**state, "current_step": "article_refiner"}
+    
+    # Extract needed data from state
+    topic = state.get("topic")
+    article = state.get("existing_article") 
+    feed_content = state.get("feed_content")
+    feed_item = state.get("feed_item")
+    
+    # By the time we reach this step, we assume the graph structure ensures:
+    # 1. We have a topic
+    # 2. We have an article to refine
+    # 3. We have relevant feed content
+    # 4. We have a feed item
+    
+    try:
+        # Refine the article with the new content
+        refined_article = refine_article(
+            topic=topic,
+            current_article=article,
+            feed_content=feed_content,
+            feed_item=feed_item
+        )
         
-        # Extract properties needed for the prompt
-        topic_title = topic.name
-        topic_description = topic.description
-        article_content = current_article.content
+        # Update state with refined article
+        new_state["refined_article"] = refined_article
         
-        try:
-            # Get the LLM
-            llm = get_llm('article_refinement')
-            
-            # Get the prompt template from the database
-            prompt_data = get_prompt('article-refinement')
-            if not prompt_data:
-                raise ChainStopError("Article refinement prompt not found in the database", step="article_refiner")
-            
-            # Create and format the prompt
-            prompt = PromptTemplate.from_template(prompt_data.template)
-            
-            # Invoke the LLM to refine the article
-            refined_content = llm.invoke(prompt.format(
-                topic_title=topic_title,
-                topic_description=topic_description,
-                article=article_content,
-                new_context=feed_content
-            )).content
-            
-            # Update the article in the database
-            updated_article = update_article(
-                article_id=current_article.id,
-                content=refined_content,
-                feed_item=feed_item
-            )
-            topic.article = updated_article.id
-            save_topic(topic)
+        return new_state
+        
+    except Exception as e:
+        error_message = str(e)
+        error("CURATOR", "Failed to refine article", error_message)
+        new_state["has_error"] = True
+        new_state["error_message"] = f"Failed to refine article: {error_message}"
+        new_state["error_step"] = "article_refiner"
+        return new_state
 
-            info("CURATOR", "Article refined", 
-                 f"Topic: {topic_title}, Source: {feed_item.url}")
-            
-            return {
-                **inputs,
-                "refined_article": updated_article
-            }
-        except Exception as e:
-            error("CURATOR", "Failed to refine article", str(e))
-            raise ChainStopError(f"Failed to refine article: {str(e)}", step="article_refiner", feed_item=feed_item) 
+def refine_article(
+    topic: Topic,
+    current_article: Article,
+    feed_content: str,
+    feed_item: FeedItem
+) -> Article:
+    """
+    Refine an article with new content.
+    
+    Args:
+        topic: The topic the article belongs to
+        current_article: The current article to refine
+        feed_content: The new content to incorporate
+        feed_item: The feed item that provided the content
+        
+    Returns:
+        The refined article
+        
+    Raises:
+        Exception: If article refinement fails
+    """
+    # Get the LLM
+    llm = get_llm('article_refinement')
+    
+    # Get the prompt template from the database
+    prompt_data = get_prompt('article-refinement')
+    if not prompt_data:
+        raise ValueError("Article refinement prompt not found in the database")
+    
+    # Create and format the prompt
+    prompt = PromptTemplate.from_template(prompt_data.template)
+    
+    # Invoke the LLM to refine the article
+    debug("REFINER", "Refining article", f"Topic: {topic.name}, Source: {feed_item.url}")
+    refined_content = llm.invoke(prompt.format(
+        topic_title=topic.name,
+        topic_description=topic.description,
+        article=current_article.content,
+        new_context=feed_content
+    )).content
+    
+    # Update the article in the database
+    updated_article = update_article(
+        article_id=current_article.id,
+        content=refined_content,
+        feed_item=feed_item
+    )
+    
+    # Update the topic reference and save
+    topic.article = updated_article.id
+    save_topic(topic)
+
+    info("CURATOR", "Article refined", 
+         f"Topic: {topic.name}, Source: {feed_item.url}")
+    
+    return updated_article 
