@@ -4,11 +4,9 @@ from uuid import uuid4
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from api.db.topic_db import load_topics, mark_topic_deleted, update_topic, get_topic, save_topic
 from typing import List
-from api.signals import topic_update_requested
-from curator.topic_updater import handle_topic_publishing
+from curator.topic_updater import handle_topic_publishing, process_feed_item, queue_topic_update
 from services.pexels_service import get_random_thumbnail
 from utils.logging import error, info, debug
-from curator.topic_updater import process_feed_item
 
 
 router = APIRouter()
@@ -20,7 +18,7 @@ def request_article_generation(topic_id: str):
 def request_topic_update(topic_id: str):
     """Background task to request topic update."""
     debug("TOPIC", "Update requested", f"ID: {topic_id}")
-    topic_update_requested.send('api', topic_id=topic_id)
+    queue_topic_update(topic_id)
 
 def request_topic_publish(topic):
     """Background task to request topic publishing."""

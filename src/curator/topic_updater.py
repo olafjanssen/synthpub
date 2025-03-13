@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from api.models.topic import Topic
 from api.models.feed_item import FeedItem
 from typing import Optional, Dict, Any, Tuple, Union
-from api.signals import topic_update_requested, publish_requested, convert_requested
+from api.signals import publish_requested, convert_requested
 from utils.logging import debug, info, warning, error
 import threading
 from queue import Queue
@@ -22,8 +22,14 @@ from curator.steps.chain_errors import ChainStopError
 # Each item is a tuple (topic_id, content, feed_item)
 processing_queue = Queue()
 
-def handle_topic_update(sender, topic_id):
-    """Signal handler for topic update requests."""
+def queue_topic_update(topic_id: str):
+    """
+    Queue a topic update by adding its feed URLs to the processing queue.
+    
+    Args:
+        topic_id: The ID of the topic to update
+        sender: The name of the component requesting the update
+    """
     try:
         # Load topic
         topic = get_topic(topic_id)
@@ -31,7 +37,7 @@ def handle_topic_update(sender, topic_id):
             warning("TOPIC", "Not found", topic_id)
             return
         
-        info("TOPIC", "Queuing update", topic.name)
+        info("TOPIC", "Queuing update", f"Topic: {topic.name}")
         
         # Queue each feed URL as a separate item
         for feed_url in topic.feed_urls:
@@ -95,7 +101,7 @@ def process_queue():
         except Exception as e:
             error("SYSTEM", "Queue processing error", str(e))
 
-def add_feed_item_to_queue(topic_id : str, feed_item: FeedItem, content: str):
+def add_feed_item_to_queue(topic_id: str, feed_item: FeedItem, content: str):
     """Add a feed item to the processing queue."""
         
     debug("FEED", "Queuing item", feed_item.url)
@@ -105,9 +111,6 @@ def add_feed_item_to_queue(topic_id : str, feed_item: FeedItem, content: str):
 
 def start_update_processor():
     """Start the update processor thread."""
-    # Connect signal handlers
-    topic_update_requested.connect(handle_topic_update)
-    
     # Start queue processor thread
     processor_thread = threading.Thread(target=process_queue, daemon=True)
     processor_thread.start()

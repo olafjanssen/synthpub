@@ -6,8 +6,9 @@ from datetime import datetime, timedelta
 from api.db.topic_db import list_topics
 from api.models.topic import Topic
 import os
-from api.signals import topic_update_requested
-from utils.logging import info, error
+from utils.logging import info, error, debug
+from curator.topic_updater import queue_topic_update
+from typing import Dict
 
 # Default configuration values
 DEFAULT_UPDATE_INTERVAL_MINUTES = 15
@@ -58,7 +59,7 @@ def check_and_update_topics():
         for topic in topics:
             if should_update_topic(topic):
                 info("SCHEDULER", "Signaling topic update", topic.id)
-                topic_update_requested.send('news_scheduler', topic_id=topic.id)
+                queue_topic_update(topic.id, sender='news_scheduler')
                 _last_checked_times[topic.id] = datetime.now()
             
     except Exception as e:
