@@ -5,7 +5,7 @@ This module implements a LangGraph workflow that replaces the previous LCEL chai
 for topic curation. It provides better state management, error handling, and visualization.
 """
 from typing import Dict, Any, Optional, TypedDict, Union, List, Callable
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START, END 
 
 from api.models.topic import Topic
 from api.models.article import Article
@@ -13,7 +13,7 @@ from api.models.feed_item import FeedItem
 from utils.logging import debug, info, warning, error
 
 # Import the step functions directly
-from curator.steps import process_input, generate_article, news_relevance, refine_article, should_generate, is_relevant
+from curator.steps import process_input, generate_article, news_relevance, refine_article, should_generate, is_relevant, should_skip_news
 
 # Define the state schema
 class CuratorState(TypedDict, total=False):
@@ -36,6 +36,11 @@ class CuratorState(TypedDict, total=False):
     error_message: str
     error_step: str
 
+# Identity function for passthrough nodes
+def identity(state: Dict[str, Any]) -> Dict[str, Any]:
+    """Identity function that returns the state unchanged."""
+    return state
+
 # Create the graph
 def create_curator_graph() -> Callable:
     """Create and compile the LangGraph curator workflow."""
@@ -43,22 +48,24 @@ def create_curator_graph() -> Callable:
     graph = StateGraph(CuratorState)
     
     # Add nodes for processing steps
-    graph.add_node("create_input", process_input)
+    graph.add_node("prepare_input", process_input)
     graph.add_node("generate_article", generate_article)
+    graph.add_node("prepare_news_item", identity)
     graph.add_node("news_relevance", news_relevance)
     graph.add_node("refine_article", refine_article)
-    
-    # Add terminal node
-    graph.add_node("end", lambda x: {"state": x})
-    
+        
     # Add edges with explicit routing targets using function factories
-    graph.add_conditional_edges("create_input", should_generate("generate_article", "news_relevance", "end"))
-    graph.add_edge("generate_article", "news_relevance")
-    graph.add_conditional_edges("news_relevance", is_relevant("refine_article", "end", "end"))
-    graph.add_edge("refine_article", "end")
+    graph.add_conditional_edges("prepare_input", should_generate("generate_article", "prepare_news_item"), 
+                                path_map={"no_article":"generate_article", "existing_article":"prepare_news_item"})
+    graph.add_edge("generate_article","prepare_news_item")
+    graph.add_conditional_edges("prepare_news_item", should_skip_news(END, "news_relevance"), 
+                                path_map={"new news":"news_relevance", "already_processed": END})    
+    graph.add_conditional_edges("news_relevance", is_relevant("refine_article", END), 
+                                path_map={"relevant":"refine_article", "not_relevant": END})
+    graph.add_edge("refine_article", END)
     
     # Set entry point
-    graph.set_entry_point("create_input")
+    graph.set_entry_point("prepare_input")
     
     # Compile the graph
     return graph.compile()
@@ -93,21 +100,7 @@ def process_feed_item(
     # Execute the graph
     try:
         result = graph.invoke(initial_state)
-        
-        # Log outcome based on final state
-        if result.get("has_error"):
-            error("CURATOR", f"Processing failed in {result.get('error_step')}", 
-                  result.get("error_message", "Unknown error"))
-        elif result.get("refined_article"):
-            info("CURATOR", "Article refined successfully", 
-                 f"Topic: {result.get('topic').name if result.get('topic') else topic_id}")
-        elif result.get("generated_article"):
-            info("CURATOR", "Article generated successfully", 
-                 f"Topic: {result.get('topic').name if result.get('topic') else topic_id}")
-        elif result.get("feed_item") and not result.get("feed_item").is_relevant:
-            info("CURATOR", "Content not relevant", 
-                 f"Topic: {result.get('topic').name if result.get('topic') else topic_id}")
-        
+        info("CURATOR", "Graph execution completed", f"Topic: {topic_id}")
         return result
     except Exception as e:
         error("CURATOR", "Graph execution failed", str(e))

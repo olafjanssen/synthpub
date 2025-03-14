@@ -13,8 +13,9 @@ from api.db.article_db import create_article
 from api.db.topic_db import save_topic
 from utils.logging import info, error, debug
 from api.models.article import Article
+from langgraph.graph import END
 
-def should_generate(true_node: str = "generate_article", false_node: str = "news_relevance", error_node: str = "end") -> Callable[[Dict[str, Any]], str]:
+def should_generate(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
     """
     Create a routing function that decides if we need to generate a new article.
     
@@ -28,9 +29,6 @@ def should_generate(true_node: str = "generate_article", false_node: str = "news
     """
     def _should_generate_router(state: Dict[str, Any]) -> str:
         """Inner function that evaluates the state and returns the next node."""
-        if state.get("has_error", False):
-            debug("CURATOR", "Stopping due to error", state.get("error_message", "Unknown error"))
-            return error_node
             
         if not state.get("existing_article"):
             debug("CURATOR", "No existing article, need to generate one")

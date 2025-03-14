@@ -15,13 +15,14 @@ from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 from api.db.topic_db import save_topic
 from utils.logging import debug, warning, error
+from langgraph.graph import END
 
 class RelevanceResponse(BaseModel):
     """Model for the relevance filter response."""
     is_relevant: bool = Field(description="Whether the new content is relevant to the topic or article")
     explanation: str = Field(description="Explanation of why the content is or is not relevant")
 
-def is_relevant(true_node: str = "refine_article", false_node: str = "end", error_node: str = "end") -> Callable[[Dict[str, Any]], str]:
+def is_relevant(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
     """
     Create a routing function that decides if the content is relevant to the topic.
     
@@ -35,10 +36,7 @@ def is_relevant(true_node: str = "refine_article", false_node: str = "end", erro
     """
     def _is_relevant_router(state: Dict[str, Any]) -> str:
         """Inner function that evaluates the state and returns the next node."""
-        if state.get("has_error", False):
-            debug("CURATOR", "Stopping due to error", state.get("error_message", "Unknown error"))
-            return error_node
-        
+
         feed_item = state.get("feed_item")
         if not feed_item or not feed_item.is_relevant:
             debug("CURATOR", "Content not relevant, stopping workflow")

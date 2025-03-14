@@ -55,4 +55,4 @@ You can modify the example to test different scenarios:
 
 - Change the topic to test different domains
 - Modify the feed content to test different relevance scenarios
-- Add more feed items to test sequential updates 
+- Add more feed items to test sequential updates

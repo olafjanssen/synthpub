@@ -139,4 +139,6 @@ docker-compose down
 
 Build the desktop app:
 
+```bash
+ ./desktop_build.sh
 ```
