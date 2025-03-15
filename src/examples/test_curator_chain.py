@@ -70,15 +70,16 @@ def main():
 
         # Create the curator chain
         graph = create_curator_graph()
-        png = graph.get_graph().draw_mermaid_png()
-        with open("curator_graph.png", "wb") as f:
-            f.write(png)
 
-        mm = graph.get_graph().draw_mermaid()
-        with open("curator_graph.md", "w") as f:
-            f.write(mm)
+        # png = graph.get_graph().draw_mermaid_png()
+        # with open("curator_graph.png", "wb") as f:
+        #     f.write(png)
 
-        exit()
+        # mm = graph.get_graph().draw_mermaid()
+        # with open("curator_graph.md", "w") as f:
+        #     f.write(mm)
+
+        # exit()
 
         # Run the chain with our test data
         info("TEST", "Running content processing", "Starting process")

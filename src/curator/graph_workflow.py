@@ -13,7 +13,7 @@ from api.models.feed_item import FeedItem
 from utils.logging import debug, info, warning, error
 
 # Import the step functions directly
-from curator.steps import process_input, generate_article, news_relevance, refine_article, should_generate, is_relevant, should_skip_news
+from curator.steps import process_input, generate_article, news_relevance, refine_article, should_generate, is_relevant, should_skip_news, extract_substance
 
 # Define the state schema
 class CuratorState(TypedDict, total=False):
@@ -52,18 +52,19 @@ def create_curator_graph() -> Callable:
     graph.add_node("generate_article", generate_article)
     graph.add_node("prepare_news_item", identity)
     graph.add_node("news_relevance", news_relevance)
+    graph.add_node("extract_substance", extract_substance)
     graph.add_node("refine_article", refine_article)
         
     # Add edges with explicit routing targets using function factories
-    graph.add_conditional_edges("prepare_input", should_generate("generate_article", "prepare_news_item"), 
+    graph.add_conditional_edges("prepare_input", should_generate("no_article", "existing_article"), 
                                 path_map={"no_article":"generate_article", "existing_article":"prepare_news_item"})
     graph.add_edge("generate_article","prepare_news_item")
-    graph.add_conditional_edges("prepare_news_item", should_skip_news(END, "news_relevance"), 
+    graph.add_conditional_edges("prepare_news_item", should_skip_news("already_processed", "new news"), 
                                 path_map={"new news":"news_relevance", "already_processed": END})    
-    graph.add_conditional_edges("news_relevance", is_relevant("refine_article", END), 
-                                path_map={"relevant":"refine_article", "not_relevant": END})
+    graph.add_conditional_edges("news_relevance", is_relevant("relevant", "not relevant"), 
+                                path_map={"relevant":"extract_substance", "not_relevant": END})
+    graph.add_edge("extract_substance", "refine_article")
     graph.add_edge("refine_article", END)
-    
     # Set entry point
     graph.set_entry_point("prepare_input")
     
@@ -94,7 +95,6 @@ def process_feed_item(
         "topic_id": topic_id,
         "feed_content": feed_content,
         "feed_item": feed_item,
-        "has_error": False
     }
     
     # Execute the graph
