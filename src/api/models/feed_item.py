@@ -2,6 +2,7 @@
 from pydantic import BaseModel
 from datetime import datetime, timezone
 import hashlib
+from typing import Optional
 
 class FeedItem(BaseModel):
     """Model for processed feed items."""
@@ -11,6 +12,14 @@ class FeedItem(BaseModel):
     is_relevant: bool = False
     relevance_explanation: str = ""
     needs_further_processing: bool = False
+    
+    # Substance extraction information
+    new_information: str = ""
+    enforcing_information: str = ""
+    contradicting_information: str = ""
+    
+    # Resulting article reference
+    article_id: Optional[str] = None
 
     @classmethod
     def create(cls, url: str, content: str, needs_further_processing: bool = False) -> "FeedItem":

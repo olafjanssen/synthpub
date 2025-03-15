@@ -70,6 +70,11 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
         
         # Update the topic reference and save
         topic.article = refined_article.id
+        
+        # Store the article ID in the feed item
+        feed_item.article_id = refined_article.id
+        
+        # Save the topic with updated feed item
         save_topic(topic)
 
         info("CURATOR", "Article refined", 

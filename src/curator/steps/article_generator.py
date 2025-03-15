@@ -54,6 +54,7 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
     
     # Extract the topic from state
     topic = state.get("topic")
+    feed_item = state.get("feed_item")
     
     # By the time we reach this step, we assume the graph structure ensures:
     # 1. The topic exists
@@ -67,6 +68,12 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
         # Update the state with the new article
         new_state["generated_article"] = new_article
         new_state["existing_article"] = new_article
+        
+        # If we have a feed item, store the article ID in it
+        if feed_item:
+            feed_item.article_id = new_article.id
+            # Save the topic with the updated feed item
+            save_topic(topic)
         
         return new_state
     except Exception as e:

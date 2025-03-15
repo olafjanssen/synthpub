@@ -40,9 +40,14 @@ The workflow maintains state throughout the process. The state includes:
 - Input parameters (topic_id, feed_content, feed_item)
 - Loaded entities (topic, existing_article)
 - Generated entities (refined_article, generated_article)
+- Extracted substance (new_information, enforcing_information, contradicting_information)
 - Status flags (has_error, error_message, error_step)
 
-The state is designed to be minimal, with information stored in the appropriate models where possible. For example, relevance information is stored directly in the `feed_item` object rather than duplicated in the state.
+The state is designed to be minimal, with information stored in the appropriate models where possible. For example:
+
+- Relevance information is stored directly in the `feed_item` object rather than duplicated in the state
+- Substance extraction results are stored in both the state and the `feed_item` object for persistence
+- The resulting article ID is stored in the `feed_item` object to track which articles were created or updated based on each feed item
 
 ### Steps
 

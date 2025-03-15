@@ -19,9 +19,9 @@ from api.db.topic_db import save_topic
 
 class SubstanceResponse(BaseModel):
     """Model for the substance extractor response."""
-    new_information: str = Field(description="New information from the article")
-    enforcing_information: str = Field(description="Enforcing information from the article")
-    contradicting_information: str = Field(description="Contradicting information from the article")
+    new_information: str = Field(description="New information from the article, leave empty if there is no new information")
+    enforcing_information: str = Field(description="Enforcing information from the article, leave empty if there is no enforcing information")
+    contradicting_information: str = Field(description="Contradicting information from the article, leave empty if there is no contradicting information")
 
 def process(state: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -54,7 +54,15 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
         # Update state with extracted substance
         new_state["new_information"] = extracted_substance.new_information
         new_state["enforcing_information"] = extracted_substance.enforcing_information
-        new_state["contradicting_information"] = extracted_substance.contradicting_information  
+        new_state["contradicting_information"] = extracted_substance.contradicting_information
+        
+        # Store the extracted substance in the feed item
+        feed_item.new_information = extracted_substance.new_information
+        feed_item.enforcing_information = extracted_substance.enforcing_information
+        feed_item.contradicting_information = extracted_substance.contradicting_information
+        
+        # Save the updated topic with the modified feed item
+        save_topic(topic)
         
         return new_state
         

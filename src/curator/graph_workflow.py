@@ -31,6 +31,11 @@ class CuratorState(TypedDict, total=False):
     refined_article: Optional[Article]
     generated_article: Optional[Article]
     
+    # Extracted substance
+    new_information: str
+    enforcing_information: str
+    contradicting_information: str
+    
     # Status flags
     has_error: bool
     error_message: str
@@ -61,7 +66,7 @@ def create_curator_graph() -> Callable:
     graph.add_edge("generate_article","prepare_news_item")
     graph.add_conditional_edges("prepare_news_item", should_skip_news("already_processed", "new news"), 
                                 path_map={"new news":"news_relevance", "already_processed": END})    
-    graph.add_conditional_edges("news_relevance", is_relevant("relevant", "not relevant"), 
+    graph.add_conditional_edges("news_relevance", is_relevant("relevant", "not_relevant"), 
                                 path_map={"relevant":"extract_substance", "not_relevant": END})
     graph.add_edge("extract_substance", "refine_article")
     graph.add_edge("refine_article", END)
