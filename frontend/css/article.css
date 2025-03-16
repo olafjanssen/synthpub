@@ -11,7 +11,7 @@ body {
     background-color: #f8f9fa; /* Light background for the entire page */
     width: 100%;
     max-width: 800px; /* Limit the width for readability */
-    padding: 2rem 2rem;
+    padding: 2rem;
     margin: 2rem auto;
 }
 
