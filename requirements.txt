@@ -1,3 +1,4 @@
+# Core dependencies
 langchain
 langchain-community
 langgraph
@@ -8,15 +9,19 @@ requests==2.31.0
 fastapi==0.110.0
 uvicorn==0.27.1
 pydantic==2.9.2
-langchain-ollama
-openai
-langchain_openai
-langchain_mistralai
+loguru==0.7.2
+websockets>=10.4
 tomli
 tomli_w
 blinker
 
-# connectors
+# LLM integration
+langchain-ollama
+openai
+langchain_openai
+langchain_mistralai
+
+# Connectors
 beautifulsoup4==4.12.3
 feedparser==6.0.11
 youtube-transcript-api
@@ -25,15 +30,12 @@ google-api-python-client
 arxiv
 PyPDF2
 
-# converters
+# Media processing
 piper-tts
 numpy
 pydub
 
-# desktop
+# Desktop
 pywebview
 chardet
 nuitka
-
-loguru==0.7.2
-websockets>=10.4
