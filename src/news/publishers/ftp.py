@@ -21,6 +21,7 @@ WARNING: FTP is an insecure protocol that transmits data and credentials in plai
 import os
 import io
 from ftplib import FTP
+from typing import Tuple
 from urllib.parse import urlparse
 from .publisher_interface import Publisher
 from api.models.topic import Topic
