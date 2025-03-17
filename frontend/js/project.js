@@ -33,10 +33,20 @@ async function loadTopics(projectId) {
         const project = await response.json();
         
         // Update the project title
-        document.getElementById('project-title').innerHTML = `Project<br>${project.title}`;
+        const projectTitle = document.getElementById('project-title');
+        projectTitle.textContent = '';
+        
+        const projectText = document.createTextNode('Project');
+        projectTitle.appendChild(projectText);
+        
+        const lineBreak = document.createElement('br');
+        projectTitle.appendChild(lineBreak);
+        
+        const titleText = document.createTextNode(project.title);
+        projectTitle.appendChild(titleText);
         
         const topicsList = document.getElementById('topics-list');
-        topicsList.innerHTML = '';
+        topicsList.textContent = '';
         
         const template = document.getElementById('topic-template');
         const emptyTemplate = document.getElementById('empty-topic-template');
@@ -125,10 +135,23 @@ function addFeedInput() {
     const container = document.getElementById('feedUrlsContainer');
     const newInput = document.createElement('div');
     newInput.className = 'input-group mb-2';
-    newInput.innerHTML = `
-        <input type="url" class="form-control feed-url" placeholder="https://example.com/feed">
-        <button type="button" class="btn btn-outline-danger remove-feed" onclick="removeFeedInput(this)">×</button>
-    `;
+    
+    // Create input element
+    const input = document.createElement('input');
+    input.type = 'url';
+    input.className = 'form-control feed-url';
+    input.placeholder = 'https://example.com/feed';
+    
+    // Create button element
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-outline-danger remove-feed';
+    button.textContent = '×';
+    button.onclick = function() { removeFeedInput(this); };
+    
+    // Append elements to the container
+    newInput.appendChild(input);
+    newInput.appendChild(button);
     container.appendChild(newInput);
 }
 
@@ -190,12 +213,29 @@ async function createTopic() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('createTopicModal'));
         modal.hide();
         document.getElementById('createTopicForm').reset();
-        document.getElementById('feedUrlsContainer').innerHTML = `
-            <div class="input-group mb-2">
-                <input type="url" class="form-control feed-url" placeholder="https://example.com/feed">
-                <button type="button" class="btn btn-outline-danger remove-feed" onclick="removeFeedInput(this)">×</button>
-            </div>
-        `;
+        
+        // Clear and reset feed URL container
+        const feedUrlsContainer = document.getElementById('feedUrlsContainer');
+        feedUrlsContainer.textContent = '';
+        
+        // Add a default feed URL input group
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'input-group mb-2';
+        
+        const input = document.createElement('input');
+        input.type = 'url';
+        input.className = 'form-control feed-url';
+        input.placeholder = 'https://example.com/feed';
+        
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn btn-outline-danger remove-feed';
+        button.textContent = '×';
+        button.onclick = function() { removeFeedInput(this); };
+        
+        inputGroup.appendChild(input);
+        inputGroup.appendChild(button);
+        feedUrlsContainer.appendChild(inputGroup);
         
         // Refresh topics list
         await loadTopics(projectId);
@@ -246,14 +286,28 @@ function editTopic(topicId) {
 
             // Clear existing feed URLs
             const editFeedUrlsContainer = document.getElementById('editFeedUrlsContainer');
-            editFeedUrlsContainer.innerHTML = '';
+            editFeedUrlsContainer.textContent = '';
             topic.feed_urls.forEach(url => {
                 const inputGroup = document.createElement('div');
                 inputGroup.className = 'input-group mb-2';
-                inputGroup.innerHTML = `
-                    <input type="url" class="form-control feed-url" value="${url}">
-                    <button type="button" class="btn btn-outline-danger remove-feed" onclick="removeFeedInput(this)">×</button>
-                `;
+                
+                // Create input element for the feed URL
+                const input = document.createElement('input');
+                input.type = 'url';
+                input.className = 'form-control feed-url';
+                input.value = url;
+                
+                // Create remove button
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-outline-danger remove-feed';
+                button.textContent = '×';
+                button.onclick = function() { removeFeedInput(this); };
+                
+                // Append elements to input group
+                inputGroup.appendChild(input);
+                inputGroup.appendChild(button);
+                
                 editFeedUrlsContainer.appendChild(inputGroup);
             });
 
@@ -267,14 +321,28 @@ function editTopic(topicId) {
 
             // Clear existing publish URLs
             const editPublishUrlsContainer = document.getElementById('editPublishUrlsContainer');
-            editPublishUrlsContainer.innerHTML = '';
+            editPublishUrlsContainer.textContent = '';
             (topic.publish_urls || []).forEach(url => {
                 const inputGroup = document.createElement('div');
                 inputGroup.className = 'input-group mb-2';
-                inputGroup.innerHTML = `
-                    <input type="url" class="form-control edit-publish-url" value="${url}">
-                    <button type="button" class="btn btn-outline-danger remove-publish" onclick="removePublishInput(this)">×</button>
-                `;
+                
+                // Create input element for the publish URL
+                const input = document.createElement('input');
+                input.type = 'url';
+                input.className = 'form-control edit-publish-url';
+                input.value = url;
+                
+                // Create remove button
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-outline-danger remove-publish';
+                button.textContent = '×';
+                button.onclick = function() { removePublishInput(this); };
+                
+                // Append elements to input group
+                inputGroup.appendChild(input);
+                inputGroup.appendChild(button);
+                
                 editPublishUrlsContainer.appendChild(inputGroup);
             });
 
@@ -296,10 +364,24 @@ function addEditFeedInput() {
     const container = document.getElementById('editFeedUrlsContainer');
     const inputGroup = document.createElement('div');
     inputGroup.className = 'input-group mb-2';
-    inputGroup.innerHTML = `
-        <input type="url" class="form-control feed-url" placeholder="https://example.com/feed">
-        <button type="button" class="btn btn-outline-danger remove-feed" onclick="removeFeedInput(this)">×</button>
-    `;
+    
+    // Create input element
+    const input = document.createElement('input');
+    input.type = 'url';
+    input.className = 'form-control feed-url';
+    input.placeholder = 'https://example.com/feed';
+    
+    // Create button element
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-outline-danger remove-feed';
+    button.textContent = '×';
+    button.onclick = function() { removeFeedInput(this); };
+    
+    // Append elements to the container
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(button);
+    
     container.insertBefore(inputGroup, container.lastChild);
 }
 
@@ -307,10 +389,24 @@ function addEditPublishInput() {
     const container = document.getElementById('editPublishUrlsContainer');
     const inputGroup = document.createElement('div');
     inputGroup.className = 'input-group mb-2';
-    inputGroup.innerHTML = `
-        <input type="url" class="form-control edit-publish-url" placeholder="https://example.com/publish">
-        <button type="button" class="btn btn-outline-danger remove-publish" onclick="removePublishInput(this)">×</button>
-    `;
+    
+    // Create input element
+    const input = document.createElement('input');
+    input.type = 'url';
+    input.className = 'form-control edit-publish-url';
+    input.placeholder = 'https://example.com/publish';
+    
+    // Create button element
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-outline-danger remove-publish';
+    button.textContent = '×';
+    button.onclick = function() { removePublishInput(this); };
+    
+    // Append elements to the container
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(button);
+    
     container.insertBefore(inputGroup, container.lastChild);
 }
 
@@ -392,10 +488,24 @@ function addPublishInput() {
     const container = document.getElementById('publishUrlsContainer');
     const div = document.createElement('div');
     div.className = 'input-group mb-2';
-    div.innerHTML = `
-        <input type="url" class="form-control publish-url" placeholder="https://example.com/publish">
-        <button type="button" class="btn btn-outline-danger remove-publish" onclick="removePublishInput(this)">×</button>
-    `;
+    
+    // Create input element
+    const input = document.createElement('input');
+    input.type = 'url';
+    input.className = 'form-control publish-url';
+    input.placeholder = 'https://example.com/publish';
+    
+    // Create button element
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-outline-danger remove-publish';
+    button.textContent = '×';
+    button.onclick = function() { removePublishInput(this); };
+    
+    // Append elements to the container
+    div.appendChild(input);
+    div.appendChild(button);
+    
     container.appendChild(div);
 }
 
@@ -406,9 +516,14 @@ function removePublishInput(button) {
 async function publishArticle(topicId) {
     try {
         const button = document.querySelector(`[data-topic-id="${topicId}"].publish-article`);
-        const originalText = button.innerHTML;
+        const originalHTML = button.innerHTML;
         button.disabled = true;
-        button.innerHTML = '<i class="bi bi-cloud-upload"></i>';
+        
+        // Safely clear and add icon
+        button.textContent = '';
+        const icon = document.createElement('i');
+        icon.className = 'bi bi-cloud-upload';
+        button.appendChild(icon);
         
         const response = await fetch(`${API_URL}/topics/${topicId}/publish`, {
             method: 'POST',
@@ -424,7 +539,10 @@ async function publishArticle(topicId) {
         // Reset button after short delay
         setTimeout(() => {
             button.disabled = false;
-            button.innerHTML = originalText;
+            // Use insertAdjacentHTML which is safer in this controlled context
+            // where originalHTML is from our own code, not user input
+            button.textContent = '';
+            button.insertAdjacentHTML('afterbegin', originalHTML);
         }, 2000);
         
     } catch (error) {
@@ -432,6 +550,7 @@ async function publishArticle(topicId) {
         showError('Failed to publish article. Please try again later.');
         const button = document.querySelector(`[data-topic-id="${topicId}"].publish-article`);
         button.disabled = false;
-        button.innerHTML = '<i class="bi bi-cloud-upload"></i>';
+        button.textContent = '';
+        button.insertAdjacentHTML('afterbegin', '<i class="bi bi-cloud-upload"></i>');
     }
 } 

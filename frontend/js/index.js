@@ -20,7 +20,7 @@ function renderProjects(projects) {
     const emptyCard = document.getElementById('projects-list').querySelector('.empty-card');
 
     // Clear existing projects but keep the new project card
-    projectsList.innerHTML = '';
+    projectsList.textContent = '';
     
     // Add all project cards
     projects.forEach(project => {
@@ -82,7 +82,12 @@ function createProjectCard(project) {
     editButton.setAttribute('data-bs-toggle', 'modal');
     editButton.setAttribute('data-bs-target', '#editProjectModal');
     editButton.title = 'Edit Project';
-    editButton.innerHTML = '<i class="bi bi-pencil"></i>';
+    
+    // Create icon element
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-pencil';
+    editButton.appendChild(icon);
+    
     editButton.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();

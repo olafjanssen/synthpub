@@ -1,4 +1,5 @@
 /** @global {Object} marked */
+/** @global {Object} DOMPurify */
 
 const API_URL = '/api';
 
@@ -73,7 +74,9 @@ function displayArticle(article) {
     
     // Render markdown content
     const contentElement = document.getElementById('article-text');
-    contentElement.innerHTML = marked.parse(article.content);
+    const htmlContent = marked.parse(article.content);
+    // Sanitize the HTML content before rendering
+    contentElement.innerHTML = DOMPurify.sanitize(htmlContent);
 }
 
 function setupVersionNavigation(article) {
@@ -129,7 +132,17 @@ async function init() {
         const project = await response.json();
         
         // Update the project title
-        document.getElementById('project-title').innerHTML = `Project<br>${project.title}`;
+        const projectTitle = document.getElementById('project-title');
+        projectTitle.textContent = '';
+        
+        const projectText = document.createTextNode('Project');
+        projectTitle.appendChild(projectText);
+        
+        const lineBreak = document.createElement('br');
+        projectTitle.appendChild(lineBreak);
+        
+        const titleText = document.createTextNode(project.title);
+        projectTitle.appendChild(titleText);
     } catch (error) {
         console.error('Error fetching project:', error);
     }
@@ -146,11 +159,14 @@ function formatDate(dateString) {
 
 function showError(message) {
     const contentDiv = document.getElementById('article-content');
-    contentDiv.innerHTML = `
-        <div class="alert alert-danger" role="alert">
-            ${message}
-        </div>
-    `;
+    contentDiv.textContent = '';
+    
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger';
+    alertDiv.setAttribute('role', 'alert');
+    alertDiv.textContent = message;
+    
+    contentDiv.appendChild(alertDiv);
 }
 
 function displaySources(sources) {
@@ -167,14 +183,30 @@ function displaySources(sources) {
         return;
     }
     
-    sourcesList.innerHTML = relevantSources.map(source => `
-        <li>
-            <a href="${source.url}" target="_blank" rel="noopener noreferrer">
-                ${source.title || source.url}
-            </a>
-            ${source.accessed_at ? `<span class="text-muted"> (accessed ${new Date(source.accessed_at).toLocaleDateString()})</span>` : ''}
-        </li>
-    `).join('');
+    // Clear the existing list
+    sourcesList.textContent = '';
+    
+    // Create and append list items for each source
+    relevantSources.forEach(source => {
+        const li = document.createElement('li');
+        
+        const a = document.createElement('a');
+        a.href = source.url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = source.title || source.url;
+        
+        li.appendChild(a);
+        
+        if (source.accessed_at) {
+            const span = document.createElement('span');
+            span.className = 'text-muted';
+            span.textContent = ` (accessed ${new Date(source.accessed_at).toLocaleDateString()})`;
+            li.appendChild(span);
+        }
+        
+        sourcesList.appendChild(li);
+    });
 }
 
 // Load article when page loads
