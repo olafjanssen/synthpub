@@ -17,9 +17,6 @@ from api.db.cache_manager import get_all_connectors
 # Import the LangGraph-based implementation
 from curator.graph_workflow import process_feed_item as graph_process_feed_item
 
-# Import step modules (for backwards compatibility)
-from curator.steps import InputCreatorStep, RelevanceFilterStep, ArticleRefinerStep, ArticleGeneratorStep
-
 # Single processing queue for all items
 # Each item is a tuple (topic_id, content, feed_item)
 processing_queue = Queue()
