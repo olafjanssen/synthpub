@@ -40,3 +40,10 @@ pydub
 pywebview
 chardet
 nuitka
+
+# Testing
+pytest
+pytest-cov
+flake8
+black
+isort
