@@ -1,3 +1,5 @@
+/** @global {Object} marked */
+
 const API_URL = '/api';
 
 // Configure marked options

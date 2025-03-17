@@ -99,7 +99,7 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/topics/{topic_id}/update", response_model=dict)
-async def update_topic_route(topic_id: str, background_tasks: BackgroundTasks):
+async def schedule_topic_update_route(topic_id: str, background_tasks: BackgroundTasks):
     """Request a topic update (fetch feeds and process)."""
     try:
         topic = get_topic(topic_id)

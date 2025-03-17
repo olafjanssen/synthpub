@@ -1,3 +1,6 @@
+/** @global {Object} bootstrap */
+/** @global {Object} bootstrap.Modal */
+
 const API_URL = '/api';
 
 document.addEventListener("DOMContentLoaded", function() {

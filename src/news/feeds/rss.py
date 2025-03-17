@@ -52,9 +52,14 @@ def fetch_rss_links(url: str) -> List[Dict[str, str]]:
     Returns:
         List of dicts containing title, link, and published date
     """
-    # Disable SSL verification
+    # Create a custom SSL context with verification
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = True
+    ssl_context.verify_mode = ssl.CERT_REQUIRED
+    
+    # Use the custom SSL context
     if hasattr(ssl, '_create_unverified_context'):
-        ssl._create_default_https_context = ssl._create_unverified_context
+        ssl._create_default_https_context = lambda: ssl_context
         
     feed = feedparser.parse(url)
     
