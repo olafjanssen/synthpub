@@ -1,4 +1,5 @@
 """Article model definitions."""
+
 from datetime import datetime
 from typing import Optional
 
@@ -9,6 +10,7 @@ from .feed_item import FeedItem
 
 class Article(BaseModel):
     """Article model with version tracking."""
+
     id: str
     title: str
     topic_id: str

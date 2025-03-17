@@ -6,9 +6,11 @@ These are placeholder tests that should be replaced with real integration tests.
 # This is a placeholder - in a real test, you would import the actual app
 # from src.api.app import app
 
+
 def test_api_sample():
     """A sample test that always passes."""
     assert True
+
 
 # The following tests are commented out as they require the actual API to be implemented
 # Uncomment and adapt them when implementing the real integration tests
@@ -33,4 +35,4 @@ def test_topic_not_found():
     '''Test requesting a non-existent topic.'''
     response = client.get("/api/topics/NonExistentTopic")
     assert response.status_code == 404
-""" 
+"""

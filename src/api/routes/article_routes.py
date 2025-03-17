@@ -7,6 +7,7 @@ from ..models.article import Article
 
 router = APIRouter()
 
+
 @router.get("/articles/{article_id}", response_model=Article)
 async def get_article_route(article_id: str):
     """Get a specific article by ID."""
@@ -20,5 +21,7 @@ async def get_article_route(article_id: str):
     except Exception as e:
         if not isinstance(e, HTTPException):
             error("ARTICLE", "Retrieval error", str(e))
-            raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-        raise e 
+            raise HTTPException(
+                status_code=500, detail=f"Internal server error: {str(e)}"
+            )
+        raise e

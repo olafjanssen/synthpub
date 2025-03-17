@@ -2,4 +2,4 @@
 Services package for external service integrations.
 """
 
-__all__ = [] 
+__all__ = []

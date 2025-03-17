@@ -1,4 +1,5 @@
 """Feed item model definitions."""
+
 import hashlib
 from datetime import datetime, timezone
 from typing import Optional
@@ -8,26 +9,29 @@ from pydantic import BaseModel
 
 class FeedItem(BaseModel):
     """Model for processed feed items."""
+
     url: str
     accessed_at: datetime
     content_hash: str
     is_relevant: bool = False
     relevance_explanation: str = ""
     needs_further_processing: bool = False
-    
+
     # Substance extraction information
     new_information: str = ""
     enforcing_information: str = ""
     contradicting_information: str = ""
-    
+
     # Resulting article reference
     article_id: Optional[str] = None
 
     @classmethod
-    def create(cls, url: str, content: str, needs_further_processing: bool = False) -> "FeedItem":
+    def create(
+        cls, url: str, content: str, needs_further_processing: bool = False
+    ) -> "FeedItem":
         """
         Create a new feed item with computed hash.
-        
+
         Args:
             url: URL of the feed item
             content: Content of the feed item
@@ -37,5 +41,5 @@ class FeedItem(BaseModel):
             url=url,
             accessed_at=datetime.now(timezone.utc),
             content_hash=hashlib.sha256(content.encode()).hexdigest(),
-            needs_further_processing=needs_further_processing
-        ) 
+            needs_further_processing=needs_further_processing,
+        )

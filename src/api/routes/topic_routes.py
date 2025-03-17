@@ -1,4 +1,5 @@
 """Topic-related API routes."""
+
 from typing import List
 from uuid import uuid4
 
@@ -22,19 +23,23 @@ from utils.logging import debug, error, info
 
 router = APIRouter()
 
+
 def request_article_generation(topic_id: str):
     """Background task to request article generation."""
     process_feed_item(topic_id)
+
 
 def request_topic_update(topic_id: str):
     """Background task to request topic update."""
     debug("TOPIC", "Update requested", f"ID: {topic_id}")
     queue_topic_update(topic_id)
 
+
 def request_topic_publish(topic):
     """Background task to request topic publishing."""
     debug("TOPIC", "Publish requested", topic.name)
     handle_topic_publishing(topic)
+
 
 @router.post("/topics/", response_model=Topic)
 async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTasks):
@@ -42,13 +47,13 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
     try:
         # Generate a unique ID for the topic
         topic_id = str(uuid4())
-                
+
         # Get thumbnail if not provided
         thumbnail_url = topic.thumbnail_url
         if not thumbnail_url or thumbnail_url.lower() in ["auto", "none", ""]:
             thumbnail_data = get_random_thumbnail(f"{topic.name} {topic.description}")
             thumbnail_url = thumbnail_data.get("thumbnail_url")
-        
+
         # Create topic object
         topic_data = Topic(
             id=topic_id,
@@ -58,23 +63,24 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
             publish_urls=topic.publish_urls,
             article=None,
             processed_feeds=[],
-            thumbnail_url=thumbnail_url
+            thumbnail_url=thumbnail_url,
         )
-        
+
         # Save topic to database
         save_topic(topic_data)
         info("TOPIC", "Created", topic.name)
-        
+
         # Trigger update if feeds are provided
         if topic.feed_urls:
             background_tasks.add_task(request_topic_update, topic_id)
         else:
             background_tasks.add_task(request_article_generation, topic_id)
-            
+
         return topic_data
     except Exception as e:
         error("TOPIC", "Creation error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @router.get("/topics/", response_model=list[Topic])
 async def list_topics_route():
@@ -82,6 +88,7 @@ async def list_topics_route():
     debug("TOPIC", "List requested", "Getting all topics")
     topics = load_topics()
     return topics
+
 
 @router.get("/topics/{topic_id}", response_model=Topic)
 async def get_topic_route(topic_id: str):
@@ -93,6 +100,7 @@ async def get_topic_route(topic_id: str):
     debug("TOPIC", "Retrieved", topic.name)
     return topic
 
+
 @router.put("/topics/{topic_id}/feeds", response_model=Topic)
 async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
     """Update the feed URLs for a topic."""
@@ -101,13 +109,14 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
         if not topic:
             error("TOPIC", "Not found", f"ID: {topic_id}")
             raise HTTPException(status_code=404, detail="Topic not found")
-        
+
         topic.feed_urls = feed_urls
         save_topic(topic)
         return topic
     except Exception as e:
         error("TOPIC", "Feed update error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @router.post("/topics/{topic_id}/update", response_model=dict)
 async def schedule_topic_update_route(topic_id: str, background_tasks: BackgroundTasks):
@@ -117,13 +126,14 @@ async def schedule_topic_update_route(topic_id: str, background_tasks: Backgroun
         if not topic:
             error("TOPIC", "Not found", f"ID: {topic_id}")
             raise HTTPException(status_code=404, detail="Topic not found")
-        
+
         background_tasks.add_task(request_topic_update, topic_id)
         debug("TOPIC", "Update scheduled", topic.name)
         return {"message": f"Update scheduled for topic {topic_id}"}
     except Exception as e:
         error("TOPIC", "Update scheduling error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @router.delete("/topics/{topic_id}", response_model=dict)
 async def delete_topic_route(topic_id: str):
@@ -133,13 +143,14 @@ async def delete_topic_route(topic_id: str):
         if not topic:
             error("TOPIC", "Not found", f"ID: {topic_id}")
             raise HTTPException(status_code=404, detail="Topic not found")
-        
+
         mark_topic_deleted(topic_id)
         info("TOPIC", "Deleted", topic.name)
         return {"message": f"Topic {topic_id} deleted"}
     except Exception as e:
         error("TOPIC", "Deletion error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @router.put("/topics/{topic_id}", response_model=Topic)
 async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
@@ -150,22 +161,24 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
         if not topic:
             error("TOPIC", "Not found", f"ID: {topic_id}")
             raise HTTPException(status_code=404, detail="Topic not found")
-        
+
         # Update only non-null values
         update_data = topic_update.model_dump(exclude_unset=True)
-        
+
         # Special handling for thumbnail_url
         if "thumbnail_url" in update_data:
             thumbnail_url = update_data["thumbnail_url"]
             if not thumbnail_url or thumbnail_url.lower() in ["auto", "none", ""]:
                 # Generate new thumbnail
-                thumbnail_data = get_random_thumbnail(f"{topic.name} {topic.description}")
+                thumbnail_data = get_random_thumbnail(
+                    f"{topic.name} {topic.description}"
+                )
                 update_data["thumbnail_url"] = thumbnail_data.get("thumbnail_url")
-        
+
         # Update topic
         for key, value in update_data.items():
             setattr(topic, key, value)
-        
+
         # Save updated topic
         updated_topic = update_topic(topic_id, update_data)
         info("TOPIC", "Updated", topic.name)
@@ -173,6 +186,7 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
     except Exception as e:
         error("TOPIC", "Update error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
 
 @router.post("/topics/{topic_id}/publish", response_model=dict)
 async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
@@ -182,7 +196,7 @@ async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
         if not topic:
             error("TOPIC", "Not found", f"ID: {topic_id}")
             raise HTTPException(status_code=404, detail="Topic not found")
-        
+
         background_tasks.add_task(request_topic_publish, topic)
         debug("TOPIC", "Publishing scheduled", topic.name)
         return {"message": f"Publishing scheduled for topic {topic_id}"}
