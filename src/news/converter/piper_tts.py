@@ -11,7 +11,6 @@ import wave
 from typing import Any, Dict, List, Optional
 
 import requests
-
 # Import Piper library
 from piper.voice import PiperVoice
 from pydub import AudioSegment
@@ -84,6 +83,29 @@ class PiperTTS(Converter):
         voices_db = cls.get_voices_database()
         return list(voices_db.keys())
 
+    def _download_file(self, url: str, target_path: str) -> bool:
+        """Download a single file from URL to target path."""
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+
+            with open(target_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            return True
+        except Exception as e:
+            error("PIPER_TTS", "Download failed", f"URL: {url}, Error: {str(e)}")
+            return False
+
+    def _get_model_files(self, voice_info: Dict[str, Any]) -> Dict[str, str]:
+        """Get the list of files needed for the voice model."""
+        model_files = {}
+        for file_type in ["model", "config", "vocoder"]:
+            if file_type in voice_info:
+                model_files[file_type] = voice_info[file_type]
+        return model_files
+
     @classmethod
     def download_voice_model(cls, voice_key: str) -> Dict[str, str]:
         """Download a voice model from Hugging Face."""
@@ -93,47 +115,31 @@ class PiperTTS(Converter):
             raise ValueError(f"Voice '{voice_key}' not found in the voices database")
 
         voice_info = voices_db[voice_key]
-        model_files = {}
+        model_files = cls._get_model_files(voice_info)
 
         try:
             # Create voice-specific cache directory
             voice_cache_dir = os.path.join(cls._cache_dir, voice_key)
             os.makedirs(voice_cache_dir, exist_ok=True)
 
-            # Download the model files
-            for file_path, file_info in voice_info["files"].items():
-                # Local file path
-                local_file = os.path.join(voice_cache_dir, os.path.basename(file_path))
+            # Download each required file
+            downloaded_files = {}
+            for file_type, file_path in model_files.items():
+                url = f"{cls.VOICE_DOWNLOAD_BASE_URL}{file_path}"
+                target_path = os.path.join(voice_cache_dir, os.path.basename(file_path))
 
-                # Check if we already have the file and it's the correct size
-                if (
-                    os.path.exists(local_file)
-                    and os.path.getsize(local_file) == file_info["size_bytes"]
-                ):
-                    debug("PIPER_TTS", "Using cached model file", f"File: {local_file}")
-                else:
-                    # Download the file
-                    file_url = f"{cls.VOICE_DOWNLOAD_BASE_URL}{file_path}"
-                    debug("PIPER_TTS", "Downloading model file", f"URL: {file_url}")
+                if cls._download_file(url, target_path):
+                    downloaded_files[file_type] = target_path
 
-                    response = requests.get(file_url, stream=True, timeout=120)
-                    response.raise_for_status()
+            if not downloaded_files:
+                raise ValueError("Failed to download any model files")
 
-                    with open(local_file, "wb") as f:
-                        for chunk in response.iter_content(chunk_size=8192):
-                            f.write(chunk)
+            return downloaded_files
 
-                # Store the file path
-                if file_path.endswith(".onnx"):
-                    model_files["model"] = local_file
-                elif file_path.endswith(".onnx.json"):
-                    model_files["config"] = local_file
-
-            return model_files
         except Exception as e:
             error(
                 "PIPER_TTS",
-                "Failed to download voice model",
+                "Model download failed",
                 f"Voice: {voice_key}, Error: {str(e)}",
             )
             raise

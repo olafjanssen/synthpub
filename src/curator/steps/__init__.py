@@ -7,7 +7,6 @@ This package contains modules for each step in the curator workflow.
 from .article_generator import process as generate_article
 from .article_generator import should_generate
 from .article_refiner import process as refine_article
-
 # Import the process functions from each step module
 from .input_creator import process as process_input
 from .input_creator import should_skip_news

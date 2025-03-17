@@ -125,39 +125,70 @@ def _initialize_cache():
     _cache_initialized = True
 
 
-def _cleanup_cache():
-    """Clean up expired and excess items when cache exceeds threshold."""
-    global _cache_metadata, _cache_size_bytes
+def _process_cache_file(file_path: Path) -> Optional[Dict[str, Any]]:
+    """Process a single cache file and return its metadata."""
+    if not file_path.is_file():
+        return None
 
-    # Current time for expiration check
+    file_size = file_path.stat().st_size
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            url = data.get("url")
+            if url:
+                return {
+                    "path": file_path,
+                    "size": file_size,
+                    "added_at": file_path.stat().st_mtime,
+                    "expires_at": data.get("expires_at", -1),
+                }
+    except (json.JSONDecodeError, KeyError, TypeError):
+        pass
+    return None
+
+
+def _remove_expired_files():
+    """Remove expired cache files."""
     current_time = time.time()
+    for url, metadata in list(_cache_metadata.items()):
+        if metadata["expires_at"] > 0 and current_time > metadata["expires_at"]:
+            try:
+                metadata["path"].unlink()
+                _cache_size_bytes -= metadata["size"]
+                del _cache_metadata[url]
+            except OSError:
+                pass
 
-    # First, remove expired items
-    expired_urls = [
-        url
-        for url, metadata in _cache_metadata.items()
-        if metadata["expires_at"] > 0 and metadata["expires_at"] < current_time
-    ]
 
-    for url in expired_urls:
-        remove_from_cache(url)
+def _cleanup_cache():
+    """Clean up the cache by removing expired files and maintaining size limits."""
+    global _cache_size_bytes, _cache_metadata
 
-    # If still above threshold, remove oldest items until below threshold
-    max_size_bytes = MAX_CACHE_SIZE_MB * 1024 * 1024
-    if _cache_size_bytes > max_size_bytes * CACHE_CLEANUP_THRESHOLD:
-        # Sort by added_at (oldest first)
-        urls_by_age = sorted(
-            _cache_metadata.keys(), key=lambda url: _cache_metadata[url]["added_at"]
-        )
+    _cache_size_bytes = 0
+    _cache_metadata.clear()
 
-        # Remove oldest items until below threshold or all items with expiration
-        for url in urls_by_age:
-            # Keep items with expiration time -1 (cache forever) unless absolutely necessary
-            if _cache_size_bytes <= max_size_bytes * CACHE_CLEANUP_THRESHOLD:
-                break
+    # Ensure cache directory exists
+    ensure_cache_exists()
 
-            if _cache_metadata[url]["expires_at"] != -1:
-                remove_from_cache(url)
+    # Scan cache directory and build metadata
+    for file_path in CACHE_PATH().glob("*.json"):
+        metadata = _process_cache_file(file_path)
+        if metadata:
+            _cache_metadata[metadata["path"].name] = metadata
+            _cache_size_bytes += metadata["size"]
+
+    # Remove expired files
+    _remove_expired_files()
+
+    # If still over limit, remove oldest files
+    while _cache_size_bytes > MAX_CACHE_SIZE_MB * 1024 * 1024 * CACHE_CLEANUP_THRESHOLD:
+        oldest_file = min(_cache_metadata.items(), key=lambda x: x[1]["added_at"])
+        try:
+            oldest_file[1]["path"].unlink()
+            _cache_size_bytes -= oldest_file[1]["size"]
+            del _cache_metadata[oldest_file[0]]
+        except OSError:
+            break
 
 
 def CACHE_PATH() -> Path:
@@ -342,68 +373,54 @@ def find_cache_files(url_pattern: str = None) -> List[Dict[str, Any]]:
     return results
 
 
-def get_cache_info(url: str) -> Optional[Dict[str, Any]]:
-    """
-    Get information about cached content for a specific URL.
-
-    Args:
-        url: The URL to check
-
-    Returns:
-        Dict with cache info or None if not cached:
-        - path: Path to the cache file
-        - exists: Whether the cache exists and is valid
-        - filename: Name of the cache file
-        - age: Age of the cached content in seconds
-        - size: Size of the cache file in bytes
-        - item_count: Number of items in the cache
-        - expired: Whether the cache has expired
-    """
-    ensure_cache_exists()
-    cache_path = _get_cache_path(url)
-
-    if not cache_path.exists():
-        return None
-
+def _get_file_metadata(file_path: Path) -> Optional[Dict[str, Any]]:
+    """Get metadata for a single cache file."""
     try:
-        stat = cache_path.stat()
-        age = time.time() - stat.st_mtime
-
-        # Try to read the cache
-        cache_data = get_from_cache(url)
-        item_count = len(cache_data.get("items", [])) if cache_data else 0
-
-        # Determine the expiration time
-        expiration_time = -1
-        for connector_class in get_all_connectors():
-            if hasattr(connector_class, "can_handle") and callable(
-                connector_class.can_handle
-            ):
-                if connector_class.can_handle(url) and hasattr(
-                    connector_class, "cache_expiration"
-                ):
-                    expiration_time = connector_class.cache_expiration
-                    break
-
-        # Check if expired
-        is_expired = expiration_time > 0 and age > expiration_time
-
-        return {
-            "path": str(cache_path),
-            "exists": cache_data is not None,
-            "filename": cache_path.name,
-            "age": age,
-            "size": stat.st_size,
-            "item_count": item_count,
-            "expired": is_expired,
-        }
-    except Exception as e:
-        error(
-            "CACHE",
-            "Info retrieval failed",
-            f"Error getting cache info for {url}: {str(e)}",
-        )
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return {
+                "url": data.get("url"),
+                "size": file_path.stat().st_size,
+                "added_at": file_path.stat().st_mtime,
+                "expires_at": data.get("expires_at", -1),
+            }
+    except (json.JSONDecodeError, OSError):
         return None
+
+
+def _get_cache_metadata(url: str) -> Optional[Dict[str, Any]]:
+    """Get cache metadata for a specific URL."""
+    if url in _cache_metadata:
+        return _cache_metadata[url]
+
+    file_path = _get_cache_path(url)
+    if not file_path.exists():
+        return None
+
+    metadata = _get_file_metadata(file_path)
+    if metadata and metadata["url"] == url:
+        _cache_metadata[url] = metadata
+        return metadata
+    return None
+
+
+def get_cache_info(url: str) -> Optional[Dict[str, Any]]:
+    """Get information about a cached item."""
+    metadata = _get_cache_metadata(url)
+    if not metadata:
+        return None
+
+    current_time = time.time()
+    if metadata["expires_at"] > 0 and current_time > metadata["expires_at"]:
+        remove_from_cache(url)
+        return None
+
+    return {
+        "url": url,
+        "size": metadata["size"],
+        "added_at": metadata["added_at"],
+        "expires_at": metadata["expires_at"],
+    }
 
 
 def get_all_connectors():

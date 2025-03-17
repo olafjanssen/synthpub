@@ -1,18 +1,13 @@
 """Project-related API routes."""
 
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
 
-from api.db.project_db import (
-    add_topic_to_project,
-    create_project,
-    get_project,
-    list_projects,
-    mark_project_deleted,
-    remove_topic_from_project,
-    update_project,
-)
+from api.db.project_db import (add_topic_to_project, create_project,
+                               get_project, list_projects,
+                               mark_project_deleted, remove_topic_from_project,
+                               update_project)
 from api.models.project import Project, ProjectCreate, ProjectUpdate
 from services.pexels_service import get_random_thumbnail
 from utils.logging import error, warning
@@ -76,6 +71,22 @@ async def get_project_route(project_id: str):
     return project
 
 
+def _handle_thumbnail_update(project_update: ProjectUpdate) -> Optional[str]:
+    """Handle thumbnail URL update logic."""
+    if (
+        not hasattr(project_update, "thumbnail_url")
+        or project_update.thumbnail_url is None
+    ):
+        return None
+
+    thumbnail_url = project_update.thumbnail_url.strip()
+    if thumbnail_url and thumbnail_url.lower() not in ["auto", "none"]:
+        return thumbnail_url
+
+    search_text = f"{project_update.title or ''} {project_update.description or ''}"
+    return get_random_thumbnail(search_text).get("thumbnail_url")
+
+
 @router.put("/projects/{project_id}", response_model=Project)
 async def update_project_route(project_id: str, project_update: ProjectUpdate):
     """Update a project's details."""
@@ -85,41 +96,17 @@ async def update_project_route(project_id: str, project_update: ProjectUpdate):
             k: v for k, v in project_update.model_dump().items() if v is not None
         }
 
-        # Special handling for thumbnail_url
-        if (
-            hasattr(project_update, "thumbnail_url")
-            and project_update.thumbnail_url is not None
-        ):
-            thumbnail_url = project_update.thumbnail_url.strip()
+        # Handle thumbnail update
+        thumbnail_url = _handle_thumbnail_update(project_update)
+        if thumbnail_url is not None:
+            updated_data["thumbnail_url"] = thumbnail_url
 
-            # Check if we should generate a new thumbnail
-            if thumbnail_url == "" or thumbnail_url.lower() in ["auto", "none"]:
-                search_text = (
-                    f"{project_update.title or ''} {project_update.description or ''}"
-                )
-
-                # If title and description aren't being updated, get them from the existing project
-                if not search_text.strip():
-                    existing_project = get_project(project_id)
-                    if existing_project:
-                        search_text = (
-                            f"{existing_project.title} {existing_project.description}"
-                        )
-
-                thumbnail_data = get_random_thumbnail(search_text)
-                updated_data["thumbnail_url"] = thumbnail_data.get("thumbnail_url")
-            else:
-                # Use the provided URL
-                updated_data["thumbnail_url"] = thumbnail_url
-
+        # Update the project
         updated_project = update_project(project_id, updated_data)
-
         if not updated_project:
-            raise HTTPException(
-                status_code=404, detail="Project not found or update failed"
-            )
-
+            raise HTTPException(status_code=404, detail="Project not found")
         return updated_project
+
     except Exception as e:
         error("PROJECT", "Update error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

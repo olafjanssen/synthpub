@@ -36,6 +36,33 @@ class FeedConnector(Protocol):
         """
         ...
 
+    def _process_cached_items(
+        self, cached_data: Dict[str, Any]
+    ) -> List[Dict[str, str]]:
+        """Process cached feed items."""
+        if not isinstance(cached_data, dict) or "items" not in cached_data:
+            return []
+        return cached_data["items"]
+
+    def _process_feed_item(self, item: Dict[str, str], topic_id: str):
+        """Process a single feed item."""
+        needs_further_processing = item.get("needs_further_processing", False)
+        item_url = item["url"]
+        item_content = item.get("content", "")
+
+        if needs_further_processing:
+            debug("FEED", "Further processing needed", item_url)
+
+        # Create feed item with appropriate processing flag
+        feed_item = FeedItem.create(
+            url=item_url,
+            content=item_content,
+            needs_further_processing=needs_further_processing,
+        )
+
+        # Directly add to queue with the topic's ID
+        add_feed_item_to_queue(topic_id, feed_item, item_content)
+
     @classmethod
     def handle_feed_update(cls, topic_id: str, feed_url: str):
         """
@@ -55,50 +82,28 @@ class FeedConnector(Protocol):
         from curator.topic_updater import add_feed_item_to_queue
 
         debug("FEED", "Checking handler", f"URL: {feed_url}, Handler: {cls.__name__}")
-        if cls.can_handle(feed_url):
-            debug("FEED", "Using handler", f"URL: {feed_url}, Handler: {cls.__name__}")
-            try:
-                # Check cache first
-                cached_data = get_from_cache(feed_url)
-                if (
-                    cached_data
-                    and isinstance(cached_data, dict)
-                    and "items" in cached_data
-                ):
-                    debug("FEED", "Using cached data", feed_url)
-                    items = cached_data["items"]
-                else:
-                    # Fetch fresh content
-                    items = cls.fetch_content(feed_url)
-                    info(
-                        "FEED",
-                        "Content fetched",
-                        f"Items: {len(items)}, URL: {feed_url}",
-                    )
+        if not cls.can_handle(feed_url):
+            return
 
-                    # Cache the results if caching is enabled
-                    if cls.cache_expiration != 0 and items:
-                        add_to_cache(feed_url, {"items": items}, cls.cache_expiration)
+        debug("FEED", "Using handler", f"URL: {feed_url}, Handler: {cls.__name__}")
+        try:
+            # Check cache first
+            cached_data = get_from_cache(feed_url)
+            if cached_data:
+                debug("FEED", "Using cached data", feed_url)
+                items = cls._process_cached_items(cached_data)
+            else:
+                # Fetch fresh content
+                items = cls.fetch_content(feed_url)
+                info("FEED", "Content fetched", f"Items: {len(items)}, URL: {feed_url}")
 
-                # Process each item
-                for item in items:
-                    needs_further_processing = item.get(
-                        "needs_further_processing", False
-                    )
-                    item_url = item["url"]
-                    item_content = item.get("content", "")
+            # Cache the results if caching is enabled
+            if cls.cache_expiration != 0 and items:
+                add_to_cache(feed_url, {"items": items}, cls.cache_expiration)
 
-                    if needs_further_processing:
-                        debug("FEED", "Further processing needed", item_url)
+            # Process each item
+            for item in items:
+                cls._process_feed_item(item, topic_id)
 
-                    # Create feed item with appropriate processing flag
-                    feed_item = FeedItem.create(
-                        url=item_url,
-                        content=item_content,
-                        needs_further_processing=needs_further_processing,
-                    )
-
-                    # Directly add to queue with the topic's ID
-                    add_feed_item_to_queue(topic_id, feed_item, item_content)
-            except Exception as e:
-                error("FEED", "Processing error", f"URL: {feed_url}, Error: {str(e)}")
+        except Exception as e:
+            error("FEED", "Processing error", f"URL: {feed_url}, Error: {str(e)}")

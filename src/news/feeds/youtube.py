@@ -4,7 +4,7 @@ YouTube connector for fetching transcripts from YouTube videos, channels, and pl
 
 import os
 from typing import Dict, List
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import ParseResult, parse_qs, urlparse
 
 from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -105,6 +105,51 @@ def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
         return []
 
 
+def _handle_channel_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
+    """Handle YouTube channel URL."""
+    path_parts = [p for p in parsed_url.path.split("/") if p]
+    if "@" in parsed_url.path:
+        handle = path_parts[0].lstrip("@")
+        return fetch_youtube_videos_handle(handle)
+    elif "channel" in parsed_url.path:
+        channel_id = path_parts[-1]
+        return fetch_youtube_videos_channel(channel_id)
+    return []
+
+
+def _handle_playlist_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
+    """Handle YouTube playlist URL."""
+    playlist_id = parse_qs(parsed_url.query).get("list", [""])[0]
+    return fetch_youtube_videos_playlist(playlist_id) if playlist_id else []
+
+
+def _handle_video_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
+    """Handle YouTube video URL."""
+    video_id = None
+    if parsed_url.netloc == "youtu.be":
+        video_id = parsed_url.path[1:]
+    else:
+        video_id = parse_qs(parsed_url.query).get("v", [""])[0]
+
+    if not video_id:
+        return []
+
+    try:
+        transcript = fetch_youtube_transcript(video_id)
+        return [
+            {
+                "url": f"https://www.youtube.com/watch?v={video_id}",
+                "content": transcript,
+                "needs_further_processing": False,
+            }
+        ]
+    except Exception as e:
+        error(
+            "YOUTUBE", "Transcript fetch failed", f"Video: {video_id}, Error: {str(e)}"
+        )
+        return []
+
+
 class YouTubeConnector(FeedConnector):
     # Cache for 6 hours
     cache_expiration = 6 * 3600
@@ -119,54 +164,20 @@ class YouTubeConnector(FeedConnector):
 
     @staticmethod
     def fetch_content(url: str) -> List[Dict[str, str]]:
+        """Fetch content from YouTube URL."""
         info("YOUTUBE", "Fetching content", url)
         try:
             parsed = urlparse(url)
             path_parts = [p for p in parsed.path.split("/") if p]
 
-            # Handle channel/playlist URLs
-            if path_parts and (
-                "@" in parsed.path
-                or "channel" in parsed.path
-                or "playlist" in parsed.path
-            ):
-                if "playlist" in parsed.path:
-                    playlist_id = parse_qs(parsed.query).get("list", [""])[0]
-                    return (
-                        fetch_youtube_videos_playlist(playlist_id)
-                        if playlist_id
-                        else []
-                    )
-                else:
-                    handle = path_parts[0]
-                    if handle.startswith("@"):
-                        handle = handle[1:]
-                    return fetch_youtube_videos_handle(handle)
-
-            # Handle single video URLs
-            if parsed.netloc == "youtu.be":
-                video_id = parsed.path[1:]
+            # Handle different URL types
+            if "playlist" in parsed.path:
+                return _handle_playlist_url(parsed)
+            elif "@" in parsed.path or "channel" in parsed.path:
+                return _handle_channel_url(parsed)
             else:
-                query = parse_qs(parsed.query)
-                video_id = query.get("v", [""])[0]
-
-            if not video_id:
-                return []
-
-            transcript = fetch_youtube_transcript(video_id)
-            return (
-                [
-                    {
-                        "url": url,
-                        "content": transcript,
-                        "title": f"YouTube Video {video_id}",
-                        "needs_further_processing": False,  # Individual videos don't need further processing
-                    }
-                ]
-                if transcript
-                else []
-            )
+                return _handle_video_url(parsed)
 
         except Exception as e:
-            error("YOUTUBE", "Fetching content failed", str(e))
+            error("YOUTUBE", "Content fetch failed", f"URL: {url}, Error: {str(e)}")
             return []
