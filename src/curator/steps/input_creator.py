@@ -32,8 +32,12 @@ def should_skip_news(
     def _should_skip_news(state: Dict[str, Any]) -> str:
         """Inner function that evaluates the state and returns the next node."""
 
-        topic: Topic = state.get("topic")
-        feed_item: FeedItem = state.get("feed_item")
+        topic : Topic = state.get("topic")
+        feed_item = state.get("feed_item")
+
+        if feed_item is None:
+            debug("CURATOR", "No feed item found")
+            return true_node
 
         processed_items = {
             (item.url, item.content_hash): item for item in topic.processed_feeds

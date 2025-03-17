@@ -9,6 +9,58 @@ document.addEventListener("DOMContentLoaded", function() {
         loadTopics(projectId);
     }
     
+    // Connect create topic button
+    const createTopicBtn = document.getElementById('createTopicBtn');
+    if (createTopicBtn) {
+        createTopicBtn.addEventListener('click', function() {
+            const form = document.getElementById('createTopicForm');
+            if (form.checkValidity()) {
+                createTopic();
+            } else {
+                form.reportValidity();
+            }
+        });
+    }
+
+    // Connect update topic button
+    const updateTopicBtn = document.getElementById('updateTopicBtn');
+    if (updateTopicBtn) {
+        updateTopicBtn.addEventListener('click', function() {
+            const form = document.getElementById('editTopicForm');
+            if (form.checkValidity()) {
+                updateTopic();
+            } else {
+                form.reportValidity();
+            }
+        });
+    }
+
+    // Connect feed URL buttons
+    const addFeedBtn = document.getElementById('addFeedBtn');
+    if (addFeedBtn) {
+        addFeedBtn.addEventListener('click', addFeedInput);
+    }
+
+    // Connect publish URL buttons
+    const addPublishBtn = document.getElementById('addPublishBtn');
+    if (addPublishBtn) {
+        addPublishBtn.addEventListener('click', addPublishInput);
+    }
+
+    // Connect remove feed buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-feed')) {
+            removeFeedInput(event.target);
+        }
+    });
+
+    // Connect remove publish buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-publish')) {
+            removePublishInput(event.target);
+        }
+    });
+
     // Handle edit button clicks in topic list
     document.getElementById('topics-list').addEventListener('click', (event) => {
         if (event.target.classList.contains('edit-article')) {
@@ -24,109 +76,119 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+// Split loadTopics into smaller functions to reduce complexity
 async function loadTopics(projectId) {
-    var cardIndex = 2;
-
     try {
-        const response = await fetch(`${API_URL}/projects/${projectId}`);
-        const project = await response.json();
-        
-        // Update the project title
-        const projectTitle = document.getElementById('project-title');
-        projectTitle.textContent = '';
-        
-        const projectText = document.createTextNode('Project');
-        projectTitle.appendChild(projectText);
-        
-        const lineBreak = document.createElement('br');
-        projectTitle.appendChild(lineBreak);
-        
-        const titleText = document.createTextNode(project.title);
-        projectTitle.appendChild(titleText);
-        
-        const topicsList = document.getElementById('topics-list');
-        topicsList.textContent = '';
-        
-        const template = document.getElementById('topic-template');
-        const emptyTemplate = document.getElementById('empty-topic-template');
-        
-        for (const topicId of project.topic_ids) {
-            const topicResponse = await fetch(`${API_URL}/topics/${topicId}`);
-            const topic = await topicResponse.json();
-            
-            const topicElement = template.content.cloneNode(true);
-            
-            // Fill in the template
-            topicElement.querySelector('.topic-name').textContent = topic.name;
-            topicElement.querySelector('.description').textContent = topic.description;
-            
-            // Check if article is still being generated
-            if (!topic.article) {
-                // Disable the update button while generating
-                topicElement.querySelector('.update-article').disabled = true;
-                topicElement.querySelector('.update-article').title = 'Article is still being generated';
-                
-                // Disable the publish button while generating
-                topicElement.querySelector('.publish-article').disabled = true;
-                topicElement.querySelector('.publish-article').title = 'Article is still being generated';
-            }
-            
-            // Use Pexels thumbnail if available, otherwise use default image
-            const topicImg = topicElement.querySelector('.topic-img');
-            if (topic.thumbnail_url) {
-                topicImg.src = topic.thumbnail_url;
-            } else {
-                topicImg.src = `/img/bg/bg-${(cardIndex++ % 5) + 1}.png`;
-            }
-
-            // Set up view article button
-            const viewButton = topicElement.querySelector('.view-article');
-            viewButton.dataset.topicId = topic.id;
-            viewButton.addEventListener('click', () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const projectId = urlParams.get("project_id");
-                if (topic.article) {
-                    window.location.href = `article.html?id=${topic.article}&project_id=${projectId}`;
-                } else {
-                    // If the article isn't generated yet, show a message to the user
-                    alert('Article is being generated. Please try again in a moment.');
-                }
-            });
-                        
-            // Add data attributes and event listeners for other buttons
-            const updateButton = topicElement.querySelector('.update-article');
-            const editButton = topicElement.querySelector('.edit-article');
-            const publishButton = topicElement.querySelector('.publish-article');
-            
-            updateButton.dataset.topicId = topic.id;
-            editButton.dataset.topicId = topic.id;
-            publishButton.dataset.topicId = topic.id;
-            
-            updateButton.addEventListener('click', () => updateArticle(topic.id));
-            editButton.addEventListener('click', () => editTopic(topic.id));
-            publishButton.addEventListener('click', () => publishArticle(topic.id));
-            
-            // Only enable publish button if there are publish URLs
-            if (!topic.publish_urls || topic.publish_urls.length === 0) {
-                publishButton.disabled = true;
-                publishButton.title = 'No publish URLs configured';
-            }
-            
-            topicsList.appendChild(topicElement);
-        }
-
-        // Add empty cards until we have at least 30 total
-        const totalCards = project.topic_ids.length;
-        const emptyCardsNeeded = Math.max(0, 30 - totalCards);
-        
-        for (let i = 0; i < emptyCardsNeeded; i++) {
-            topicsList.appendChild(emptyTemplate.content.cloneNode(true));
-        }
-
-                
+        const project = await fetchProject(projectId);
+        updateProjectTitle(project.title);
+        await renderTopicsList(project.topic_ids);
     } catch (error) {
         console.error('Error loading topics:', error);
         showError('Failed to load topics. Please try again later.');
+    }
+}
+
+async function fetchProject(projectId) {
+    const response = await fetch(`${API_URL}/projects/${projectId}`);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+}
+
+function updateProjectTitle(title) {
+    const projectTitle = document.getElementById('project-title');
+    projectTitle.textContent = '';
+    projectTitle.appendChild(document.createTextNode('Project'));
+    projectTitle.appendChild(document.createElement('br'));
+    projectTitle.appendChild(document.createTextNode(title));
+}
+
+async function renderTopicsList(topicIds) {
+    const topicsList = document.getElementById('topics-list');
+    const template = document.getElementById('topic-template');
+    const emptyTemplate = document.getElementById('empty-topic-template');
+    
+    topicsList.textContent = '';
+    let cardIndex = 2;
+
+    for (const topicId of topicIds) {
+        const topic = await fetchTopic(topicId);
+        const topicElement = createTopicElement(topic, template, cardIndex++);
+        topicsList.appendChild(topicElement);
+    }
+
+    // Add empty cards
+    const emptyCardsNeeded = Math.max(0, 30 - topicIds.length);
+    for (let i = 0; i < emptyCardsNeeded; i++) {
+        topicsList.appendChild(emptyTemplate.content.cloneNode(true));
+    }
+}
+
+async function fetchTopic(topicId) {
+    const response = await fetch(`${API_URL}/topics/${topicId}`);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+}
+
+function createTopicElement(topic, template, cardIndex) {
+    const topicElement = template.content.cloneNode(true);
+    
+    // Fill in the template
+    topicElement.querySelector('.topic-name').textContent = topic.name;
+    topicElement.querySelector('.description').textContent = topic.description;
+    
+    // Set up image
+    const topicImg = topicElement.querySelector('.topic-img');
+    topicImg.src = topic.thumbnail_url || `/img/bg/bg-${(cardIndex % 5) + 1}.png`;
+    
+    // Set up buttons
+    setupTopicButtons(topicElement, topic);
+    
+    return topicElement;
+}
+
+function setupTopicButtons(topicElement, topic) {
+    const viewButton = topicElement.querySelector('.view-article');
+    const updateButton = topicElement.querySelector('.update-article');
+    const editButton = topicElement.querySelector('.edit-article');
+    const publishButton = topicElement.querySelector('.publish-article');
+    
+    // Set data attributes
+    [viewButton, updateButton, editButton, publishButton].forEach(btn => {
+        btn.dataset.topicId = topic.id;
+    });
+    
+    // Set up view button
+    viewButton.addEventListener('click', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get("project_id");
+        if (topic.article) {
+            const safeUrl = `article.html?id=${encodeURIComponent(topic.article)}&project_id=${encodeURIComponent(projectId)}`;
+            window.location.href = safeUrl;
+        } else {
+            alert('Article is being generated. Please try again in a moment.');
+        }
+    });
+    
+    // Set up other buttons
+    updateButton.addEventListener('click', () => updateArticle(topic.id));
+    editButton.addEventListener('click', () => editTopic(topic.id));
+    publishButton.addEventListener('click', () => publishArticle(topic.id));
+    
+    // Disable buttons if needed
+    if (!topic.article) {
+        updateButton.disabled = true;
+        updateButton.title = 'Article is still being generated';
+        publishButton.disabled = true;
+        publishButton.title = 'Article is still being generated';
+    }
+    
+    if (!topic.publish_urls || topic.publish_urls.length === 0) {
+        publishButton.disabled = true;
+        publishButton.title = 'No publish URLs configured';
     }
 }
 
@@ -515,7 +577,7 @@ function removePublishInput(button) {
 async function publishArticle(topicId) {
     try {
         const button = document.querySelector(`[data-topic-id="${topicId}"].publish-article`);
-        const originalHTML = button.innerHTML;
+        const originalIcon = button.innerHTML;
         button.disabled = true;
         
         // Safely clear and add icon
@@ -538,10 +600,7 @@ async function publishArticle(topicId) {
         // Reset button after short delay
         setTimeout(() => {
             button.disabled = false;
-            // Use insertAdjacentHTML which is safer in this controlled context
-            // where originalHTML is from our own code, not user input
-            button.textContent = '';
-            button.insertAdjacentHTML('afterbegin', originalHTML);
+            button.innerHTML = originalIcon;
         }, 2000);
         
     } catch (error) {
@@ -549,7 +608,6 @@ async function publishArticle(topicId) {
         showError('Failed to publish article. Please try again later.');
         const button = document.querySelector(`[data-topic-id="${topicId}"].publish-article`);
         button.disabled = false;
-        button.textContent = '';
-        button.insertAdjacentHTML('afterbegin', '<i class="bi bi-cloud-upload"></i>');
+        button.innerHTML = '<i class="bi bi-cloud-upload"></i>';
     }
 } 

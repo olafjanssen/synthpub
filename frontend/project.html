@@ -115,10 +115,10 @@
                             <div id="feedUrlsContainer">
                                 <div class="input-group mb-2">
                                     <input type="url" class="form-control feed-url" placeholder="https://example.com/feed">
-                                    <button type="button" class="btn btn-outline-danger remove-feed" onclick="removeFeedInput(this)">×</button>
+                                    <button type="button" class="btn btn-outline-danger remove-feed">×</button>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addFeedInput()">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="addFeedBtn">
                                 Add Feed URL
                             </button>
                         </div>
@@ -127,10 +127,10 @@
                             <div id="publishUrlsContainer">
                                 <div class="input-group mb-2">
                                     <input type="url" class="form-control publish-url" placeholder="https://example.com/publish">
-                                    <button type="button" class="btn btn-outline-danger remove-publish" onclick="removePublishInput(this)">×</button>
+                                    <button type="button" class="btn btn-outline-danger remove-publish">×</button>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addPublishInput()">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="addPublishBtn">
                                 Add Publish URL
                             </button>
                         </div>
@@ -138,7 +138,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="createTopic()">Create Topic</button>
+                    <button type="button" class="btn btn-primary" id="createTopicBtn">Create Topic</button>
                 </div>
             </div>
         </div>
@@ -182,7 +182,7 @@
                     <button type="button" class="btn btn-danger remove-article">Remove Topic</button>
                     <div>
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" onclick="updateTopic()">Save Changes</button>
+                        <button type="button" class="btn btn-primary" id="updateTopicBtn">Save Changes</button>
                     </div>
                 </div>
             </div>
