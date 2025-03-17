@@ -6,10 +6,13 @@ developers and users without unnecessary duplication.
 """
 import sys
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from loguru import logger
+
 from api.db.common import get_db_path
 from api.routes.log_routes import handle_log
+
 
 def db_path():
     return get_db_path('logs')

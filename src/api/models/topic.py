@@ -1,8 +1,11 @@
 """Topic-related data models."""
-from pydantic import BaseModel
-from typing import List, Optional, Dict
 from datetime import datetime
+from typing import Dict, List, Optional
+
+from pydantic import BaseModel
+
 from .feed_item import FeedItem
+
 
 class TopicBase(BaseModel):
     """Base topic model."""

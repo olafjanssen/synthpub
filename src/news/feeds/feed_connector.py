@@ -1,9 +1,12 @@
 """Base interface for feed connectors."""
-from typing import List, Dict, Protocol, Any
+from typing import Any, Dict, List, Protocol
+
 from typing_extensions import runtime_checkable
+
+from api.db.cache_manager import add_to_cache, get_from_cache
 from api.models.feed_item import FeedItem
-from api.db.cache_manager import get_from_cache, add_to_cache
-from utils.logging import debug, info, error, warning
+from utils.logging import debug, error, info, warning
+
 
 @runtime_checkable
 class FeedConnector(Protocol):

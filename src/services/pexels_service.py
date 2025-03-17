@@ -1,9 +1,12 @@
 """Service for fetching images from Pexels API."""
 import os
 import random
+from typing import Any, Dict, List, Optional
+
 import requests
-from typing import Optional, Dict, List, Any
-from utils.logging import warning, error
+
+from utils.logging import error, warning
+
 
 def get_pexels_key() -> str:
     """Get Pexels API key from environment variables."""

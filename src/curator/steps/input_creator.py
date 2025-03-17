@@ -3,15 +3,17 @@ Input creator step for the curator workflow.
 
 This module handles loading topic and article data based on the topic_id.
 """
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
-from api.models.topic import Topic
-from api.models.article import Article
-from api.models.feed_item import FeedItem
-from utils.logging import warning, debug, error
+from langgraph.graph import END
+
 from api.db.article_db import get_article
 from api.db.topic_db import get_topic
-from langgraph.graph import END
+from api.models.article import Article
+from api.models.feed_item import FeedItem
+from api.models.topic import Topic
+from utils.logging import debug, error, warning
+
 
 def should_skip_news(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
     """

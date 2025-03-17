@@ -4,16 +4,17 @@ Example script to test the curator chain with a test topic.
 This script creates a test Topic and runs it through the curator chain
 to verify that the chain works correctly.
 """
-import sys
 import os
-
-from api.models.topic import Topic
-from api.models.feed_item import FeedItem
-from curator.graph_workflow import create_curator_graph
-from utils.logging import info, debug, error
-from api.db.topic_db import save_topic
+import sys
 from datetime import datetime, timezone
+
 import yaml
+
+from api.db.topic_db import save_topic
+from api.models.feed_item import FeedItem
+from api.models.topic import Topic
+from curator.graph_workflow import create_curator_graph
+from utils.logging import debug, error, info
 
 # Load environment variables from settings.yaml
 if os.path.exists("settings.yaml"):

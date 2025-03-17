@@ -1,14 +1,16 @@
 """Converter for generating and updating podcast RSS feeds."""
-import os
 import datetime
+import os
 import urllib.request
 from urllib.parse import urlparse
 from xml.etree import ElementTree as ET
+
 from defusedxml.minidom import parseString
 
 from api.models import Topic
 from news.converter.converter_interface import Converter
-from utils.logging import debug, info, error, warning
+from utils.logging import debug, error, info, warning
+
 
 def is_safe_url(url: str) -> bool:
     """

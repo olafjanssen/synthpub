@@ -1,10 +1,13 @@
 """File system publisher for storing content in files."""
 from pathlib import Path
-from urllib.parse import unquote, urlparse
 from typing import Dict
-from .publisher_interface import Publisher
+from urllib.parse import unquote, urlparse
+
 from api.models.topic import Topic
-from utils.logging import debug, info, error, warning
+from utils.logging import debug, error, info, warning
+
+from .publisher_interface import Publisher
+
 
 def parse_file_url(url: str) -> Path:
     """Parse a file:// URL and return the filesystem path."""

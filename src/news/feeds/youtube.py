@@ -1,13 +1,17 @@
 """
 YouTube connector for fetching transcripts from YouTube videos, channels, and playlists.
 """
-from urllib.parse import urlparse, parse_qs
-from typing import List, Dict
-from .feed_connector import FeedConnector
-from youtube_transcript_api import YouTubeTranscriptApi
-from googleapiclient.discovery import build
 import os
-from utils.logging import info, error
+from typing import Dict, List
+from urllib.parse import parse_qs, urlparse
+
+from googleapiclient.discovery import build
+from youtube_transcript_api import YouTubeTranscriptApi
+
+from utils.logging import error, info
+
+from .feed_connector import FeedConnector
+
 
 def get_api_key():
     """Get YouTube API key from environment variables"""

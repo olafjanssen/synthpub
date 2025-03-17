@@ -1,11 +1,13 @@
 """
 Log routes for the API.
 """
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import Dict, List, Any
 import asyncio
 import time
 from contextlib import asynccontextmanager
+from typing import Any, Dict, List
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 import utils.logging as logging
 
 router = APIRouter()

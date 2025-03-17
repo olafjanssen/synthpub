@@ -1,10 +1,10 @@
 """Feed connector initialization."""
+from .arxiv import ArxivConnector
 from .file import FileConnector
 from .gmail import GmailConnector
 from .rss import RSSConnector
 from .web import WebConnector
 from .youtube import YouTubeConnector
-from .arxiv import ArxivConnector
 
 # List of all connector classes
 CONNECTORS = [

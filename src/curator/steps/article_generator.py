@@ -3,16 +3,18 @@ Article generator step for the curator workflow.
 
 This module handles generating new articles for topics that don't have one yet.
 """
-from langchain.prompts import PromptTemplate
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
+from langchain.prompts import PromptTemplate
+
+from api.db.article_db import create_article
+from api.db.prompt_db import get_prompt
+from api.db.topic_db import save_topic
+from api.models.article import Article
 from api.models.topic import Topic
 from services.llm_service import get_llm
-from api.db.prompt_db import get_prompt
-from api.db.article_db import create_article
-from api.db.topic_db import save_topic
-from utils.logging import info, error, debug
-from api.models.article import Article
+from utils.logging import debug, error, info
+
 
 def should_generate(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
     """

@@ -1,14 +1,19 @@
 """
 Arxiv connector for fetching research papers and their PDF contents.
 """
-import arxiv
-import requests
-import PyPDF2
 import io
-from typing import List, Dict
-from urllib.parse import urlparse, unquote
+from typing import Dict, List
+from urllib.parse import unquote, urlparse
+
+import arxiv
+import PyPDF2
+import requests
+
+from utils.logging import error, info
+
 from .feed_connector import FeedConnector
-from utils.logging import info, error
+
+
 def extract_pdf_text(pdf_url: str) -> str:
     """Download and extract text from PDF."""
     try:

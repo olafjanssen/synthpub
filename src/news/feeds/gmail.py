@@ -2,15 +2,18 @@
 Gmail connector for fetching email content from Gmail inbox.
 """
 import base64
-from typing import List, Dict
+from pathlib import Path
+from typing import Dict, List
+from urllib.parse import urlparse
+
+from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from pathlib import Path
-from urllib.parse import urlparse
-from .feed_connector import FeedConnector
+
 from utils.logging import error
+
+from .feed_connector import FeedConnector
 
 # Gmail API configuration
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']

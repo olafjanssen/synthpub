@@ -3,18 +3,20 @@ Substance extractor step for the curator workflow.
 
 Extract the substance of an article: new information, enforcing information, and contradicting information.
 """
-from langchain.prompts import PromptTemplate
-from typing import Dict, Any
-from pydantic import BaseModel, Field
-from langchain.output_parsers import PydanticOutputParser
+from typing import Any, Dict
 
-from api.models.topic import Topic
+from langchain.output_parsers import PydanticOutputParser
+from langchain.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+
+from api.db.prompt_db import get_prompt
+from api.db.topic_db import save_topic
 from api.models.article import Article
 from api.models.feed_item import FeedItem
+from api.models.topic import Topic
 from services.llm_service import get_llm
-from api.db.prompt_db import get_prompt
-from utils.logging import info, error, debug
-from api.db.topic_db import save_topic
+from utils.logging import debug, error, info
+
 
 class SubstanceResponse(BaseModel):
     """Model for the substance extractor response."""

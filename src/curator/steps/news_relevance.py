@@ -3,15 +3,17 @@ News relevance step for the curator workflow.
 
 This module checks if new content is relevant to an existing topic and article.
 """
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field
-from typing import Dict, Any, Callable
+from typing import Any, Callable, Dict
 
-from services.llm_service import get_llm
+from langchain.output_parsers import PydanticOutputParser
+from langchain.prompts import PromptTemplate
+from pydantic import BaseModel, Field
+
 from api.db.prompt_db import get_prompt
 from api.db.topic_db import save_topic
-from utils.logging import debug, warning, error
+from services.llm_service import get_llm
+from utils.logging import debug, error, warning
+
 
 class RelevanceResponse(BaseModel):
     """Model for the relevance filter response."""

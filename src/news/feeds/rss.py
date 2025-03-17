@@ -2,13 +2,17 @@
 RSS connector for fetching links from RSS feeds.
 """
 import ssl
-import feedparser
-from typing import List, Dict
 from datetime import datetime
 from email.utils import parsedate_to_datetime
+from typing import Dict, List
 from urllib.parse import urlparse
+
+import feedparser
+
+from utils.logging import error, info, warning
+
 from .feed_connector import FeedConnector
-from utils.logging import info, error, warning
+
 
 def get_pub_date(entry) -> datetime:
     """Extract publication date from entry, handling multiple formats."""

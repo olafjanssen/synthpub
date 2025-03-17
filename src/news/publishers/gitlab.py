@@ -1,11 +1,14 @@
 """GitLab publisher for committing content to GitLab repositories."""
+import os
 from urllib.parse import urlparse
 
-import os
 import requests
-from .publisher_interface import Publisher
+
 from api.models.topic import Topic
-from utils.logging import debug, info, error
+from utils.logging import debug, error, info
+
+from .publisher_interface import Publisher
+
 
 def get_api_key():
     """Get Gitlab token API key from environment variables"""

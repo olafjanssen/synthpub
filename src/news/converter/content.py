@@ -1,10 +1,12 @@
 """
 Content converter that simply uses the article content as is.
 """
-from ..converter.converter_interface import Converter
-from api.models.topic import Topic
 from api.db.article_db import get_article
+from api.models.topic import Topic
 from utils.logging import error
+
+from ..converter.converter_interface import Converter
+
 
 class Content(Converter):
     @staticmethod

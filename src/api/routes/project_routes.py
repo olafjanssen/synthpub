@@ -1,19 +1,20 @@
 """Project-related API routes."""
-from fastapi import APIRouter, HTTPException
 from typing import List
-from utils.logging import error, warning
 
-from api.models.project import Project, ProjectCreate, ProjectUpdate
+from fastapi import APIRouter, HTTPException
+
 from api.db.project_db import (
+    add_topic_to_project,
     create_project,
     get_project,
     list_projects,
-    update_project,
     mark_project_deleted,
-    add_topic_to_project,
-    remove_topic_from_project
+    remove_topic_from_project,
+    update_project,
 )
+from api.models.project import Project, ProjectCreate, ProjectUpdate
 from services.pexels_service import get_random_thumbnail
+from utils.logging import error, warning
 
 router = APIRouter()
 

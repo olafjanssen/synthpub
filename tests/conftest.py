@@ -4,6 +4,7 @@ Common test fixtures for SynthPub tests.
 import pytest
 import yaml
 
+
 @pytest.fixture
 def sample_settings_data():
     """Return sample settings data for tests."""

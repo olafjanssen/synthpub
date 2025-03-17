@@ -1,12 +1,14 @@
 """
 Content converter using a prompt from the prompt database.
 """
-from .converter_interface import Converter
-from api.models.topic import Topic
 from langchain.prompts import PromptTemplate
-from services.llm_service import get_llm
-from utils.logging import debug, info, error, warning
+
 from api.db.prompt_db import get_prompt
+from api.models.topic import Topic
+from services.llm_service import get_llm
+from utils.logging import debug, error, info, warning
+
+from .converter_interface import Converter
 
 
 class Prompt(Converter):

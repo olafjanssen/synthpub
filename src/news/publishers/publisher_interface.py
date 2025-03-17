@@ -1,9 +1,12 @@
 """Publisher interface for publishing content."""
 from typing import Protocol
+
 from typing_extensions import runtime_checkable
-from api.signals import publish_requested
+
 from api.models import Topic
+from api.signals import publish_requested
 from utils.logging import debug, error
+
 
 @runtime_checkable
 class Publisher(Protocol):

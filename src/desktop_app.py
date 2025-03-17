@@ -3,16 +3,20 @@ Desktop application wrapper for SynthPub using PyWebView.
 """
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-import time
-import webview
 import threading
-import uvicorn
+import time
+
 import requests
-from api.app import app
+import uvicorn
+import webview
 import yaml
-from utils.logging import error, debug
+
+from api.app import app
+from utils.logging import debug, error
+
 
 def load_environment():
     """Load environment variables from settings.yaml"""

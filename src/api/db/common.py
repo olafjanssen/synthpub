@@ -1,7 +1,9 @@
 """Common database utilities."""
 import os
 from pathlib import Path
+
 from ..routes.settings import load_settings
+
 
 def get_base_db_path() -> Path:
     """Get the base database path from settings or fallback to default."""

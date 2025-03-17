@@ -1,13 +1,15 @@
 """
 Simple database operations for prompts using plain Markdown files.
 """
-from pathlib import Path
-from typing import Dict, Optional, List
-import shutil
 import os
+import shutil
+from pathlib import Path
+from typing import Dict, List, Optional
+
 from api.models import Prompt
+from utils.logging import debug, error, info
+
 from .common import get_db_path
-from utils.logging import error, debug, info
 
 # In-memory cache for prompts
 _prompt_cache: Dict[str, Prompt] = {}

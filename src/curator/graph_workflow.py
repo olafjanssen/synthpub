@@ -4,16 +4,27 @@ LangGraph-based topic curator workflow.
 This module implements a LangGraph workflow that replaces the previous LCEL chain
 for topic curation. It provides better state management, error handling, and visualization.
 """
-from typing import Dict, Any, Optional, TypedDict, List, Callable
-from langgraph.graph import StateGraph, END 
+from typing import Any, Callable, Dict, List, Optional, TypedDict
 
-from api.models.topic import Topic
+from langgraph.graph import END, StateGraph
+
 from api.models.article import Article
 from api.models.feed_item import FeedItem
-from utils.logging import info, error
+from api.models.topic import Topic
 
 # Import the step functions directly
-from curator.steps import process_input, generate_article, news_relevance, refine_article, should_generate, is_relevant, should_skip_news, extract_substance
+from curator.steps import (
+    extract_substance,
+    generate_article,
+    is_relevant,
+    news_relevance,
+    process_input,
+    refine_article,
+    should_generate,
+    should_skip_news,
+)
+from utils.logging import error, info
+
 
 # Define the state schema
 class CuratorState(TypedDict, total=False):

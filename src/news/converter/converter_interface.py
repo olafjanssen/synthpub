@@ -1,9 +1,12 @@
 """Base interface for publishers."""
 from typing import Protocol
+
 from typing_extensions import runtime_checkable
-from api.signals import convert_requested
+
 from api.models import Topic
+from api.signals import convert_requested
 from utils.logging import debug, error
+
 
 @runtime_checkable
 class Converter(Protocol):

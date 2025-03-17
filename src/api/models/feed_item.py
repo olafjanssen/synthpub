@@ -1,8 +1,10 @@
 """Feed item model definitions."""
-from pydantic import BaseModel
-from datetime import datetime, timezone
 import hashlib
+from datetime import datetime, timezone
 from typing import Optional
+
+from pydantic import BaseModel
+
 
 class FeedItem(BaseModel):
     """Model for processed feed items."""

@@ -18,15 +18,18 @@ WARNING: FTP is an insecure protocol that transmits data and credentials in plai
          - HTTPS with client certificates
          - WebDAV over HTTPS
 """
-import os
+import ftplib
 import io
+import os
 from ftplib import FTP
 from typing import Tuple
 from urllib.parse import urlparse
-from .publisher_interface import Publisher
+
 from api.models.topic import Topic
-from utils.logging import debug, info, error, warning
-import ftplib
+from utils.logging import debug, error, info, warning
+
+from .publisher_interface import Publisher
+
 
 def get_ftp_credentials():
     """

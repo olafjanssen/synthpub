@@ -1,21 +1,25 @@
 """
 Content converter using Piper TTS to generate long-form audio from articles locally.
 """
-from .converter_interface import Converter
-from api.models.topic import Topic
-from typing import List, Dict, Any, Optional
 import io
-import os
-import wave
-import tempfile
 import json
-import requests
+import os
+import tempfile
 import time
-from pydub import AudioSegment
-from utils.logging import debug, info, error, warning
+import wave
+from typing import Any, Dict, List, Optional
+
+import requests
 
 # Import Piper library
 from piper.voice import PiperVoice
+from pydub import AudioSegment
+
+from api.models.topic import Topic
+from utils.logging import debug, error, info, warning
+
+from .converter_interface import Converter
+
 
 class PiperTTS(Converter):
     

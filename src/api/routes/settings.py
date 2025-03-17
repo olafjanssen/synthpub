@@ -1,11 +1,12 @@
+import os
+import sys
+from pathlib import Path
+from typing import Dict, Optional
+
+import webview
+import yaml
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Optional
-import os
-import yaml
-import webview
-from pathlib import Path
-import sys
 
 router = APIRouter()
 SETTINGS_FILE = "settings.yaml"
@@ -222,8 +223,8 @@ async def update_scheduler_settings(scheduler_settings: SchedulerSettings):
     
     # Update the scheduler based on settings changes
     try:
-        from news.news_scheduler import stop_scheduler_thread, start_scheduler_thread
-        
+        from news.news_scheduler import start_scheduler_thread, stop_scheduler_thread
+
         # Always stop and restart the scheduler to apply new settings
         stop_scheduler_thread()
                 

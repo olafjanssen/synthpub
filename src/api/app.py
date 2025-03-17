@@ -1,21 +1,25 @@
 """
 FastAPI application for the Curator API.
 """
-from fastapi import FastAPI, APIRouter
+import os
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+import yaml
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
-import yaml
-from .routes.topic_routes import router as topic_router
+
+from curator.topic_updater import start_update_processor
+from utils.logging import debug, error
+
 from .routes.article_routes import router as article_router
 from .routes.health import router as health_router
+from .routes.log_routes import router as log_router
 from .routes.project_routes import router as project_router
 from .routes.settings import router as settings_router
-from .routes.log_routes import router as log_router
-from contextlib import asynccontextmanager
-from curator.topic_updater import start_update_processor
-from pathlib import Path
-from utils.logging import debug, error
+from .routes.topic_routes import router as topic_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

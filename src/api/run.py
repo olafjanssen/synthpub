@@ -2,7 +2,9 @@
 Script to run the FastAPI application.
 """
 import os
+
 import uvicorn
+
 
 def main():
     """Run the FastAPI application."""

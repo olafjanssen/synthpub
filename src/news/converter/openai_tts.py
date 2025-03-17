@@ -1,16 +1,19 @@
 """
 Content converter using OpenAI TTS to generate long-form audio from articles.
 """
-from .converter_interface import Converter
-from api.models.topic import Topic
-from openai import OpenAI
+import io
 import os
 from typing import List
-import numpy as np
 
-import io
+import numpy as np
+from openai import OpenAI
 from pydub import AudioSegment
-from utils.logging import debug, info, error
+
+from api.models.topic import Topic
+from utils.logging import debug, error, info
+
+from .converter_interface import Converter
+
 
 class OpenAITTS(Converter):
     

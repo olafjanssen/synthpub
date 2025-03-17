@@ -1,8 +1,11 @@
 """Article model definitions."""
 from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel
+
 from .feed_item import FeedItem
+
 
 class Article(BaseModel):
     """Article model with version tracking."""

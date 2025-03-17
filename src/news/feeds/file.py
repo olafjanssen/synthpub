@@ -1,13 +1,16 @@
 """
 File system connector for processing local files using glob patterns.
 """
+import glob
+import mimetypes
 from pathlib import Path
 from typing import Dict, List
 from urllib.parse import unquote, urlparse
-import mimetypes
-import glob
-from .feed_connector import FeedConnector
+
 from utils.logging import error, warning
+
+from .feed_connector import FeedConnector
+
 
 def parse_file_url(url: str) -> str:
     """

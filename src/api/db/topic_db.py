@@ -1,15 +1,18 @@
 """
 Database operations for topics using individual YAML files.
 """
-from typing import Dict, Optional, List
-import yaml
 import uuid
 from datetime import datetime
 from shutil import move
+from typing import Dict, List, Optional
+
+import yaml
+
 from api.models import Topic
 from api.models.feed_item import FeedItem
+from utils.logging import error, warning
+
 from .common import get_db_path
-from utils.logging import warning, error
 
 # In-memory cache for topics
 _topic_cache: Dict[str, Topic] = {}
@@ -116,7 +119,7 @@ def mark_topic_deleted(topic_id: str) -> bool:
     
     # Import project_db locally to avoid circular imports
     from . import project_db
-    
+
     # Remove this topic from all projects that reference it
     projects = project_db.list_projects()
     for project in projects:

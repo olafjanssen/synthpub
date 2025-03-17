@@ -1,12 +1,15 @@
 """
 Web connector for fetching and parsing webpage content.
 """
-from urllib.parse import urlparse
 from typing import Dict, List
-from .feed_connector import FeedConnector
+from urllib.parse import urlparse
+
 import requests
 from bs4 import BeautifulSoup
+
 from utils.logging import error
+
+from .feed_connector import FeedConnector
 
 # Chrome user agent string
 HEADERS = {
