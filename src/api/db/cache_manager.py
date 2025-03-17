@@ -57,7 +57,7 @@ def _get_cache_path(url: str) -> Path:
     base_filename = _sanitize_filename(url)
     
     # Add a short hash suffix to avoid potential collisions
-    url_short_hash = hashlib.md5(url.encode()).hexdigest()[:8]
+    url_short_hash = hashlib.md5(url.encode(), usedforsecurity=False).hexdigest()[:8]
     filename = f"{base_filename}_{url_short_hash}.json"
     
     return CACHE_PATH() / filename

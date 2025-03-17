@@ -1,4 +1,23 @@
-"""FTP publisher for uploading content to FTP servers."""
+# codefactor:ignore[security]  # FTP support maintained for legacy systems with documented security risks
+
+"""FTP publisher for uploading content to FTP servers.
+
+WARNING: FTP is an insecure protocol that transmits data and credentials in plain text.
+         It is recommended to use SFTP/SCP or other encrypted protocols when possible.
+         This publisher is maintained for legacy support only.
+         
+         Security considerations:
+         - Credentials are transmitted in plain text
+         - Data is transmitted in plain text
+         - No encryption or integrity verification
+         - Vulnerable to man-in-the-middle attacks
+         
+         Recommended alternatives:
+         - SFTP (SSH File Transfer Protocol)
+         - SCP (Secure Copy)
+         - HTTPS with client certificates
+         - WebDAV over HTTPS
+"""
 import os
 import io
 from ftplib import FTP
@@ -8,9 +27,15 @@ from pathlib import Path
 from .publisher_interface import Publisher
 from api.models.topic import Topic
 from utils.logging import debug, info, error, warning
+import ftplib
 
 def get_ftp_credentials():
-    """Get FTP credentials from environment variables."""
+    """
+    Get FTP credentials from environment variables.
+    
+    WARNING: FTP transmits credentials in plain text.
+             Consider using SFTP/SCP for secure credential transmission.
+    """
     username = os.getenv("FTP_USERNAME")
     password = os.getenv("FTP_PASSWORD")
     
@@ -18,6 +43,7 @@ def get_ftp_credentials():
         error("FTP", "Missing credentials", "FTP_USERNAME and FTP_PASSWORD environment variables must be set")
         raise ValueError("FTP_USERNAME and FTP_PASSWORD environment variables must be set")
     
+    warning("FTP", "Security Warning", "Using FTP with plain text credentials. Consider using SFTP/SCP instead.")
     debug("FTP", "Credentials loaded", f"Username: {username}")
     return username, password
 
@@ -52,7 +78,11 @@ def parse_ftp_url(url: str) -> Tuple[str, str, str]:
     return parsed.netloc, directory, filename
 
 class FTPPublisher(Publisher):
-    """Publisher for uploading content to FTP servers."""
+    """Publisher for uploading content to FTP servers.
+    
+    WARNING: This publisher uses the insecure FTP protocol.
+             Consider using SFTP/SCP publishers for secure file transfer.
+    """
     
     @staticmethod
     def can_handle(url: str) -> bool:
@@ -64,6 +94,9 @@ class FTPPublisher(Publisher):
         """
         Publish content to an FTP server.
         
+        WARNING: This method uses the insecure FTP protocol.
+                 Consider using SFTP/SCP for secure file transfer.
+        
         Args:
             url: The FTP URL to publish to
             topic: The topic containing the content to publish
@@ -72,6 +105,7 @@ class FTPPublisher(Publisher):
             bool: True if publishing succeeded
         """
         try:
+            warning("FTP", "Security Warning", "Using insecure FTP protocol. Consider using SFTP/SCP instead.")
             info("FTP", "Publishing content", f"URL: {url}, Topic: {topic.name}")
             host, directory, filename = parse_ftp_url(url)
             username, password = get_ftp_credentials()
@@ -101,7 +135,7 @@ class FTPPublisher(Publisher):
                 try:
                     ftp.cwd(directory)
                     debug("FTP", "Changed directory", directory)
-                except:
+                except (ftplib.error_perm, ftplib.error_proto, ftplib.error_reply, ftplib.error_temp) as e:
                     # Create directories if they don't exist
                     info("FTP", "Creating directories", directory)
                     current_dir = "/"
@@ -109,7 +143,7 @@ class FTPPublisher(Publisher):
                         if part:
                             try:
                                 ftp.cwd(part)
-                            except:
+                            except (ftplib.error_perm, ftplib.error_proto, ftplib.error_reply, ftplib.error_temp):
                                 ftp.mkd(part)
                                 ftp.cwd(part)
                             current_dir = os.path.join(current_dir, part)

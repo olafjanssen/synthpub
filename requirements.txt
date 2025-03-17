@@ -14,6 +14,7 @@ websockets>=10.4
 tomli
 tomli_w
 blinker
+defusedxml>=0.7.1
 
 # LLM integration
 langchain-ollama

@@ -4,11 +4,24 @@ import datetime
 import urllib.request
 from urllib.parse import urlparse
 from xml.etree import ElementTree as ET
-from xml.dom import minidom
+from defusedxml.minidom import parseString
 
 from api.models import Topic
 from news.converter.converter_interface import Converter
 from utils.logging import debug, info, error, warning
+
+def is_safe_url(url: str) -> bool:
+    """
+    Check if a URL uses a safe scheme (http or https).
+    
+    Args:
+        url: The URL to check
+        
+    Returns:
+        bool: True if the URL uses a safe scheme
+    """
+    parsed = urlparse(url)
+    return parsed.scheme in ('http', 'https')
 
 class PodcastEpisodeRSSConverter(Converter):
     """Converter for generating and updating podcast RSS feeds with episodes."""
@@ -50,19 +63,15 @@ class PodcastEpisodeRSSConverter(Converter):
         existing_rss = None
         try:
             # Try to fetch existing RSS
-            if rss_url.startswith("http://") or rss_url.startswith("https://"):
+            if is_safe_url(rss_url):
                 with urllib.request.urlopen(rss_url) as response:
                     existing_rss = response.read().decode('utf-8')
-            elif rss_url.startswith("file://"):
-                file_path = urlparse(rss_url).path
-                if os.path.exists(file_path):
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        existing_rss = f.read()
+            elif os.path.exists(rss_url):
+                with open(rss_url, 'r', encoding='utf-8') as f:
+                    existing_rss = f.read()
             else:
-                # Check if it's a local path without scheme
-                if os.path.exists(rss_url):
-                    with open(rss_url, 'r', encoding='utf-8') as f:
-                        existing_rss = f.read()
+                error("PODCAST", "Invalid URL", f"Unsafe URL scheme or file not found: {rss_url}")
+                return False
         except Exception as e:
             warning("PODCAST", "RSS fetch failed", str(e))
             # Continue with creating a new RSS
@@ -162,7 +171,7 @@ class PodcastEpisodeRSSConverter(Converter):
                 
                 # Convert to string with pretty formatting
                 xml_string = ET.tostring(rss, 'utf-8')
-                pretty_xml = minidom.parseString(xml_string).toprettyxml(indent="  ")
+                pretty_xml = parseString(xml_string).toprettyxml(indent="  ")
                 
                 return pretty_xml
                 
@@ -206,7 +215,7 @@ class PodcastEpisodeRSSConverter(Converter):
         
         # Convert to string with pretty formatting
         xml_string = ET.tostring(rss, 'utf-8')
-        pretty_xml = minidom.parseString(xml_string).toprettyxml(indent="  ")
+        pretty_xml = parseString(xml_string).toprettyxml(indent="  ")
         
         return pretty_xml
     
