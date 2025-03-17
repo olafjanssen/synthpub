@@ -18,6 +18,7 @@ from curator.topic_updater import (
     queue_topic_update,
 )
 from services.pexels_service import get_random_thumbnail
+from ..db.project_db import add_topic_to_project
 from utils.logging import debug, error, info
 
 router = APIRouter()
@@ -36,20 +37,23 @@ def request_topic_publish(topic):
     debug("TOPIC", "Publish requested", topic.name)
     handle_topic_publishing(topic)
 
-@router.post("/topics/", response_model=Topic)
-async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTasks):
-    """Create a new topic and optionally generate an article."""
+@router.post("/projects/{project_id}/topics", response_model=Topic)
+async def create_topic_for_project(
+    project_id: str,
+    topic: TopicCreate,
+    background_tasks: BackgroundTasks
+):
+    """Create a new topic for a specific project and optionally generate an article."""
     try:
-        # Generate a unique ID for the topic
         topic_id = str(uuid4())
                 
-        # Get thumbnail if not provided
+
         thumbnail_url = topic.thumbnail_url
         if not thumbnail_url or thumbnail_url.lower() in ["auto", "none", ""]:
             thumbnail_data = get_random_thumbnail(f"{topic.name} {topic.description}")
             thumbnail_url = thumbnail_data.get("thumbnail_url")
         
-        # Create topic object
+
         topic_data = Topic(
             id=topic_id,
             name=topic.name,
@@ -61,11 +65,13 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
             thumbnail_url=thumbnail_url
         )
         
-        # Save topic to database
+    
         save_topic(topic_data)
         info("TOPIC", "Created", topic.name)
+  
+        add_topic_to_project(project_id, topic_id)
         
-        # Trigger update if feeds are provided
+
         if topic.feed_urls:
             background_tasks.add_task(request_topic_update, topic_id)
         else:
@@ -74,7 +80,7 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
         return topic_data
     except Exception as e:
         error("TOPIC", "Creation error", str(e))
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
 
 @router.get("/topics/", response_model=list[Topic])
 async def list_topics_route():
