@@ -90,4 +90,3 @@
 - [ ] Adjust the window title to that of the project/article
 - [ ] Add a system tray icon and option
 - [x] Allow for opening a new folder as database
-

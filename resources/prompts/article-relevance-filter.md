@@ -3,14 +3,18 @@ You are evaluating if new content is relevant to the following topic and existin
 Topic title: {topic_title}
 Topic description: {topic_description}
 
-Here is an existing article for this topic:
+Here is an existing article for this topic
 -------------
+
 {article}
+
 -------------
 
 This is a new source of information that is relevant for this topic:
 -------------
+
 {new_context}
+
 -------------
 
 Determine if the new content is relevant to the topic or existing article. Consider the following:

@@ -59,6 +59,7 @@ Each step in the workflow is implemented as a function in the `steps` directory:
 - `article_refiner.py`: Functions for updating the article with new content
 
 Each step module follows a consistent pattern:
+
 - Process functions that take and return state
 - Conditional routing functions that determine workflow paths
 - Helper functions that implement the core logic
