@@ -49,7 +49,7 @@ class SynthPubApp:
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
-                response = requests.get('http://127.0.0.1:8000/api/health')
+                response = requests.get('http://127.0.0.1:8000/api/health', timeout=2)
                 if response.status_code == 200:
                     self.server_started = True
                     return True

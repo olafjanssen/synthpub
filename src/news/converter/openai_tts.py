@@ -68,8 +68,8 @@ class OpenAITTS(Converter):
         return audio_segment
 
     @staticmethod
-    def can_handle(type: str) -> bool:
-        return type == 'openai-tts'
+    def can_handle(content_type: str) -> bool:
+        return content_type == 'openai-tts'
     
     @classmethod
     def convert_representation(cls, content_type: str, topic: Topic) -> bool:

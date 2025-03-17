@@ -28,7 +28,7 @@ def fetch_webpage(url: str) -> Dict[str, str]:
     Returns:
         Dict containing title and main content
     """
-    response = requests.get(url, headers=HEADERS)
+    response = requests.get(url, headers=HEADERS, timeout=15)
     response.raise_for_status()
     
     soup = BeautifulSoup(response.text, 'html.parser')

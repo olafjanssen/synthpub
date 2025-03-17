@@ -18,7 +18,7 @@ def extract_pdf_text(pdf_url: str) -> str:
     """Download and extract text from PDF."""
     try:
         # Download PDF
-        response = requests.get(pdf_url)
+        response = requests.get(pdf_url, timeout=30)
         response.raise_for_status()
         
         # Create PDF reader object

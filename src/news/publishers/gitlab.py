@@ -96,7 +96,7 @@ class GitLabPublisher(Publisher):
             debug("GITLAB", "Commit data prepared", f"Message: {commit_data['commit_message']}")
             
             # Make the request
-            response = requests.post(commit_url, headers=headers, json=commit_data)
+            response = requests.post(commit_url, headers=headers, json=commit_data, timeout=15)
             
             if response.status_code >= 200 and response.status_code < 300:
                 info("GITLAB", "Published successfully", f"Status: {response.status_code}, File: {file_path}")

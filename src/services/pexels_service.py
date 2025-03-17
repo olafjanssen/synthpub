@@ -36,7 +36,7 @@ def search_images(query: str, per_page: int = 10) -> Dict[str, Any]:
     url = f"https://api.pexels.com/v1/search?query={query}&per_page={per_page}"
     
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:

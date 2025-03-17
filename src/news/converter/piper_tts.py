@@ -53,7 +53,7 @@ class PiperTTS(Converter):
             
             # Download the voices database
             debug("PIPER_TTS", "Downloading voices database", f"URL: {cls.VOICES_DB_URL}")
-            response = requests.get(cls.VOICES_DB_URL)
+            response = requests.get(cls.VOICES_DB_URL, timeout=30)
             response.raise_for_status()
             
             # Parse the JSON response
@@ -104,7 +104,7 @@ class PiperTTS(Converter):
                     file_url = f"{cls.VOICE_DOWNLOAD_BASE_URL}{file_path}"
                     debug("PIPER_TTS", "Downloading model file", f"URL: {file_url}")
                     
-                    response = requests.get(file_url, stream=True)
+                    response = requests.get(file_url, stream=True, timeout=120)
                     response.raise_for_status()
                     
                     with open(local_file, "wb") as f:
@@ -212,8 +212,8 @@ class PiperTTS(Converter):
                 warning("PIPER_TTS", "Failed to delete temp file", f"Path: {wav_file_path}, Error: {str(e)}")
 
     @staticmethod
-    def can_handle(type: str) -> bool:
-        return type.startswith('piper-tts')
+    def can_handle(content_type: str) -> bool:
+        return content_type.startswith('piper-tts')
     
     @classmethod
     def convert_representation(cls, content_type: str, topic: Topic) -> bool:
