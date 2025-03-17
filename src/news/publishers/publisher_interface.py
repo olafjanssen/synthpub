@@ -1,9 +1,9 @@
 """Publisher interface for publishing content."""
-from typing import Dict, Protocol
+from typing import Protocol
 from typing_extensions import runtime_checkable
 from api.signals import publish_requested
 from api.models import Topic
-from utils.logging import debug, info, error
+from utils.logging import debug, error
 
 @runtime_checkable
 class Publisher(Protocol):

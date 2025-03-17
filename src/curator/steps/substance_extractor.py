@@ -4,7 +4,7 @@ Substance extractor step for the curator workflow.
 Extract the substance of an article: new information, enforcing information, and contradicting information.
 """
 from langchain.prompts import PromptTemplate
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pydantic import BaseModel, Field
 from langchain.output_parsers import PydanticOutputParser
 
@@ -13,7 +13,6 @@ from api.models.article import Article
 from api.models.feed_item import FeedItem
 from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
-from api.db.article_db import update_article
 from utils.logging import info, error, debug
 from api.db.topic_db import save_topic
 

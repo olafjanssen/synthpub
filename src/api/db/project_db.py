@@ -1,13 +1,11 @@
 """
 Database operations for projects using individual YAML files.
 """
-from pathlib import Path
-from typing import Dict, Optional, List
+from typing import Optional, List
 import yaml
 import uuid
 from datetime import datetime
 from shutil import move
-import os
 
 from api.models.project import Project
 from .common import get_db_path

@@ -1,14 +1,13 @@
 """Scheduler for automatically updating topics."""
-import time
+
 import threading
 import yaml
 from datetime import datetime, timedelta
 from api.db.topic_db import list_topics
 from api.models.topic import Topic
 import os
-from utils.logging import info, error, debug
+from utils.logging import info, error
 from curator.topic_updater import queue_topic_update
-from typing import Dict
 
 # Default configuration values
 DEFAULT_UPDATE_INTERVAL_MINUTES = 15

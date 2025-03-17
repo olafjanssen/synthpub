@@ -11,8 +11,6 @@ import tempfile
 import json
 import requests
 import time
-from pathlib import Path
-import numpy as np
 from pydub import AudioSegment
 from utils.logging import debug, info, error, warning
 

@@ -1,12 +1,11 @@
 """GitLab publisher for committing content to GitLab repositories."""
 from urllib.parse import urlparse
-import base64
+
 import os
 import requests
 from .publisher_interface import Publisher
 from api.models.topic import Topic
-from api.db.article_db import get_article
-from utils.logging import debug, info, error, warning
+from utils.logging import debug, info, error
 
 def get_api_key():
     """Get Gitlab token API key from environment variables"""
@@ -16,7 +15,6 @@ def get_api_key():
         raise ValueError("GITLAB_TOKEN environment variable not found in settings")
     debug("GITLAB", "API key loaded", "Token available")
     return api_key
-
 
 def parse_gitlab_url(url: str) -> tuple[str, str, str]:
     """

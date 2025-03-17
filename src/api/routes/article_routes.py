@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from ..db.article_db import get_article
 from ..models.article import Article
-from utils.logging import info, error, debug
+from utils.logging import error, debug
 
 router = APIRouter()
 

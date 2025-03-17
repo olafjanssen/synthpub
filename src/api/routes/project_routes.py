@@ -1,8 +1,7 @@
 """Project-related API routes."""
 from fastapi import APIRouter, HTTPException
-from uuid import uuid4
 from typing import List
-from utils.logging import error, warning, info
+from utils.logging import error, warning
 
 from api.models.project import Project, ProjectCreate, ProjectUpdate
 from api.db.project_db import (

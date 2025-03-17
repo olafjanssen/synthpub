@@ -1,11 +1,8 @@
 """
 Common test fixtures for SynthPub tests.
 """
-import os
 import pytest
 import yaml
-from pathlib import Path
-
 
 @pytest.fixture
 def sample_settings_data():
@@ -26,7 +23,6 @@ def sample_settings_data():
         'db_path': '../test_db',
     }
 
-
 @pytest.fixture
 def temp_settings_file(tmp_path, sample_settings_data):
     """Create a temporary settings.yaml file for testing."""
@@ -36,7 +32,6 @@ def temp_settings_file(tmp_path, sample_settings_data):
         yaml.dump(sample_settings_data, f)
     
     return settings_file
-
 
 @pytest.fixture
 def mock_feed_data():

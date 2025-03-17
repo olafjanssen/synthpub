@@ -15,7 +15,7 @@ from .routes.log_routes import router as log_router
 from contextlib import asynccontextmanager
 from curator.topic_updater import start_update_processor
 from pathlib import Path
-from utils.logging import info, debug, error
+from utils.logging import debug, error
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

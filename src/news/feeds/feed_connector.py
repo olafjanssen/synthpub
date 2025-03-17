@@ -1,5 +1,5 @@
 """Base interface for feed connectors."""
-from typing import List, Dict, Protocol, Callable, Any
+from typing import List, Dict, Protocol, Any
 from typing_extensions import runtime_checkable
 from api.models.feed_item import FeedItem
 from api.db.cache_manager import get_from_cache, add_to_cache

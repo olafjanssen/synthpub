@@ -22,8 +22,6 @@ import os
 import io
 from ftplib import FTP
 from urllib.parse import urlparse
-from typing import Dict, Tuple
-from pathlib import Path
 from .publisher_interface import Publisher
 from api.models.topic import Topic
 from utils.logging import debug, info, error, warning

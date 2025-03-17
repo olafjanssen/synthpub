@@ -1,17 +1,11 @@
-from fastapi import HTTPException
-from api.models.topic import Topic
 from api.models.feed_item import FeedItem
-from typing import Optional, Dict, Any, Tuple, Union
 from api.signals import publish_requested, convert_requested
 from utils.logging import debug, info, warning, error
 import threading
 from queue import Queue
-import news.feeds
-import news.publishers
-import news.converter   
+
 import time
-from api.db.topic_db import get_topic, save_topic
-from api.db.article_db import get_article, update_article, create_article
+from api.db.topic_db import get_topic
 from api.db.cache_manager import get_all_connectors
 
 # Import the LangGraph-based implementation

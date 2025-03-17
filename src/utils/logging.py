@@ -8,7 +8,6 @@ import sys
 from datetime import datetime
 from typing import Dict, List, Any
 from loguru import logger
-from blinker import signal
 from api.db.common import get_db_path
 from api.routes.log_routes import handle_log
 

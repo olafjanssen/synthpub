@@ -4,11 +4,8 @@ Article refiner step for the curator workflow.
 This module refines existing articles with new relevant content.
 """
 from langchain.prompts import PromptTemplate
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
-from api.models.topic import Topic
-from api.models.article import Article
-from api.models.feed_item import FeedItem
 from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 from api.db.article_db import update_article

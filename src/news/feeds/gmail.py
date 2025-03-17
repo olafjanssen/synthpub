@@ -1,15 +1,12 @@
 """
 Gmail connector for fetching email content from Gmail inbox.
 """
-import os
-import json
 import base64
 from typing import List, Dict
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
-from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import urlparse
 from .feed_connector import FeedConnector

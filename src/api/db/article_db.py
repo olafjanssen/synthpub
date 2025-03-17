@@ -1,11 +1,8 @@
 """Database operations for articles using markdown files with YAML front matter."""
-import os
 from datetime import datetime
 import yaml
-from pathlib import Path
 from typing import List, Optional
 import uuid
-import os
 from shutil import move
 
 from ..models.article import Article
@@ -18,6 +15,7 @@ def DB_PATH():
 def ensure_db_exists():
     """Create the articles directory if it doesn't exist."""
     DB_PATH().mkdir(parents=True, exist_ok=True)
+
 def article_to_markdown(article: Article) -> str:
     """Convert article to markdown with YAML front matter."""
     metadata = {

@@ -6,16 +6,12 @@ This module checks if new content is relevant to an existing topic and article.
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Callable
 
-from api.models.topic import Topic
-from api.models.article import Article
-from api.models.feed_item import FeedItem
 from services.llm_service import get_llm
 from api.db.prompt_db import get_prompt
 from api.db.topic_db import save_topic
 from utils.logging import debug, warning, error
-from langgraph.graph import END
 
 class RelevanceResponse(BaseModel):
     """Model for the relevance filter response."""

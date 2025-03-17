@@ -12,7 +12,6 @@ from api.models.feed_item import FeedItem
 from curator.graph_workflow import create_curator_graph
 from utils.logging import info, debug, error
 from api.db.topic_db import save_topic
-from api.db.article_db import get_article
 from datetime import datetime, timezone
 import yaml
 

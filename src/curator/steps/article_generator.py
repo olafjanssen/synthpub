@@ -4,7 +4,7 @@ Article generator step for the curator workflow.
 This module handles generating new articles for topics that don't have one yet.
 """
 from langchain.prompts import PromptTemplate
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Callable
 
 from api.models.topic import Topic
 from services.llm_service import get_llm
@@ -13,7 +13,6 @@ from api.db.article_db import create_article
 from api.db.topic_db import save_topic
 from utils.logging import info, error, debug
 from api.models.article import Article
-from langgraph.graph import END
 
 def should_generate(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
     """

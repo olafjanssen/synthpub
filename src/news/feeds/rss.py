@@ -8,7 +8,7 @@ from datetime import datetime
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlparse
 from .feed_connector import FeedConnector
-from utils.logging import debug, info, error, warning
+from utils.logging import info, error, warning
 
 def get_pub_date(entry) -> datetime:
     """Extract publication date from entry, handling multiple formats."""
