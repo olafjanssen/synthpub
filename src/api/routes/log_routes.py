@@ -73,7 +73,9 @@ async def websocket_logs(websocket: WebSocket):
     if main_event_loop is None:
         main_event_loop = asyncio.get_running_loop()
     
-    client_info = f"{websocket.client.host}:{websocket.client.port}"
+    client_info = "Unknown client"
+    if websocket.client is not None:
+        client_info = f"{websocket.client.host}:{websocket.client.port}"
     logging.debug("WEBSOCKET", "New connection", client_info)
     
     await websocket.accept()

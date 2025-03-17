@@ -47,3 +47,10 @@ pytest-cov
 flake8
 black
 isort
+mypy
+
+# Types
+types-requests 
+types-beautifulsoup4 
+types-defusedxml
+types-PyYAML
