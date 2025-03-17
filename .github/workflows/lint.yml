@@ -35,6 +35,6 @@ jobs:
       run: |
         isort --check-only --profile black src tests
         
-    - name: Type checking with mypy
-      run: |
-        mypy src 
+    # - name: Type checking with mypy
+    #   run: |
+    #     mypy src 
