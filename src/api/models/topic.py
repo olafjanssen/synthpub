@@ -21,8 +21,6 @@ class TopicBase(BaseModel):
 class TopicCreate(TopicBase):
     """Topic creation model."""
 
-    pass
-
 
 class TopicUpdate(BaseModel):
     """Topic update model."""

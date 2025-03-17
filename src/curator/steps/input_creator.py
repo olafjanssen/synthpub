@@ -6,14 +6,12 @@ This module handles loading topic and article data based on the topic_id.
 
 from typing import Any, Callable, Dict
 
-from langgraph.graph import END
-
 from api.db.article_db import get_article
 from api.db.topic_db import get_topic
 from api.models.article import Article
 from api.models.feed_item import FeedItem
 from api.models.topic import Topic
-from utils.logging import debug, error, warning
+from utils.logging import debug
 
 
 def should_skip_news(

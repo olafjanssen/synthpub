@@ -1,5 +1,4 @@
-/** @global {Object} marked */
-/** @global {Object} DOMPurify */
+/*global marked, DOMPurify */
 
 const API_URL = '/api';
 

@@ -1,11 +1,10 @@
 """File system publisher for storing content in files."""
 
 from pathlib import Path
-from typing import Dict
 from urllib.parse import unquote, urlparse
 
 from api.models.topic import Topic
-from utils.logging import debug, error, info, warning
+from utils.logging import debug, error, info
 
 from .publisher_interface import Publisher
 

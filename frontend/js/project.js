@@ -1,5 +1,4 @@
-/** @global {Object} bootstrap */
-/** @global {Object} bootstrap.Modal */
+/*global bootstrap */
 
 const API_URL = '/api';
 

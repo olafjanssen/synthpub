@@ -178,3 +178,4 @@ settings.yaml
 creds/
 
 .DS_Store
+.vscode/

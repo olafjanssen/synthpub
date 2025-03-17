@@ -5,7 +5,7 @@ This module implements a LangGraph workflow that replaces the previous LCEL chai
 for topic curation. It provides better state management, error handling, and visualization.
 """
 
-from typing import Any, Callable, Dict, List, Optional, TypedDict
+from typing import Any, Callable, Dict, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
 
