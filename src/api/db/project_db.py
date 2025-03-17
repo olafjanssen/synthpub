@@ -143,7 +143,8 @@ def add_topic_to_project(project_id: str, topic_id: str):
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    project.topic_ids.append(topic_id)
+    if topic_id not in project.topic_ids:
+        project.topic_ids.append(topic_id)
     
   
     updated_data = {"topic_ids": project.topic_ids}
