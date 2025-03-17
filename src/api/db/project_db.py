@@ -1,6 +1,8 @@
 """
 Database operations for projects using individual YAML files.
 """
+from http.client import HTTPException
+from logging import info
 import uuid
 from datetime import datetime
 from shutil import move
@@ -130,18 +132,25 @@ def mark_project_deleted(project_id: str) -> bool:
     move(filename, new_filename)
     return True
 
-def add_topic_to_project(project_id: str, topic_id: str) -> Optional[Project]:
-    """Add a topic to a project's topic list if the topic exists."""
+def add_topic_to_project(project_id: str, topic_id: str):
+    """
+    Associate a topic with a project.
+    Adjust this logic based on your actual project model and DB functions.
+    """
+    from api.db.project_db import get_project, update_project  
+
     project = get_project(project_id)
     if not project:
-        return None
-            
-    if topic_id not in project.topic_ids:
-        project.topic_ids.append(topic_id)
-        project.updated_at = datetime.utcnow()
-        save_project(project)
-        
-    return project
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    project.topic_ids.append(topic_id)
+    
+  
+    updated_data = {"topic_ids": project.topic_ids}
+    
+    update_project(project_id, updated_data)
+    info("PROJECT", "Updated", f"Added topic {topic_id} to project {project_id}")
+
 
 def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Project]:
     """Remove a topic from a project's topic list."""

@@ -18,6 +18,7 @@ from curator.topic_updater import (
     queue_topic_update,
 )
 from services.pexels_service import get_random_thumbnail
+from ..db.project_db import add_topic_to_project
 from utils.logging import debug, error, info
 
 router = APIRouter()
@@ -36,9 +37,13 @@ def request_topic_publish(topic):
     debug("TOPIC", "Publish requested", topic.name)
     handle_topic_publishing(topic)
 
-@router.post("/topics/", response_model=Topic)
-async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTasks):
-    """Create a new topic and optionally generate an article."""
+@router.post("/projects/{project_id}/topics", response_model=Topic)
+async def create_topic_for_project(
+    project_id: str,
+    topic: TopicCreate,
+    background_tasks: BackgroundTasks
+):
+    """Create a new topic for a specific project and optionally generate an article."""
     try:
         # Generate a unique ID for the topic
         topic_id = str(uuid4())
@@ -64,6 +69,9 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
         # Save topic to database
         save_topic(topic_data)
         info("TOPIC", "Created", topic.name)
+        
+        # Associate the topic with the project
+        add_topic_to_project(project_id, topic_id)
         
         # Trigger update if feeds are provided
         if topic.feed_urls:
