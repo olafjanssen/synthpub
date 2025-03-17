@@ -14,12 +14,12 @@ from .converter_interface import Converter
 class Prompt(Converter):
     
     @staticmethod
-    def can_handle(type: str) -> bool:
+    def can_handle(content_type: str) -> bool:
         # Check if type starts with 'prompt/' followed by a prompt ID
-        return type.startswith('prompt')
+        return content_type.startswith('prompt')
     
     @staticmethod
-    def convert_representation(type: str, topic: Topic) -> bool:
+    def convert_representation(content_type: str, topic: Topic) -> bool:
         try:            
             info("PROMPT", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
@@ -27,8 +27,8 @@ class Prompt(Converter):
             # Parse type to extract prompt_id
             # Format is either 'prompt' (using default) or 'prompt/prompt_id'
             prompt_id = None
-            if '/' in type:
-                _, prompt_id = type.split('/', 1)
+            if '/' in content_type:
+                _, prompt_id = content_type.split('/', 1)
             
             # Get prompt from database or use default
             template_text = None
@@ -60,7 +60,7 @@ Use a clear, concise style appropriate for the content.
             converted_content = llm.invoke(prompt.format(content=content)).content.strip()
             debug("PROMPT", "LLM response received", f"Output length: {len(converted_content)}")
 
-            topic.add_representation(type, converted_content)
+            topic.add_representation(content_type, converted_content)
             info("PROMPT", "Conversion complete", f"Topic: {topic.name}")
 
             return True

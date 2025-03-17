@@ -72,7 +72,7 @@ class OpenAITTS(Converter):
         return type == 'openai-tts'
     
     @classmethod
-    def convert_representation(cls, type: str, topic: Topic) -> bool:
+    def convert_representation(cls, content_type: str, topic: Topic) -> bool:
         try:
             info("TTS", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
@@ -99,7 +99,7 @@ class OpenAITTS(Converter):
             # Add audio representation
             total_duration = len(combined_audio) / 1000  # in seconds
             info("TTS", "Conversion complete", f"Topic: {topic.name}, Duration: {total_duration:.1f}s")
-            topic.add_representation(type, audio_bytes.hex(), {"format": "mp3", "binary": True})
+            topic.add_representation(content_type, audio_bytes.hex(), {"format": "mp3", "binary": True})
             return True
             
         except Exception as e:

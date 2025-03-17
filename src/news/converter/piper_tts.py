@@ -216,7 +216,7 @@ class PiperTTS(Converter):
         return type.startswith('piper-tts')
     
     @classmethod
-    def convert_representation(cls, type: str, topic: Topic) -> bool:
+    def convert_representation(cls, content_type: str, topic: Topic) -> bool:
         try:
             info("PIPER_TTS", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
@@ -226,8 +226,8 @@ class PiperTTS(Converter):
             speaker_id = None
             
             # Parse type string for voice_key and optional speaker_id
-            if "/" in type:
-                parts = type.split("/", 1)[1].split(":")
+            if "/" in content_type:
+                parts = content_type.split("/", 1)[1].split(":")
                 voice_key = parts[0]
                 
                 # Extract speaker_id if provided
@@ -258,7 +258,7 @@ class PiperTTS(Converter):
             # Add audio representation
             total_duration = len(combined_audio) / 1000  # in seconds
             info("PIPER_TTS", "Conversion complete", f"Topic: {topic.name}, Duration: {total_duration:.1f}s")
-            topic.add_representation(type, audio_bytes.hex(), {
+            topic.add_representation(content_type, audio_bytes.hex(), {
                 "format": "mp3", 
                 "binary": True,
                 "voice": voice_key,

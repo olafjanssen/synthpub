@@ -10,18 +10,18 @@ from ..converter.converter_interface import Converter
 
 class Content(Converter):
     @staticmethod
-    def can_handle(type: str) -> bool:
-        return type == "content"
+    def can_handle(content_type: str) -> bool:
+        return content_type == "content"
     
     @staticmethod
-    def convert_representation(type: str, topic: Topic) -> bool:
+    def convert_representation(content_type: str, topic: Topic) -> bool:
         try:
             # Get the specific article
             article = get_article(topic.article)
 
-            topic.add_representation(type, article.content)
+            topic.add_representation(content_type, article.content)
             return True
             
         except Exception as e:
-            error("CONVERT", "Content conversion failed", f"Error converting {type}: {str(e)}")
+            error("CONVERT", "Content conversion failed", f"Error converting {content_type}: {str(e)}")
             return False 
