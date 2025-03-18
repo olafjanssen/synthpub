@@ -179,3 +179,20 @@ creds/
 
 .DS_Store
 .vscode/
+
+# macOS
+.DS_Store
+
+# Build and distribution
+dist/
+build/
+
+# Virtual environments 
+venv/
+venv-mini/
+
+# Cache directories
+.pytest_cache/
+.mypy_cache/
+__pycache__/
+.coverage
