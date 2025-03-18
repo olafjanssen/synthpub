@@ -3,7 +3,7 @@ Database operations for projects using individual YAML files.
 """
 
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from shutil import move
 from typing import List, Optional
 

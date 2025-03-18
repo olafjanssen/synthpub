@@ -1,31 +1,32 @@
 """Unit tests for topic database operations."""
 
+import os
 import sys
-import pytest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import mock_open, patch, MagicMock
-import os
+from unittest.mock import MagicMock, mock_open, patch
 
+import pytest
 import yaml
 
 from api.db.topic_db import (
-    _invalidate_cache,
     _ensure_cache,
+    _invalidate_cache,
     _load_all_topics_from_disk,
+    create_topic,
     db_path,
     ensure_db_exists,
-    save_topic,
     get_topic,
     list_topics,
-    load_topics,
-    create_topic,
-    mark_topic_deleted,
-    update_topic,
     load_feed_items,
+    load_topics,
+    mark_topic_deleted,
+    save_topic,
+    update_topic,
 )
 from api.models import Topic
 from api.models.feed_item import FeedItem
+
 
 @pytest.fixture
 def mock_topic():
@@ -78,7 +79,7 @@ def test_invalidate_cache():
     with patch("api.db.topic_db._topic_cache", {"test-key": "test-value"}):
         with patch("api.db.topic_db._cache_initialized", True):
             _invalidate_cache()
-            from api.db.topic_db import _topic_cache, _cache_initialized
+            from api.db.topic_db import _cache_initialized, _topic_cache
             assert _topic_cache == {}
             assert _cache_initialized is False
 

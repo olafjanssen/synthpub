@@ -6,8 +6,8 @@ import pytest
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.testclient import TestClient
 
-from api.app import app
 import utils.logging as logging
+from api.app import app
 
 
 @pytest.fixture

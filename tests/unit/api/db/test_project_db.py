@@ -1,27 +1,28 @@
 """Unit tests for project database operations."""
 
-import pytest
+import os
+import shutil
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import mock_open, patch
-import shutil
-import os
 
+import pytest
 import yaml
 
 from api.db.project_db import (
     DB_PATH,
+    add_topic_to_project,
+    create_project,
     ensure_db_exists,
-    save_project,
     get_project,
     list_projects,
-    create_project,
-    update_project,
     mark_project_deleted,
-    add_topic_to_project,
     remove_topic_from_project,
+    save_project,
+    update_project,
 )
 from api.models.project import Project
+
 
 @pytest.fixture
 def mock_project():

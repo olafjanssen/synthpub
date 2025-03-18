@@ -4,8 +4,7 @@ Unit tests for the Topic model.
 
 from datetime import datetime
 
-from api.models.topic import (Representation, Topic, TopicBase,
-                                  TopicCreate, TopicUpdate)
+from api.models.topic import Representation, Topic, TopicBase, TopicCreate, TopicUpdate
 
 
 def test_topic_base_creation():

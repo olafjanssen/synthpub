@@ -1,11 +1,13 @@
 """Unit tests for common database utilities."""
 
 import os
-import pytest
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from api.db.common import get_base_db_path, get_db_path
+
 
 @pytest.fixture
 def mock_settings():

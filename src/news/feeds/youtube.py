@@ -105,6 +105,38 @@ def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
         return []
 
 
+def fetch_youtube_videos_channel(channel_id: str) -> List[Dict[str, str]]:
+    """Fetch transcripts from all videos in a channel by channel ID"""
+    youtube = build("youtube", "v3", developerKey=get_api_key())
+    items = []
+
+    try:
+        search_response = (
+            youtube.search()
+            .list(part="id,snippet", channelId=channel_id, maxResults=50, type="video")
+            .execute()
+        )
+
+        for item in search_response["items"]:
+            video_id = item["id"]["videoId"]
+            video_url = f"https://www.youtube.com/watch?v={video_id}"
+
+            # For channel items, we only fetch basic info and mark for further processing
+            items.append(
+                {
+                    "url": video_url,
+                    "content": f"YouTube Video: {item['snippet'].get('title', f'Video {video_id}')}",
+                    "title": item["snippet"].get("title", f"YouTube Video {video_id}"),
+                    "needs_further_processing": True,  # These items need further processing by the YouTube connector
+                }
+            )
+
+        return items
+    except Exception as e:
+        error("YOUTUBE", "Channel fetch failed", str(e))
+        return []
+
+
 def _handle_channel_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
     """Handle YouTube channel URL."""
     path_parts = [p for p in parsed_url.path.split("/") if p]

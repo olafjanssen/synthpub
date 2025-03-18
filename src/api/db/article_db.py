@@ -1,7 +1,7 @@
 """Database operations for articles using markdown files with YAML front matter."""
 
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from shutil import move
 from typing import List, Optional
 

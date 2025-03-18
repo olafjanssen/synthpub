@@ -4,7 +4,7 @@ Integration tests for settings endpoints.
 
 import os
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient

@@ -1,31 +1,33 @@
 """Unit tests for cache manager module."""
 
 import json
-import pytest
 import time
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import mock_open, patch, MagicMock, call
+from unittest.mock import MagicMock, call, mock_open, patch
+
+import pytest
 
 from api.db.cache_manager import (
-    _sanitize_filename,
+    CACHE_PATH,
+    _cleanup_cache,
+    _get_cache_metadata,
     _get_cache_path,
+    _get_file_metadata,
     _initialize_cache,
     _process_cache_file,
     _remove_expired_files,
-    _cleanup_cache,
-    CACHE_PATH,
-    ensure_cache_exists,
-    get_from_cache,
+    _sanitize_filename,
     add_to_cache,
-    remove_from_cache,
     clear_cache,
+    ensure_cache_exists,
     find_cache_files,
-    _get_file_metadata,
-    _get_cache_metadata,
-    get_cache_info,
     get_all_connectors,
+    get_cache_info,
+    get_from_cache,
+    remove_from_cache,
 )
+
 
 @pytest.fixture
 def mock_cache_dir():

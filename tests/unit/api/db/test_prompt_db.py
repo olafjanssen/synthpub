@@ -1,21 +1,23 @@
 """Unit tests for prompt database operations."""
 
-import pytest
 import os
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import mock_open, patch, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 from api.db.prompt_db import (
-    _ensure_cache,
-    _copy_default_prompts,
-    _load_all_prompts_from_disk,
     DB_PATH,
+    _copy_default_prompts,
+    _ensure_cache,
+    _load_all_prompts_from_disk,
     ensure_db_exists,
     get_prompt,
     list_prompts,
 )
 from api.models import Prompt
+
 
 @pytest.fixture
 def mock_prompt():

@@ -149,6 +149,7 @@ def _process_cache_file(file_path: Path) -> Optional[Dict[str, Any]]:
 
 def _remove_expired_files():
     """Remove expired cache files."""
+    global _cache_size_bytes
     current_time = time.time()
     for url, metadata in list(_cache_metadata.items()):
         if metadata["expires_at"] > 0 and current_time > metadata["expires_at"]:

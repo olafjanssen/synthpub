@@ -1,6 +1,6 @@
 """Base interface for feed connectors."""
 
-from typing import Dict, List, Protocol
+from typing import Any, Dict, List, Protocol
 
 from typing_extensions import runtime_checkable
 
@@ -46,6 +46,9 @@ class FeedConnector(Protocol):
 
     def _process_feed_item(self, item: Dict[str, str], topic_id: str):
         """Process a single feed item."""
+        # Import here to avoid circular imports
+        from curator.topic_updater import add_feed_item_to_queue
+        
         needs_further_processing = item.get("needs_further_processing", False)
         item_url = item["url"]
         item_content = item.get("content", "")
