@@ -1,7 +1,7 @@
 """Database operations for articles using markdown files with YAML front matter."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from shutil import move
 from typing import List, Optional
 
@@ -120,7 +120,7 @@ def create_article(
         topic_id=topic_id,
         content=content,
         version=version,
-        created_at=created_at or datetime.utcnow(),  # Use provided date or current time
+        created_at=created_at or datetime.now(UTC),  # Use provided date or current time
         updated_at=updated_at,  # Use provided update date or None for new articles
     )
 
@@ -155,7 +155,7 @@ def update_article(
         content=content,
         version=current_article.version + 1,
         created_at=current_article.created_at,
-        updated_at=datetime.utcnow(),
+        updated_at=datetime.now(UTC),
         previous_version=current_article.id,
         next_version=None,  # This is the latest version
         source_feed=feed_item,  # Store the feed item that triggered this update

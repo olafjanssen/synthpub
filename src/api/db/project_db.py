@@ -3,7 +3,7 @@ Database operations for projects using individual YAML files.
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, UTC
 from shutil import move
 from typing import List, Optional
 
@@ -92,7 +92,7 @@ def create_project(
         description=description,
         topic_ids=topic_ids or [],
         thumbnail_url=thumbnail_url,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(UTC),
     )
     save_project(project)
     return project
@@ -121,7 +121,7 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
         project.topic_ids = valid_topic_ids
 
     # Update the timestamp
-    project.updated_at = datetime.utcnow()
+    project.updated_at = datetime.now(UTC)
 
     save_project(project)
     return project
@@ -152,7 +152,7 @@ def add_topic_to_project(project_id: str, topic_id: str) -> Optional[Project]:
 
     if topic_id not in project.topic_ids:
         project.topic_ids.append(topic_id)
-        project.updated_at = datetime.utcnow()
+        project.updated_at = datetime.now(UTC)
         save_project(project)
 
     return project
@@ -166,7 +166,7 @@ def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Projec
 
     if topic_id in project.topic_ids:
         project.topic_ids.remove(topic_id)
-        project.updated_at = datetime.utcnow()
+        project.updated_at = datetime.now(UTC)
         save_project(project)
 
     return project
