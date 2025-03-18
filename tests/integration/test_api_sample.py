@@ -4,7 +4,7 @@ These are placeholder tests that should be replaced with real integration tests.
 """
 
 # This is a placeholder - in a real test, you would import the actual app
-# from src.api.app import app
+# from api.app import app
 
 
 def test_api_sample():

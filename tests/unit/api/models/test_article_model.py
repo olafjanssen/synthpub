@@ -4,8 +4,8 @@ Unit tests for the Article model.
 
 from datetime import datetime, timezone
 
-from src.api.models.article import Article
-from src.api.models.feed_item import FeedItem
+from api.models.article import Article
+from api.models.feed_item import FeedItem
 
 
 def test_article_creation():

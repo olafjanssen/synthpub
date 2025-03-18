@@ -1,0 +1,33 @@
+from pathlib import Path
+from unittest.mock import patch
+
+def test_load_all_prompts_from_disk():
+    """Test loading all prompts from disk."""
+    prompt_files = [
+        Path("/mock/db/prompts/prompt1.md"),
+        Path("/mock/db/prompts/prompt2.md")
+    ]
+    
+    prompt1_content = "This is the template for prompt 1"
+    prompt2_content = "This is the template for prompt 2"
+    
+    # Mock the file system operations
+    with patch("api.db.prompt_db.DB_PATH", return_value=Path("/mock/db/prompts")):
+        with patch("pathlib.Path.glob", return_value=prompt_files):
+            with patch("pathlib.Path.mkdir", return_value=None):
+                with patch("pathlib.Path.exists", return_value=True):
+                    # Mock the read_text method of Path
+                    with patch("pathlib.Path.read_text", side_effect=[prompt1_content, prompt2_content]):
+                        with patch("api.db.prompt_db.error"):
+                            # Get the return value from the function
+                            result = _load_all_prompts_from_disk()
+                            
+                            # Verify the result
+                            assert len(result) == 2
+                            assert result[0].id == "prompt1"
+                            assert result[0].name == "Prompt1"
+                            assert result[0].template == prompt1_content
+                            
+                            assert result[1].id == "prompt2"
+                            assert result[1].name == "Prompt2"
+                            assert result[1].template == prompt2_content 

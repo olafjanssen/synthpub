@@ -4,7 +4,7 @@ Unit tests for the Project model.
 
 from datetime import datetime
 
-from src.api.models.project import (Project, ProjectBase, ProjectCreate,
+from api.models.project import (Project, ProjectBase, ProjectCreate,
                                     ProjectUpdate)
 
 

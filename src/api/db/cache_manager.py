@@ -69,7 +69,7 @@ def _sanitize_filename(url: str, max_length: int = 120) -> str:
     # Trim to max length
     if len(url) > max_length:
         # Keep the beginning and end, remove middle
-        half_length = max_length // 2
+        half_length = (max_length - 4) // 2
         url = url[:half_length] + "___" + url[-half_length:]
 
     return url
