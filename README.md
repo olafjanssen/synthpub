@@ -219,3 +219,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - OpenAI for providing the LLM capabilities
 - Pexels for the image API
 - Piper TTS for local text-to-speech conversion
+
+## Disclaimers
+
+### AI Development and Documentation
+
+![AI-Human Collaboration](resources/images/cyborg-black.svg)
+
+This project is developed using Cursor AI for code generation, documentation, and development assistance. While human developers review and validate the code, a significant portion of the implementation, documentation, and architectural decisions are generated or assisted by AI tools. 
+
+The project represents a true AI-human collaboration where AI tools are not just assistants but active participants in the development process. While human developers maintain final control and make critical decisions, the majority of the codebase and documentation is AI-generated and then refined through human review and modification.
