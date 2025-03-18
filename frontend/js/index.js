@@ -85,7 +85,7 @@ function createProject() {
         })
     })
     .then(response => response.json())
-    .then(project => {
+    .then(() => {
         loadProjects();
         document.getElementById("createProjectForm").reset();
         const modal = bootstrap.Modal.getInstance(document.getElementById("createProjectModal"));
@@ -253,6 +253,3 @@ function showError(message) {
     alert(message); // Simple error display for now
 }
 
-function viewTopics(projectId) {
-    window.location.href = `project.html?project_id=${projectId}`;
-} 

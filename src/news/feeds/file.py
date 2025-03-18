@@ -2,13 +2,11 @@
 File system connector for processing local files using glob patterns.
 """
 
-import glob
-import mimetypes
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import unquote, urlparse
 
-from utils.logging import error, warning
+from utils.logging import error
 
 from .feed_connector import FeedConnector
 

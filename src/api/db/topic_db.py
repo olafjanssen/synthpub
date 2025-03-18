@@ -20,13 +20,6 @@ _topic_cache: Dict[str, Topic] = {}
 _cache_initialized = False
 
 
-def _invalidate_cache():
-    """Clear the topic cache."""
-    global _topic_cache, _cache_initialized
-    _topic_cache.clear()
-    _cache_initialized = False
-
-
 def _ensure_cache():
     """Initialize cache if not already done."""
     global _cache_initialized

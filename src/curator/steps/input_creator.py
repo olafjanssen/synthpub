@@ -9,7 +9,6 @@ from typing import Any, Callable, Dict
 from api.db.article_db import get_article
 from api.db.topic_db import get_topic
 from api.models.article import Article
-from api.models.feed_item import FeedItem
 from api.models.topic import Topic
 from utils.logging import debug
 

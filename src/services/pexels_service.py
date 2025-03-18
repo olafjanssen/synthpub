@@ -1,7 +1,7 @@
 """Service for fetching images from Pexels API."""
 
 import os
-import random
+import secrets
 from typing import Any, Dict, Optional
 
 import requests
@@ -94,7 +94,7 @@ def get_random_thumbnail(text: str) -> Dict[str, Optional[str]]:
 
     # Return random image URL if available
     if results and "photos" in results and results["photos"]:
-        photo = random.choice(results["photos"])
+        photo = secrets.choice(results["photos"])
         return {"thumbnail_url": photo.get("src", {}).get("medium")}
 
     return {"thumbnail_url": None}

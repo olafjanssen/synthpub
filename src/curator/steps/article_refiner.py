@@ -15,6 +15,17 @@ from services.llm_service import get_llm
 from utils.logging import debug, error, info
 
 
+def _handle_refinement_error(state: Dict[str, Any], e: Exception) -> Dict[str, Any]:
+    """Handle errors in the refinement process."""
+    error_message = str(e)
+    error("CURATOR", "Failed to refine article", error_message)
+    new_state = {**state}
+    new_state["has_error"] = True
+    new_state["error_message"] = f"Failed to refine article: {error_message}"
+    new_state["error_step"] = "article_refiner"
+    return new_state
+
+
 def process(state: Dict[str, Any]) -> Dict[str, Any]:
     """
     Refine an existing article with new relevant content.
@@ -93,9 +104,4 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
         return new_state
 
     except Exception as e:
-        error_message = str(e)
-        error("CURATOR", "Failed to refine article", error_message)
-        new_state["has_error"] = True
-        new_state["error_message"] = f"Failed to refine article: {error_message}"
-        new_state["error_step"] = "article_refiner"
-        return new_state
+        return _handle_refinement_error(state, e)

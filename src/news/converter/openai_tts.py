@@ -6,7 +6,6 @@ import io
 import os
 from typing import List
 
-import numpy as np
 from openai import OpenAI
 from pydub import AudioSegment
 

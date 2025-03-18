@@ -4,8 +4,10 @@ import datetime
 import os
 import urllib.request
 from urllib.parse import urlparse
-from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import Element, SubElement
 
+# Use defusedxml for parsing untrusted XML
+import defusedxml.ElementTree as ET
 from defusedxml.minidom import parseString
 
 from api.models import Topic
@@ -25,6 +27,20 @@ def is_safe_url(url: str) -> bool:
     """
     parsed = urlparse(url)
     return parsed.scheme in ("http", "https")
+
+
+def is_file_path(path: str) -> bool:
+    """
+    Check if a string is a file path rather than a URL.
+
+    Args:
+        path: The path to check
+
+    Returns:
+        bool: True if the string is a file path
+    """
+    parsed = urlparse(path)
+    return parsed.scheme == "" or parsed.scheme == "file"
 
 
 class PodcastEpisodeRSSConverter(Converter):
@@ -72,9 +88,12 @@ class PodcastEpisodeRSSConverter(Converter):
         try:
             # Try to fetch existing RSS
             if is_safe_url(rss_url):
-                with urllib.request.urlopen(rss_url) as response:
+                req = urllib.request.Request(
+                    url=rss_url, headers={"User-Agent": "podcast-rss-converter"}
+                )
+                with urllib.request.urlopen(req, timeout=10) as response:
                     existing_rss = response.read().decode("utf-8")
-            elif os.path.exists(rss_url):
+            elif is_file_path(rss_url) and os.path.exists(rss_url):
                 with open(rss_url, "r", encoding="utf-8") as f:
                     existing_rss = f.read()
             else:
@@ -136,7 +155,10 @@ class PodcastEpisodeRSSConverter(Converter):
 
     @staticmethod
     def _generate_or_update_rss(
-        topic: Topic, mp3_url: str, file_size: int, existing_rss: str = None
+        topic: Topic,
+        mp3_url: str | None,
+        file_size: int,
+        existing_rss: str | None = None,
     ) -> str:
         """
         Generate a new RSS feed or update an existing one with the topic as an episode.
@@ -158,8 +180,10 @@ class PodcastEpisodeRSSConverter(Converter):
         if existing_rss:
             # Update existing RSS
             try:
-                # Parse the existing RSS
-                rss = ET.fromstring(existing_rss)
+                # Parse the existing RSS - using defusedxml for security
+                rss = ET.fromstring(
+                    existing_rss
+                )  # nosec: using defusedxml.ElementTree, not vulnerable xml.etree
 
                 # Find the channel element
                 channel = rss.find("channel")
@@ -209,48 +233,48 @@ class PodcastEpisodeRSSConverter(Converter):
     def _create_new_rss(topic: Topic, episode_item) -> str:
         """Create a new podcast RSS feed with the topic's project info and the episode."""
         # Create the root element
-        rss = ET.Element("rss")
+        rss = Element("rss")
         rss.set("version", "2.0")
         rss.set("xmlns:itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")
         rss.set("xmlns:content", "http://purl.org/rss/1.0/modules/content/")
 
         # Create the channel element
-        channel = ET.SubElement(rss, "channel")
+        channel = SubElement(rss, "channel")
 
         # Get podcast info from project or use defaults
         project = getattr(topic, "project", None)
 
         # Add required channel elements
-        ET.SubElement(channel, "title").text = (
+        SubElement(channel, "title").text = (
             getattr(project, "title", "Podcast") if project else "Podcast"
         )
-        ET.SubElement(channel, "link").text = (
+        SubElement(channel, "link").text = (
             getattr(project, "website", "https://example.com")
             if project
             else "https://example.com"
         )
-        ET.SubElement(channel, "description").text = (
+        SubElement(channel, "description").text = (
             getattr(project, "description", "Podcast description")
             if project
             else "Podcast description"
         )
-        ET.SubElement(channel, "language").text = (
+        SubElement(channel, "language").text = (
             getattr(project, "language", "en-us") if project else "en-us"
         )
-        ET.SubElement(channel, "lastBuildDate").text = datetime.datetime.now().strftime(
+        SubElement(channel, "lastBuildDate").text = datetime.datetime.now().strftime(
             "%a, %d %b %Y %H:%M:%S GMT"
         )
 
         # Add iTunes specific elements
-        ET.SubElement(channel, "itunes:author").text = (
+        SubElement(channel, "itunes:author").text = (
             getattr(project, "author", "Unknown") if project else "Unknown"
         )
-        ET.SubElement(channel, "itunes:summary").text = (
+        SubElement(channel, "itunes:summary").text = (
             getattr(project, "description", "Podcast description")
             if project
             else "Podcast description"
         )
-        ET.SubElement(channel, "itunes:explicit").text = "false"
+        SubElement(channel, "itunes:explicit").text = "false"
 
         # Add the episode
         channel.append(episode_item)
@@ -262,7 +286,7 @@ class PodcastEpisodeRSSConverter(Converter):
         return pretty_xml
 
     @staticmethod
-    def _generate_episode_element(topic: Topic, mp3_url: str, file_size: int):
+    def _generate_episode_element(topic: Topic, mp3_url: str | None, file_size: int):
         """
         Generate an XML element for a podcast episode from a topic.
 
@@ -275,15 +299,15 @@ class PodcastEpisodeRSSConverter(Converter):
             XML Element for the podcast episode
         """
         # Create the item element
-        item = ET.Element("item")
+        item = Element("item")
 
         # Add required episode elements
-        ET.SubElement(item, "title").text = topic.name
-        ET.SubElement(item, "description").text = topic.description
+        SubElement(item, "title").text = topic.name
+        SubElement(item, "description").text = topic.description
 
         # Publication date (RSS format)
         pub_date = getattr(topic, "published_at", datetime.datetime.now())
-        ET.SubElement(item, "pubDate").text = pub_date.strftime(
+        SubElement(item, "pubDate").text = pub_date.strftime(
             "%a, %d %b %Y %H:%M:%S GMT"
         )
 
@@ -293,20 +317,20 @@ class PodcastEpisodeRSSConverter(Converter):
             mp3_url = f"https://example.com/{topic.id}.mp3"  # Placeholder
 
         # Add the MP3 enclosure
-        enclosure = ET.SubElement(item, "enclosure")
+        enclosure = SubElement(item, "enclosure")
         enclosure.set("url", mp3_url)
         enclosure.set("type", "audio/mpeg")
         enclosure.set("length", str(file_size))
 
         # Add a GUID - use topic ID to ensure consistency
-        guid = ET.SubElement(item, "guid")
+        guid = SubElement(item, "guid")
         guid.text = topic.id
         guid.set("isPermaLink", "false")
 
         # iTunes specific elements
-        ET.SubElement(item, "itunes:duration").text = getattr(
+        SubElement(item, "itunes:duration").text = getattr(
             topic, "duration", "00:00:00"
         )
-        ET.SubElement(item, "itunes:explicit").text = "false"
+        SubElement(item, "itunes:explicit").text = "false"
 
         return item

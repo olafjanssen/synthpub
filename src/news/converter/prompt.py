@@ -20,49 +20,56 @@ class Prompt(Converter):
         return content_type.startswith("prompt")
 
     @staticmethod
-    def convert_representation(content_type: str, topic: Topic) -> bool:
-        try:
-            info("PROMPT", "Starting conversion", f"Topic: {topic.name}")
-            content = topic.representations[-1].content
+    def _get_prompt_template(content_type: str) -> str:
+        """Extract and retrieve the prompt template to use for conversion."""
+        # Parse type to extract prompt_id
+        # Format is either 'prompt' (using default) or 'prompt/prompt_id'
+        prompt_id = None
+        if "/" in content_type:
+            _, prompt_id = content_type.split("/", 1)
 
-            # Parse type to extract prompt_id
-            # Format is either 'prompt' (using default) or 'prompt/prompt_id'
-            prompt_id = None
-            if "/" in content_type:
-                _, prompt_id = content_type.split("/", 1)
-
-            # Get prompt from database or use default
-            template_text = None
-            if prompt_id:
-                prompt_obj = get_prompt(prompt_id)
-                if prompt_obj:
-                    info(
-                        "PROMPT",
-                        "Using prompt from database",
-                        f"Prompt: {prompt_obj.name}",
-                    )
-                    template_text = prompt_obj.template
-                else:
-                    warning(
-                        "PROMPT",
-                        "Prompt not found",
-                        f"Prompt ID: {prompt_id}, using default",
-                    )
-
-            # Use default prompt if no prompt_id or prompt not found
-            if not template_text:
+        # Get prompt from database or use default
+        template_text = None
+        if prompt_id:
+            prompt_obj = get_prompt(prompt_id)
+            if prompt_obj:
                 info(
                     "PROMPT",
-                    "Using default prompt",
-                    "No prompt ID specified or prompt not found",
+                    "Using prompt from database",
+                    f"Prompt: {prompt_obj.name}",
                 )
-                template_text = """
+                template_text = prompt_obj.template
+            else:
+                warning(
+                    "PROMPT",
+                    "Prompt not found",
+                    f"Prompt ID: {prompt_id}, using default",
+                )
+
+        # Use default prompt if no prompt_id or prompt not found
+        if not template_text:
+            info(
+                "PROMPT",
+                "Using default prompt",
+                "No prompt ID specified or prompt not found",
+            )
+            template_text = """
 Write a well-crafted response about the following content:
 
 {content}
 
 Use a clear, concise style appropriate for the content.
 """
+        return template_text
+
+    @staticmethod
+    def convert_representation(content_type: str, topic: Topic) -> bool:
+        try:
+            info("PROMPT", "Starting conversion", f"Topic: {topic.name}")
+            content = topic.representations[-1].content
+
+            # Get the prompt template to use
+            template_text = Prompt._get_prompt_template(content_type)
 
             debug("PROMPT", "Getting LLM", "Using article_refinement model")
             llm = get_llm("article_refinement")

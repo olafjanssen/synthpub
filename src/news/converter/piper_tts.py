@@ -25,7 +25,7 @@ from .converter_interface import Converter
 class PiperTTS(Converter):
 
     # Cache for loaded voice models to avoid reloading
-    _voice_cache = {}
+    _voice_cache: Dict[str, PiperVoice] = {}
 
     # Voice database URL
     VOICES_DB_URL = (
@@ -84,10 +84,11 @@ class PiperTTS(Converter):
         voices_db = cls.get_voices_database()
         return list(voices_db.keys())
 
-    def _download_file(self, url: str, target_path: str) -> bool:
+    @classmethod
+    def _download_file(cls, url: str, target_path: str) -> bool:
         """Download a single file from URL to target path."""
         try:
-            response = requests.get(url, stream=True)
+            response = requests.get(url, stream=True, timeout=30)
             response.raise_for_status()
 
             with open(target_path, "wb") as f:
@@ -99,7 +100,8 @@ class PiperTTS(Converter):
             error("PIPER_TTS", "Download failed", f"URL: {url}, Error: {str(e)}")
             return False
 
-    def _get_model_files(self, voice_info: Dict[str, Any]) -> Dict[str, str]:
+    @classmethod
+    def _get_model_files(cls, voice_info: Dict[str, Any]) -> Dict[str, str]:
         """Get the list of files needed for the voice model."""
         model_files = {}
         for file_type in ["model", "config", "vocoder"]:
@@ -116,7 +118,7 @@ class PiperTTS(Converter):
             raise ValueError(f"Voice '{voice_key}' not found in the voices database")
 
         voice_info = voices_db[voice_key]
-        model_files = cls._get_model_files(voice_info)
+        model_files = cls._get_model_files(voice_info)  # type: ignore
 
         try:
             # Create voice-specific cache directory
@@ -129,7 +131,7 @@ class PiperTTS(Converter):
                 url = f"{cls.VOICE_DOWNLOAD_BASE_URL}{file_path}"
                 target_path = os.path.join(voice_cache_dir, os.path.basename(file_path))
 
-                if cls._download_file(url, target_path):
+                if cls._download_file(url, target_path):  # type: ignore
                     downloaded_files[file_type] = target_path
 
             if not downloaded_files:
@@ -149,7 +151,7 @@ class PiperTTS(Converter):
     def split_into_sentences(text: str, max_length: int = 1000) -> List[str]:
         """Split text into sentences of maximum length."""
         sentences = []
-        current_sentence = []
+        current_sentence: List[str] = []
         current_length = 0
 
         # Split by periods, keeping the period
@@ -258,23 +260,56 @@ class PiperTTS(Converter):
         return content_type.startswith("piper-tts")
 
     @classmethod
+    def _parse_voice_info(cls, content_type: str) -> tuple[str, Optional[int]]:
+        """Parse voice key and speaker ID from content type string."""
+        voice_key = "en_US-lessac-medium"
+        speaker_id = None
+
+        # Parse type string for voice_key and optional speaker_id
+        if "/" in content_type:
+            parts = content_type.split("/", 1)[1].split(":")
+            voice_key = parts[0]
+
+            # Extract speaker_id if provided
+            if len(parts) > 1 and parts[1].isdigit():
+                speaker_id = int(parts[1])
+
+        return voice_key, speaker_id
+
+    @classmethod
+    def _generate_combined_audio(
+        cls, content: str, voice_key: str, speaker_id: Optional[int]
+    ) -> tuple[AudioSegment, float]:
+        """Generate audio for content by splitting it into chunks and combining them.
+
+        Returns:
+            tuple[AudioSegment, float]: The combined audio and its duration in seconds
+        """
+        # Split content into manageable chunks
+        sentences = cls.split_into_sentences(content)
+        info("PIPER_TTS", "Processing chunks", f"Chunks: {len(sentences)}")
+
+        # Generate audio for each chunk
+        audio_segments = []
+        for i, sentence in enumerate(sentences):
+            debug("PIPER_TTS", "Processing chunk", f"{i+1}/{len(sentences)}")
+            audio_segment = cls.generate_audio(sentence, voice_key, speaker_id)
+            audio_segments.append(audio_segment)
+
+        # Concatenate all audio segments
+        combined_audio = sum(audio_segments)
+        total_duration = len(combined_audio) / 1000  # in seconds
+
+        return combined_audio, total_duration
+
+    @classmethod
     def convert_representation(cls, content_type: str, topic: Topic) -> bool:
         try:
             info("PIPER_TTS", "Starting conversion", f"Topic: {topic.name}")
             content = topic.representations[-1].content
 
             # Get voice from URL or use default
-            voice_key = "en_US-lessac-medium"
-            speaker_id = None
-
-            # Parse type string for voice_key and optional speaker_id
-            if "/" in content_type:
-                parts = content_type.split("/", 1)[1].split(":")
-                voice_key = parts[0]
-
-                # Extract speaker_id if provided
-                if len(parts) > 1 and parts[1].isdigit():
-                    speaker_id = int(parts[1])
+            voice_key, speaker_id = cls._parse_voice_info(content_type)
 
             info(
                 "PIPER_TTS",
@@ -282,19 +317,10 @@ class PiperTTS(Converter):
                 f"Voice: {voice_key}, Speaker ID: {speaker_id}",
             )
 
-            # Split content into manageable chunks
-            sentences = cls.split_into_sentences(content)
-            info("PIPER_TTS", "Processing chunks", f"Chunks: {len(sentences)}")
-
-            # Generate audio for each chunk
-            audio_segments = []
-            for i, sentence in enumerate(sentences):
-                debug("PIPER_TTS", "Processing chunk", f"{i+1}/{len(sentences)}")
-                audio_segment = cls.generate_audio(sentence, voice_key, speaker_id)
-                audio_segments.append(audio_segment)
-
-            # Concatenate all audio segments
-            combined_audio = sum(audio_segments)
+            # Generate the combined audio
+            combined_audio, total_duration = cls._generate_combined_audio(
+                content, voice_key, speaker_id
+            )
 
             # Export to bytes buffer
             buffer = io.BytesIO()
@@ -302,7 +328,6 @@ class PiperTTS(Converter):
             audio_bytes = buffer.getvalue()
 
             # Add audio representation
-            total_duration = len(combined_audio) / 1000  # in seconds
             info(
                 "PIPER_TTS",
                 "Conversion complete",

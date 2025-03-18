@@ -241,7 +241,7 @@ async def update_scheduler_settings(scheduler_settings: SchedulerSettings):
 
     # Get current settings to check if enabled state is changing
     current_settings = load_settings()
-    current_enabled = current_settings.get("scheduler", {}).get("enabled", False)
+    current_settings.get("scheduler", {}).get("enabled", False)
 
     # Save the new settings
     settings = load_settings()

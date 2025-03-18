@@ -3,11 +3,6 @@ Integration tests for log endpoints.
 """
 
 import pytest
-from fastapi import WebSocket, WebSocketDisconnect
-from fastapi.testclient import TestClient
-
-import utils.logging as logging
-from api.app import app
 
 
 @pytest.fixture
@@ -20,7 +15,7 @@ def mock_logs():
             "level": "INFO",
             "module": "test",
             "action": "Test Action",
-            "details": "Test log details"
+            "details": "Test log details",
         },
         {
             "id": "log2",
@@ -28,7 +23,7 @@ def mock_logs():
             "level": "ERROR",
             "module": "test",
             "action": "Error Action",
-            "details": "Test error details"
+            "details": "Test error details",
         },
         {
             "id": "log3",
@@ -36,14 +31,15 @@ def mock_logs():
             "level": "WARNING",
             "module": "test",
             "action": "Warning Action",
-            "details": "Test warning details"
-        }
+            "details": "Test warning details",
+        },
     ]
 
 
 @pytest.fixture
 def mock_log_db(monkeypatch, mock_logs):
     """Mock log database functions."""
+
     def mock_get_recent_logs(min_level=None, max_count=None):
         """Mock get_recent_logs function."""
         filtered_logs = mock_logs
@@ -52,14 +48,15 @@ def mock_log_db(monkeypatch, mock_logs):
             level_order = {"DEBUG": 0, "INFO": 1, "WARNING": 2, "ERROR": 3}
             min_level_value = level_order.get(min_level.upper(), 0)
             filtered_logs = [
-                log for log in filtered_logs
+                log
+                for log in filtered_logs
                 if level_order.get(log["level"].upper(), 0) >= min_level_value
             ]
         if max_count:
             # Limit the number of logs
             filtered_logs = filtered_logs[:max_count]
         return filtered_logs
-    
+
     # Mock the get_recent_logs function
     monkeypatch.setattr("utils.logging.get_recent_logs", mock_get_recent_logs)
     return mock_logs
@@ -93,9 +90,10 @@ def test_get_logs_with_count_limit(client, mock_log_db):
 # special testing setup. These tests demonstrate the basic approach
 # but may need additional configuration in a real environment.
 
+
 @pytest.mark.skip(reason="WebSocket tests require additional setup")
 def test_log_websocket(client, mock_log_db):
     """Test WebSocket connection for real-time logs."""
     # WebSocket tests are more complex in FastAPI
     # This is a placeholder for future WebSocket testing
-    pass 
+    pass

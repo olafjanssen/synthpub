@@ -57,9 +57,11 @@ class Topic(TopicBase):
         self.processed_feeds = self.processed_feeds or []
 
     def add_representation(
-        self, content_type: str, content: str, metadata: Dict = {}
+        self, content_type: str, content: str, metadata: Dict = None
     ) -> None:
         """Add a new representation to the topic."""
+        if metadata is None:
+            metadata = {}
         self.representations.append(
             Representation(type=content_type, content=content, metadata=metadata)
         )

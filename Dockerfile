@@ -5,8 +5,8 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    ffmpeg \
+    build-essential=12.9 \
+    ffmpeg=7:4.4.2-0+deb11u1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file

@@ -10,8 +10,6 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from utils.logging import error
-
 from .common import get_db_path
 
 # Cache configuration
