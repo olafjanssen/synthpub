@@ -1,5 +1,6 @@
 # SynthPub - An AI Curated Digital Garden
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/09786f5f3e3d4890a9afc8ebcd9a04cc)](https://app.codacy.com/gh/olafjanssen/synthpub?utm_source=github.com&utm_medium=referral&utm_content=olafjanssen/synthpub&utm_campaign=Badge_Grade)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Overview
