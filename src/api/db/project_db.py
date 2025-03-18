@@ -45,6 +45,7 @@ def save_project(project: Project) -> None:
 
 def get_project(project_id: str) -> Optional[Project]:
     """Retrieve project by id."""
+    print(f"GET PROJECT FROM DBCALLED: {project_id}")
     filename = DB_PATH() / f"{project_id}.yaml"
 
     if not filename.exists():
@@ -62,7 +63,7 @@ def get_project(project_id: str) -> Optional[Project]:
 def list_projects() -> List[Project]:
     """List all active (non-deleted) projects."""
     ensure_db_exists()
-
+    print("LISTING PROJECTS SHOULD NOT BE CALLED IN TESTS")
     projects = []
     # Correctly exclude files that start with '_'
     for file in DB_PATH().glob("*.yaml"):
