@@ -3,16 +3,21 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ProjectBase(BaseModel):
     """Base project model."""
 
-    title: str
-    description: str
-    topic_ids: List[str] = []
-    thumbnail_url: Optional[str] = None
+    title: str = Field(description="Title of the project")
+    description: str = Field(description="Detailed description of the project")
+    topic_ids: List[str] = Field(
+        default=[], description="List of topic IDs associated with this project"
+    )
+    thumbnail_url: Optional[str] = Field(
+        default=None,
+        description="URL of the thumbnail image, can be auto-generated if not provided",
+    )
 
 
 class ProjectCreate(ProjectBase):
@@ -22,15 +27,29 @@ class ProjectCreate(ProjectBase):
 class ProjectUpdate(BaseModel):
     """Project update model."""
 
-    title: Optional[str] = None
-    description: Optional[str] = None
-    topic_ids: Optional[List[str]] = None
-    thumbnail_url: Optional[str] = None
+    title: Optional[str] = Field(
+        default=None, description="Updated title of the project"
+    )
+    description: Optional[str] = Field(
+        default=None, description="Updated description of the project"
+    )
+    topic_ids: Optional[List[str]] = Field(
+        default=None, description="Updated list of topic IDs"
+    )
+    thumbnail_url: Optional[str] = Field(
+        default=None,
+        description="Updated thumbnail URL, use 'auto' for automatic generation",
+    )
 
 
 class Project(ProjectBase):
     """Complete project model."""
 
-    id: str
-    created_at: datetime = datetime.now()
-    updated_at: Optional[datetime] = None
+    id: str = Field(description="Unique identifier for the project")
+    created_at: datetime = Field(
+        default_factory=datetime.now,
+        description="Timestamp when this project was created",
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None, description="Timestamp when this project was last updated"
+    )

@@ -6,21 +6,27 @@ from typing import Dict
 import webview
 import yaml
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 SETTINGS_FILE = "settings.yaml"
 
 
 class LLMTaskSettings(BaseModel):
-    provider: str
-    model_name: str
-    max_tokens: int
+    provider: str = Field(
+        description="Provider of the language model (e.g., 'openai', 'mistralai')"
+    )
+    model_name: str = Field(description="Specific model name to use")
+    max_tokens: int = Field(
+        description="Maximum number of tokens to generate in completions"
+    )
     model_config = {"protected_namespaces": ()}  # Disable protected namespace checks
 
 
 class LLMSettings(BaseModel):
-    settings: Dict[str, LLMTaskSettings]
+    settings: Dict[str, LLMTaskSettings] = Field(
+        description="Map of task names to their LLM configuration"
+    )
 
 
 def load_settings():
@@ -47,7 +53,12 @@ def save_settings(settings):
         yaml.safe_dump(serializable_settings, f, sort_keys=False, allow_unicode=True)
 
 
-@router.get("/settings/db-path")
+@router.get(
+    "/settings/db-path",
+    summary="Get Database Path",
+    description="Returns the current database directory path. Only provides actual path in desktop mode.",
+    response_description="An object containing the database path",
+)
 async def get_db_path():
     """Get the database path"""
     # Check if running in desktop environment
@@ -61,7 +72,16 @@ async def get_db_path():
     return {"path": settings.get("db_path", "")}
 
 
-@router.post("/settings/select-folder")
+@router.post(
+    "/settings/select-folder",
+    summary="Select Database Folder",
+    description="Opens a folder selection dialog to choose the database location. Desktop application only.",
+    response_description="An object containing the selected path",
+    responses={
+        403: {"description": "Operation only available in desktop application"},
+        400: {"description": "No folder was selected by the user"},
+    },
+)
 async def select_folder():
     """Open folder selection dialog using PyWebView"""
     # Check if running in desktop environment
@@ -88,7 +108,12 @@ async def select_folder():
     raise HTTPException(status_code=400, detail="No folder selected")
 
 
-@router.get("/settings/env-vars")
+@router.get(
+    "/settings/env-vars",
+    summary="Get Environment Variables",
+    description="Returns the current environment variables. Values are masked in web mode for security.",
+    response_description="An object containing environment variables and their values",
+)
 async def get_env_vars():
     """Get environment variables"""
     # Check if running in desktop environment
@@ -120,7 +145,13 @@ async def get_env_vars():
     }
 
 
-@router.post("/settings/env-vars")
+@router.post(
+    "/settings/env-vars",
+    summary="Update Environment Variables",
+    description="Updates the application environment variables. Desktop application only.",
+    response_description="Success confirmation message",
+    responses={403: {"description": "Operation only available in desktop application"}},
+)
 async def update_env_vars(variables: Dict[str, str]):
     """Update environment variables"""
     # Check if running in desktop environment
@@ -138,7 +169,12 @@ async def update_env_vars(variables: Dict[str, str]):
     return {"status": "success"}
 
 
-@router.get("/settings/llm")
+@router.get(
+    "/settings/llm",
+    summary="Get LLM Settings",
+    description="Returns the current LLM (Language Model) settings for different tasks",
+    response_description="LLM configurations for each task (model names are masked in web mode)",
+)
 async def get_llm_settings():
     """Get LLM settings"""
     # Check if running in desktop environment
@@ -181,7 +217,13 @@ async def get_llm_settings():
     return {"settings": llm_settings}
 
 
-@router.post("/settings/llm")
+@router.post(
+    "/settings/llm",
+    summary="Update LLM Settings",
+    description="Updates the LLM (Language Model) settings for different tasks. Desktop application only.",
+    response_description="Success confirmation message",
+    responses={403: {"description": "Operation only available in desktop application"}},
+)
 async def update_llm_settings(llm_settings: LLMSettings):
     """Update LLM settings"""
     # Check if running in desktop environment
@@ -202,7 +244,12 @@ async def update_llm_settings(llm_settings: LLMSettings):
     return {"status": "success"}
 
 
-@router.get("/settings/environment")
+@router.get(
+    "/settings/environment",
+    summary="Get Environment Type",
+    description="Determines if the application is running in desktop or web mode",
+    response_description="Object indicating if the app is running in desktop mode",
+)
 async def get_environment():
     """Check if running in desktop or browser environment"""
     # PyWebView will be available in desktop environment
@@ -211,12 +258,23 @@ async def get_environment():
 
 
 class SchedulerSettings(BaseModel):
-    enabled: bool
-    update_interval_minutes: int
-    update_threshold_hours: int
+    enabled: bool = Field(
+        description="Whether the automatic content update scheduler is enabled"
+    )
+    update_interval_minutes: int = Field(
+        description="How often the scheduler runs, in minutes"
+    )
+    update_threshold_hours: int = Field(
+        description="Time threshold in hours after which content is considered outdated"
+    )
 
 
-@router.get("/settings/scheduler")
+@router.get(
+    "/settings/scheduler",
+    summary="Get Scheduler Settings",
+    description="Retrieves the scheduler configuration for automatic content updates",
+    response_description="Current scheduler settings including enabled state and intervals",
+)
 async def get_scheduler_settings():
     """Get scheduler settings"""
     settings = load_settings()
@@ -227,7 +285,13 @@ async def get_scheduler_settings():
     return {"settings": scheduler_settings}
 
 
-@router.post("/settings/scheduler")
+@router.post(
+    "/settings/scheduler",
+    summary="Update Scheduler Settings",
+    description="Updates the scheduler configuration for automatic content updates. Desktop application only.",
+    response_description="Success confirmation message",
+    responses={403: {"description": "Operation only available in desktop application"}},
+)
 async def update_scheduler_settings(scheduler_settings: SchedulerSettings):
     """Update scheduler settings"""
     # Check if running in desktop environment

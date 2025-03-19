@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .feed_item import FeedItem
 
@@ -11,11 +11,17 @@ from .feed_item import FeedItem
 class TopicBase(BaseModel):
     """Base topic model."""
 
-    name: str
-    description: str
-    feed_urls: List[str]
-    publish_urls: List[str] = []
-    thumbnail_url: Optional[str] = None
+    name: str = Field(description="Name of the topic")
+    description: str = Field(description="Detailed description of the topic")
+    feed_urls: List[str] = Field(description="List of URLs to generate content from")
+    publish_urls: List[str] = Field(
+        default=[],
+        description="List of destination URLs where the content will be published",
+    )
+    thumbnail_url: Optional[str] = Field(
+        default=None,
+        description="URL of the thumbnail image, can be auto-generated if not provided",
+    )
 
 
 class TopicCreate(TopicBase):
@@ -25,31 +31,58 @@ class TopicCreate(TopicBase):
 class TopicUpdate(BaseModel):
     """Topic update model."""
 
-    name: Optional[str] = None
-    description: Optional[str] = None
-    feed_urls: Optional[List[str]] = None
-    publish_urls: Optional[List[str]] = None
-    thumbnail_url: Optional[str] = None
+    name: Optional[str] = Field(default=None, description="Updated name of the topic")
+    description: Optional[str] = Field(
+        default=None, description="Updated description of the topic"
+    )
+    feed_urls: Optional[List[str]] = Field(
+        default=None, description="Updated list of RSS/Atom feed URLs"
+    )
+    publish_urls: Optional[List[str]] = Field(
+        default=None, description="Updated list of destination URLs for publishing"
+    )
+    thumbnail_url: Optional[str] = Field(
+        default=None,
+        description="Updated thumbnail URL, use 'auto' for automatic generation",
+    )
 
 
 class Representation(BaseModel):
     """Model for content representations."""
 
-    type: str
-    content: str
-    created_at: datetime = datetime.now()
-    metadata: Dict = {}
+    type: str = Field(description="Type of representation (e.g., 'markdown', 'html')")
+    content: str = Field(description="Content of this representation")
+    created_at: datetime = Field(
+        default_factory=datetime.now,
+        description="Timestamp when this representation was created",
+    )
+    metadata: Dict = Field(
+        default={},
+        description="Additional metadata associated with this representation",
+    )
 
 
 class Topic(TopicBase):
     """Complete topic model."""
 
-    id: str
-    article: Optional[str] = None
-    representations: List[Representation] = []
-    processed_feeds: List[FeedItem] = []
-    created_at: datetime = datetime.now()
-    updated_at: Optional[datetime] = None
+    id: str = Field(description="Unique identifier for the topic")
+    article: Optional[str] = Field(
+        default=None,
+        description="ID of the associated article, if one has been generated",
+    )
+    representations: List[Representation] = Field(
+        default=[], description="Different content representations of this topic"
+    )
+    processed_feeds: List[FeedItem] = Field(
+        default=[], description="Feed items that have been processed for this topic"
+    )
+    created_at: datetime = Field(
+        default_factory=datetime.now,
+        description="Timestamp when this topic was created",
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None, description="Timestamp when this topic was last updated"
+    )
 
     def __init__(self, **data):
         """Initialize a topic."""

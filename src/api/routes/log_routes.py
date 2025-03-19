@@ -61,14 +61,22 @@ async def send_log_to_websocket(websocket: WebSocket, log_data: Dict[str, Any]):
             active_connections.remove(websocket)
 
 
-@router.get("/logs")
+@router.get(
+    "/logs",
+    summary="Get Recent Logs",
+    description="Returns a list of recent log entries with filtering by minimum severity level",
+    response_description="Array of log entries sorted by timestamp (newest first)",
+)
 async def get_logs(min_level: str = "INFO", count: int = 100):
     """Return recent logs."""
     logs = logging.get_recent_logs(min_level=min_level, max_count=count)
     return logs
 
 
-@router.websocket("/ws/logs")
+@router.websocket(
+    "/ws/logs",
+    name="WebSocket Logs",
+)
 async def websocket_logs(websocket: WebSocket):
     """WebSocket endpoint for real-time log updates."""
     global main_event_loop
