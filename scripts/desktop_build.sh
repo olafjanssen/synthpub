@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Prepare environment
+# Prepare environment
 rm -rf venv-nuitka
 python -m venv venv-nuitka
 source venv-nuitka/bin/activate
@@ -18,7 +18,15 @@ pytest tests
 # Build
 echo "Building SynthPub macOS application..."
 
-python -m nuitka --onefile --macos-create-app-bundle --product-name=SynthPub --macos-app-icon=./frontend/img/dpbtse_logo.icns --output-dir=dist ./src/desktop_app.py
+python -m nuitka --macos-create-app-bundle \
+    --macos-app-name=SynthPub \
+    --lto=yes \
+    --include-data-dir=frontend=frontend \
+    --noinclude-pytest-mode=nofollow \
+    --product-name=SynthPub \
+    --output-filename=SynthPub \
+    --macos-app-icon=./frontend/img/dpbtse_logo.icns \
+    --output-dir=dist ./src/desktop_app.py
 
 # Deactivate environment
 deactivate
