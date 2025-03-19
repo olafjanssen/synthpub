@@ -188,8 +188,7 @@ dist/
 build/
 
 # Virtual environments 
-venv/
-venv-mini/
+venv*/
 
 # Cache directories
 .pytest_cache/
