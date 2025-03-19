@@ -7,19 +7,12 @@ from unittest.mock import mock_open, patch
 import pytest
 import yaml
 
-from api.db.article_db import (
-    article_to_markdown,
-    create_article,
-    ensure_db_exists,
-    get_article,
-    get_article_history,
-    get_latest_version,
-    list_articles,
-    mark_article_deleted,
-    markdown_to_article,
-    save_article,
-    update_article,
-)
+from api.db.article_db import (article_to_markdown, create_article,
+                               ensure_db_exists, get_article,
+                               get_article_history, get_latest_version,
+                               list_articles, mark_article_deleted,
+                               markdown_to_article, save_article,
+                               update_article)
 from api.models.article import Article
 from api.models.feed_item import FeedItem
 

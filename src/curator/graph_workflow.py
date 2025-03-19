@@ -12,18 +12,10 @@ from langgraph.graph import END, StateGraph
 from api.models.article import Article
 from api.models.feed_item import FeedItem
 from api.models.topic import Topic
-
 # Import the step functions directly
-from curator.steps import (
-    extract_substance,
-    generate_article,
-    is_relevant,
-    news_relevance,
-    process_input,
-    refine_article,
-    should_generate,
-    should_skip_news,
-)
+from curator.steps import (extract_substance, generate_article, is_relevant,
+                           news_relevance, process_input, refine_article,
+                           should_generate, should_skip_news)
 from utils.logging import error, info
 
 

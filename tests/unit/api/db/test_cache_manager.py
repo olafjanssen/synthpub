@@ -7,25 +7,15 @@ from unittest.mock import call, mock_open, patch
 
 import pytest
 
-from api.db.cache_manager import (
-    CACHE_PATH,
-    _cleanup_cache,
-    _get_cache_metadata,
-    _get_cache_path,
-    _get_file_metadata,
-    _initialize_cache,
-    _process_cache_file,
-    _remove_expired_files,
-    _sanitize_filename,
-    add_to_cache,
-    clear_cache,
-    ensure_cache_exists,
-    find_cache_files,
-    get_all_connectors,
-    get_cache_info,
-    get_from_cache,
-    remove_from_cache,
-)
+from api.db.cache_manager import (CACHE_PATH, _cleanup_cache,
+                                  _get_cache_metadata, _get_cache_path,
+                                  _get_file_metadata, _initialize_cache,
+                                  _process_cache_file, _remove_expired_files,
+                                  _sanitize_filename, add_to_cache,
+                                  clear_cache, ensure_cache_exists,
+                                  find_cache_files, get_all_connectors,
+                                  get_cache_info, get_from_cache,
+                                  remove_from_cache)
 
 
 @pytest.fixture

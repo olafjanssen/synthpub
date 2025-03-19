@@ -7,19 +7,10 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 import yaml
 
-from api.db.topic_db import (
-    _ensure_cache,
-    _load_all_topics_from_disk,
-    create_topic,
-    ensure_db_exists,
-    get_topic,
-    list_topics,
-    load_feed_items,
-    load_topics,
-    mark_topic_deleted,
-    save_topic,
-    update_topic,
-)
+from api.db.topic_db import (_ensure_cache, _load_all_topics_from_disk,
+                             create_topic, ensure_db_exists, get_topic,
+                             list_topics, load_feed_items, load_topics,
+                             mark_topic_deleted, save_topic, update_topic)
 from api.models import Topic
 
 

@@ -6,15 +6,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from api.db.prompt_db import (
-    DB_PATH,
-    _copy_default_prompts,
-    _ensure_cache,
-    _load_all_prompts_from_disk,
-    ensure_db_exists,
-    get_prompt,
-    list_prompts,
-)
+from api.db.prompt_db import (DB_PATH, _copy_default_prompts, _ensure_cache,
+                              _load_all_prompts_from_disk, ensure_db_exists,
+                              get_prompt, list_prompts)
 from api.models import Prompt
 
 

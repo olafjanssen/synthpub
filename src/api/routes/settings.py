@@ -314,7 +314,8 @@ async def update_scheduler_settings(scheduler_settings: SchedulerSettings):
 
     # Update the scheduler based on settings changes
     try:
-        from news.news_scheduler import start_scheduler_thread, stop_scheduler_thread
+        from news.news_scheduler import (start_scheduler_thread,
+                                         stop_scheduler_thread)
 
         # Always stop and restart the scheduler to apply new settings
         stop_scheduler_thread()

@@ -5,19 +5,11 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
-from api.db.topic_db import (
-    get_topic,
-    load_topics,
-    mark_topic_deleted,
-    save_topic,
-    update_topic,
-)
+from api.db.topic_db import (get_topic, load_topics, mark_topic_deleted,
+                             save_topic, update_topic)
 from api.models.topic import Topic, TopicCreate, TopicUpdate
-from curator.topic_updater import (
-    handle_topic_publishing,
-    process_feed_item,
-    queue_topic_update,
-)
+from curator.topic_updater import (handle_topic_publishing, process_feed_item,
+                                   queue_topic_update)
 from services.pexels_service import get_random_thumbnail
 from utils.logging import debug, error, info
 
