@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .feed_item import FeedItem
 
@@ -11,13 +11,26 @@ from .feed_item import FeedItem
 class Article(BaseModel):
     """Article model with version tracking."""
 
-    id: str
-    title: str
-    topic_id: str
-    content: str
-    version: int
-    created_at: datetime
-    updated_at: Optional[datetime] = None
-    previous_version: Optional[str] = None  # ID of the previous version
-    next_version: Optional[str] = None  # ID of the next version
-    source_feed: Optional[FeedItem] = None  # Feed item that triggered this version
+    id: str = Field(description="Unique identifier for the article")
+    title: str = Field(description="Title of the article")
+    topic_id: str = Field(description="ID of the parent topic this article belongs to")
+    content: str = Field(description="Markdown content of the article")
+    version: int = Field(
+        description="Version number of this article, incremented with each update"
+    )
+    created_at: datetime = Field(
+        description="Timestamp when this article was first created"
+    )
+    updated_at: Optional[datetime] = Field(
+        default=None, description="Timestamp when this article was last updated"
+    )
+    previous_version: Optional[str] = Field(
+        default=None, description="ID of the previous version of this article"
+    )
+    next_version: Optional[str] = Field(
+        default=None, description="ID of the next version of this article"
+    )
+    source_feed: Optional[FeedItem] = Field(
+        default=None,
+        description="Feed item that triggered the creation of this article version",
+    )

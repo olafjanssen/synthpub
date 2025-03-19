@@ -33,7 +33,14 @@ def request_topic_publish(topic):
     handle_topic_publishing(topic)
 
 
-@router.post("/topics/", response_model=Topic)
+@router.post(
+    "/topics/",
+    response_model=Topic,
+    summary="Create Topic",
+    description="Creates a new topic and optionally triggers content generation",
+    response_description="The newly created topic with its unique ID",
+    responses={500: {"description": "Internal server error"}},
+)
 async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTasks):
     """Create a new topic and optionally generate an article."""
     try:
@@ -74,7 +81,13 @@ async def create_topic_route(topic: TopicCreate, background_tasks: BackgroundTas
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.get("/topics/", response_model=list[Topic])
+@router.get(
+    "/topics/",
+    response_model=list[Topic],
+    summary="List Topics",
+    description="Returns a list of all available topics",
+    response_description="Array of all topics with their details",
+)
 async def list_topics_route():
     """List all topics."""
     debug("TOPIC", "List requested", "Getting all topics")
@@ -82,7 +95,14 @@ async def list_topics_route():
     return topics
 
 
-@router.get("/topics/{topic_id}", response_model=Topic)
+@router.get(
+    "/topics/{topic_id}",
+    response_model=Topic,
+    summary="Get Topic",
+    description="Returns details of a specific topic",
+    response_description="The topic with the specified ID, including its metadata",
+    responses={404: {"description": "Topic not found"}},
+)
 async def get_topic_route(topic_id: str):
     """Get a specific topic by ID."""
     topic = get_topic(topic_id)
@@ -93,7 +113,17 @@ async def get_topic_route(topic_id: str):
     return topic
 
 
-@router.put("/topics/{topic_id}/feeds", response_model=Topic)
+@router.put(
+    "/topics/{topic_id}/feeds",
+    response_model=Topic,
+    summary="Update Topic Feeds",
+    description="Updates the feed URLs for an existing topic",
+    response_description="The updated topic with new feed URLs",
+    responses={
+        404: {"description": "Topic not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
     """Update the feed URLs for a topic."""
     try:
@@ -110,7 +140,17 @@ async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.post("/topics/{topic_id}/update", response_model=dict)
+@router.post(
+    "/topics/{topic_id}/update",
+    response_model=dict,
+    summary="Update Topic Content",
+    description="Requests a topic update by fetching feeds and generating new content",
+    response_description="Confirmation message that update has been scheduled",
+    responses={
+        404: {"description": "Topic not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def schedule_topic_update_route(topic_id: str, background_tasks: BackgroundTasks):
     """Request a topic update (fetch feeds and process)."""
     try:
@@ -127,7 +167,17 @@ async def schedule_topic_update_route(topic_id: str, background_tasks: Backgroun
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.delete("/topics/{topic_id}", response_model=dict)
+@router.delete(
+    "/topics/{topic_id}",
+    response_model=dict,
+    summary="Delete Topic",
+    description="Marks a topic as deleted (soft delete)",
+    response_description="Confirmation message that topic has been deleted",
+    responses={
+        404: {"description": "Topic not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def delete_topic_route(topic_id: str):
     """Delete a specific topic."""
     try:
@@ -144,7 +194,17 @@ async def delete_topic_route(topic_id: str):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.put("/topics/{topic_id}", response_model=Topic)
+@router.put(
+    "/topics/{topic_id}",
+    response_model=Topic,
+    summary="Update Topic",
+    description="Updates details of an existing topic",
+    response_description="The updated topic with its new values",
+    responses={
+        404: {"description": "Topic not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
     """Update a topic's details."""
     try:
@@ -180,7 +240,17 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.post("/topics/{topic_id}/publish", response_model=dict)
+@router.post(
+    "/topics/{topic_id}/publish",
+    response_model=dict,
+    summary="Publish Topic",
+    description="Publishes a topic's content to its configured destinations",
+    response_description="Confirmation message that publishing has been scheduled",
+    responses={
+        404: {"description": "Topic not found"},
+        500: {"description": "Internal server error"},
+    },
+)
 async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
     """Publish a topic to its configured destinations."""
     try:

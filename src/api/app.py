@@ -66,7 +66,23 @@ async def lifespan(app: FastAPI):
         error("SYSTEM", "Error stopping news scheduler", str(e))
 
 
-app = FastAPI(title="SynthPub API", lifespan=lifespan)
+app = FastAPI(
+    title="SynthPub API",
+    description="API for creating, managing, and publishing SynthPub content",
+    version="1.0.0",
+    openapi_tags=[
+        {"name": "health", "description": "Health check endpoints"},
+        {
+            "name": "topics",
+            "description": "Operations with topics and content generation",
+        },
+        {"name": "articles", "description": "Article management endpoints"},
+        {"name": "projects", "description": "Project management endpoints"},
+        {"name": "settings", "description": "Application settings endpoints"},
+        {"name": "logs", "description": "Log management and streaming endpoints"},
+    ],
+    lifespan=lifespan,
+)
 
 # Configure CORS
 app.add_middleware(

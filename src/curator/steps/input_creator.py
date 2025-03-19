@@ -32,7 +32,7 @@ def should_skip_news(
     def _should_skip_news(state: Dict[str, Any]) -> str:
         """Inner function that evaluates the state and returns the next node."""
 
-        topic : Topic = state.get("topic")
+        topic: Topic = state.get("topic")
         feed_item = state.get("feed_item")
 
         if feed_item is None:
