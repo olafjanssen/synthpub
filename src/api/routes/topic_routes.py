@@ -113,33 +113,6 @@ async def get_topic_route(topic_id: str):
     return topic
 
 
-@router.put(
-    "/topics/{topic_id}/feeds",
-    response_model=Topic,
-    summary="Update Topic Feeds",
-    description="Updates the feed URLs for an existing topic",
-    response_description="The updated topic with new feed URLs",
-    responses={
-        404: {"description": "Topic not found"},
-        500: {"description": "Internal server error"},
-    },
-)
-async def update_topic_feeds_route(topic_id: str, feed_urls: List[str]):
-    """Update the feed URLs for a topic."""
-    try:
-        topic = get_topic(topic_id)
-        if not topic:
-            error("TOPIC", "Not found", f"ID: {topic_id}")
-            raise HTTPException(status_code=404, detail="Topic not found")
-
-        topic.feed_urls = feed_urls
-        save_topic(topic)
-        return topic
-    except Exception as e:
-        error("TOPIC", "Feed update error", str(e))
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-
 @router.post(
     "/topics/{topic_id}/update",
     response_model=dict,
