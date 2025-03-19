@@ -19,14 +19,14 @@ pytest tests
 echo "Building SynthPub macOS application..."
 
 python -m nuitka --macos-create-app-bundle \
-    --macos-app-name=SynthPub \
     --lto=yes \
-    --include-data-dir=frontend=frontend \
+    --include-data-dir=./frontend=frontend \
     --noinclude-pytest-mode=nofollow \
+    --macos-app-name=SynthPub \
     --product-name=SynthPub \
     --output-filename=SynthPub \
     --macos-app-icon=./frontend/img/dpbtse_logo.icns \
-    --output-dir=dist ./src/desktop_app.py
+    --output-dir=dist ./src/SynthPub.py
 
 # Deactivate environment
 deactivate
