@@ -1,3 +1,6 @@
+# No MKL - https://github.com/nuitka/nuitka/issues/1504
+nomkl
+
 # Core dependencies
 langchain
 langchain-community
