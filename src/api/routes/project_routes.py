@@ -4,10 +4,15 @@ from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException
 
-from api.db.project_db import (add_topic_to_project, create_project,
-                               get_project, list_projects,
-                               mark_project_deleted, remove_topic_from_project,
-                               update_project)
+from api.db.project_db import (
+    add_topic_to_project,
+    create_project,
+    get_project,
+    list_projects,
+    mark_project_deleted,
+    remove_topic_from_project,
+    update_project,
+)
 from api.models.project import Project, ProjectCreate, ProjectUpdate
 from services.pexels_service import get_random_thumbnail
 from utils.logging import error, warning

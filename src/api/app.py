@@ -41,8 +41,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize the news scheduler
     try:
-        from news.news_scheduler import (start_scheduler_thread,
-                                         stop_scheduler_thread)
+        from news.news_scheduler import start_scheduler_thread, stop_scheduler_thread
 
         start_scheduler_thread()
         debug("SYSTEM", "News scheduler started")
@@ -69,7 +68,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="SynthPub API",
     description="API for creating, managing, and publishing SynthPub content",
-    version="1.0.0",
+    version="0.1.0",
     openapi_tags=[
         {"name": "health", "description": "Health check endpoints"},
         {
