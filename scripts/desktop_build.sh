@@ -28,6 +28,10 @@ python -m nuitka --macos-create-app-bundle \
     --macos-app-icon=./frontend/img/dpbtse_logo.icns \
     --output-dir=dist ./src/SynthPub.py
 
+
+[[ $OSTYPE == 'darwin'* ]] && cp -r ./frontend ./dist/SynthPub.app/Contents/
+
+
 # Deactivate environment
 deactivate
 
