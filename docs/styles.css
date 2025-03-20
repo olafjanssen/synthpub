@@ -133,4 +133,13 @@ footer {
         padding: 0.5em 1em;
         font-size: 1em;
     }
-} 
+}
+
+summary {
+    cursor: pointer;
+}
+
+details > *:last-child {
+    padding-bottom: 1em;
+    border-bottom: 2px solid #666;
+}
