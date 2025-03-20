@@ -1,0 +1,80 @@
+[project]
+name = "synthpub"
+version = "0.1.0"
+description = "Synthesizez automatic publishing platform"
+readme = "README.md"
+requires-python = ">=3.10, <3.12.9"
+license = { text = "MIT" }
+dependencies = [
+    # Core dependencies
+    "langchain",
+    "langchain-community",
+    "langgraph",
+    "graphviz",
+    "six",
+    "pyyaml",
+    "requests",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "loguru",
+    "websockets",
+    "tomli",
+    "tomli_w",
+    "blinker",
+    "defusedxml",
+
+    # LLM integration
+    "langchain-ollama",
+    "langchain_openai",
+    "langchain_mistralai",
+
+    # Connectors
+    "beautifulsoup4",
+    "feedparser",
+    "youtube-transcript-api",
+    "google_auth_oauthlib",
+    "google-api-python-client",
+    "arxiv",
+    "PyPDF2",
+
+    # Media processing
+    "piper-tts",
+    "numpy",
+    "pydub",
+
+    # Desktop
+    "pywebview",
+    "chardet",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "flake8",
+    "black",
+    "isort",
+    "mypy",
+    "httpx",
+    "pip-tools",
+]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
