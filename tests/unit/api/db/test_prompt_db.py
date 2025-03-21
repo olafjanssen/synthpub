@@ -6,9 +6,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.api.db.prompt_db import (DB_PATH, _copy_default_prompts,
-                                  _ensure_cache, _load_all_prompts_from_disk,
-                                  ensure_db_exists, get_prompt, list_prompts)
+from src.api.db.prompt_db import (
+    DB_PATH,
+    _copy_default_prompts,
+    _ensure_cache,
+    _load_all_prompts_from_disk,
+    ensure_db_exists,
+    get_prompt,
+    list_prompts,
+)
 from src.api.models import Prompt
 
 
@@ -71,8 +77,7 @@ def test_ensure_cache(mock_prompts):
                                     mock_prompts[0].id: mock_prompts[0],
                                     mock_prompts[1].id: mock_prompts[1],
                                 }
-                                from src.api.db.prompt_db import \
-                                    _cache_initialized
+                                from src.api.db.prompt_db import _cache_initialized
 
                                 assert _cache_initialized is True
 

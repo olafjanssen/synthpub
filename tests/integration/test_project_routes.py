@@ -4,7 +4,7 @@ Integration tests for project endpoints.
 
 import uuid
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -108,42 +108,86 @@ def mock_project_db():
     }
 
 
+def setup_mocks(monkeypatch, mock_project_db):
+    """Set up all the necessary mocks for testing."""
+    # DB module paths
+    db_paths = [
+        "src.api.db.project_db.get_project",
+        "src.api.db.project_db.list_projects",
+        "src.api.db.project_db.create_project",
+        "src.api.db.project_db.update_project",
+        "src.api.db.project_db.mark_project_deleted",
+        "src.api.db.project_db.add_topic_to_project",
+        "src.api.db.project_db.remove_topic_from_project",
+    ]
+
+    # Route module paths
+    route_paths = [
+        "src.api.routes.project_routes.get_project",
+        "src.api.routes.project_routes.list_projects",
+        "src.api.routes.project_routes.create_project",
+        "src.api.routes.project_routes.update_project",
+        "src.api.routes.project_routes.mark_project_deleted",
+        "src.api.routes.project_routes.add_topic_to_project",
+        "src.api.routes.project_routes.remove_topic_from_project",
+    ]
+
+    # Mock DB functions
+    db_functions = {
+        "get_project": mock_project_db["get_project"],
+        "list_projects": mock_project_db["list_projects"],
+        "create_project": mock_project_db["create_project"],
+        "update_project": mock_project_db["update_project"],
+        "mark_project_deleted": mock_project_db["mark_project_deleted"],
+        "add_topic_to_project": mock_project_db["add_topic_to_project"],
+        "remove_topic_from_project": mock_project_db["remove_topic_from_project"],
+    }
+
+    # Apply DB function mocks
+    for path in db_paths:
+        function_name = path.split(".")[-1]
+        monkeypatch.setattr(path, db_functions[function_name])
+
+    # Apply route function mocks
+    for path in route_paths:
+        function_name = path.split(".")[-1]
+        monkeypatch.setattr(path, db_functions[function_name])
+
+    # Mock filesystem operations
+    fs_operations = [
+        "src.api.db.common.get_hierarchical_path",
+        "src.api.db.common.ensure_path_exists",
+        "src.api.db.common.find_entity_by_id",
+        "src.api.db.project_db.rmtree",
+        "src.api.db.project_db.get_hierarchical_path",
+        "src.api.db.project_db.ensure_path_exists",
+        "src.api.db.project_db.add_to_entity_cache",
+        "src.api.db.project_db.remove_from_entity_cache",
+    ]
+
+    # Mock all filesystem operations with a no-op function
+    for path in fs_operations:
+        monkeypatch.setattr(path, MagicMock())
+
+    # Mock UUID generation
+    monkeypatch.setattr(
+        "uuid.uuid4", lambda: uuid.UUID("12345678-1234-5678-1234-567812345678")
+    )
+
+
 @pytest.fixture
-def client(mock_project_db):
+def client(monkeypatch, mock_project_db):
     """
     Create a test client with mocked project DB functions.
-
-    This fixture creates a FastAPI TestClient with database functions patched.
-    The critical part is patching the exact import paths used in the actual routes,
-    not the absolute import paths from the project root.
+    Uses monkeypatch instead of patch to avoid nesting issues.
     """
-    # Create patches for all project_db functions with the exact import paths
-    # used in the routes file
-    with patch("api.db.project_db.get_project", mock_project_db["get_project"]), patch(
-        "api.db.project_db.list_projects", mock_project_db["list_projects"]
-    ), patch(
-        "api.db.project_db.create_project", mock_project_db["create_project"]
-    ), patch(
-        "api.db.project_db.update_project", mock_project_db["update_project"]
-    ), patch(
-        "api.db.project_db.mark_project_deleted",
-        mock_project_db["mark_project_deleted"],
-    ), patch(
-        "api.db.project_db.add_topic_to_project",
-        mock_project_db["add_topic_to_project"],
-    ), patch(
-        "api.db.project_db.remove_topic_from_project",
-        mock_project_db["remove_topic_from_project"],
-    ), patch(
-        "uuid.uuid4", return_value=uuid.UUID("12345678-1234-5678-1234-567812345678")
-    ):
+    setup_mocks(monkeypatch, mock_project_db)
 
-        # Create test client
-        with TestClient(app) as test_client:
-            yield test_client
+    # Create test client
+    with TestClient(app) as test_client:
+        yield test_client
 
 
-@pytest.mark.skip(reason="Test seems to be heavily dependent on Python version")
 def test_list_projects(client, mock_project_db):
     """Test that the projects endpoint returns a list of projects."""
     response = client.get("/api/projects/")
@@ -152,26 +196,12 @@ def test_list_projects(client, mock_project_db):
     assert len(response.json()) > 0
 
 
-@pytest.mark.skip(reason="Test seems to be heavily dependent on Python version")
 def test_get_project(client, mock_project_db):
     """Test getting a specific project by ID."""
-    # Additional patch at the route level to ensure the mocking works correctly
-    with patch(
-        "api.routes.project_routes.get_project",
-        return_value=Project(
-            id="test-project-id",
-            title="Test Project",
-            description="A test project for testing",
-            topic_ids=["test-topic-id"],
-            thumbnail_url="https://example.com/thumbnail.jpg",
-            created_at=datetime.now(),
-            updated_at=None,
-        ),
-    ):
-        response = client.get("/api/projects/test-project-id")
-        assert response.status_code == 200
-        assert response.json()["id"] == "test-project-id"
-        assert response.json()["title"] == "Test Project"
+    response = client.get("/api/projects/test-project-id")
+    assert response.status_code == 200
+    assert response.json()["id"] == "test-project-id"
+    assert response.json()["title"] == "Test Project"
 
 
 def test_get_nonexistent_project(client, mock_project_db):
