@@ -7,11 +7,18 @@ from unittest.mock import MagicMock, Mock, mock_open, patch
 import pytest
 import yaml
 
-from src.api.db.article_db import (article_to_files, create_article,
-                                   files_to_article, get_article,
-                                   get_article_history, get_latest_version,
-                                   list_articles, mark_article_deleted,
-                                   save_article, update_article)
+from src.api.db.article_db import (
+    article_to_files,
+    create_article,
+    files_to_article,
+    get_article,
+    get_article_history,
+    get_latest_version,
+    list_articles,
+    mark_article_deleted,
+    save_article,
+    update_article,
+)
 from src.api.models.article import Article
 from src.api.models.feed_item import FeedItem
 from src.api.models.topic import Topic
@@ -42,7 +49,7 @@ def mock_topic():
         name="Test Topic",
         description="A topic for testing",
         feed_urls=["http://example.com/feed"],
-        article=None
+        article=None,
     )
 
 
@@ -51,7 +58,7 @@ def mock_article_files(tmp_path):
     """Create mock article files for testing."""
     article_path = tmp_path / "test-article"
     article_path.mkdir()
-    
+
     metadata = {
         "id": "test-article-123",
         "title": "Test Article",
@@ -63,15 +70,15 @@ def mock_article_files(tmp_path):
         "next_version": None,
         "source_feed": None,
     }
-    
+
     metadata_file = article_path / "metadata.yaml"
     with open(metadata_file, "w", encoding="utf-8") as f:
         yaml.dump(metadata, f)
-    
+
     content_file = article_path / "article.md"
     with open(content_file, "w", encoding="utf-8") as f:
         f.write("This is test content.")
-    
+
     return article_path
 
 
@@ -79,20 +86,20 @@ def test_article_to_files(mock_article, tmp_path):
     """Test saving an article to files."""
     article_path = tmp_path / "article"
     article_path.mkdir()
-    
+
     article_to_files(mock_article, article_path)
-    
+
     metadata_file = article_path / "metadata.yaml"
     content_file = article_path / "article.md"
-    
+
     assert metadata_file.exists()
     assert content_file.exists()
-    
+
     with open(metadata_file, "r", encoding="utf-8") as f:
         metadata = yaml.safe_load(f)
         assert metadata["id"] == mock_article.id
         assert metadata["title"] == mock_article.title
-        
+
     with open(content_file, "r", encoding="utf-8") as f:
         content = f.read()
         assert content == mock_article.content
@@ -101,9 +108,9 @@ def test_article_to_files(mock_article, tmp_path):
 def test_files_to_article(mock_article_files):
     """Test loading an article from files."""
     metadata_file = mock_article_files / "metadata.yaml"
-    
+
     article = files_to_article(metadata_file)
-    
+
     assert article.id == "test-article-123"
     assert article.title == "Test Article"
     assert article.content == "This is test content."
@@ -123,18 +130,27 @@ def test_save_article(mock_article, mock_topic):
                             with patch("src.api.db.topic_db.save_topic"):
                                 # Setup mocks
                                 mock_get_topic.return_value = mock_topic
-                                mock_get_location.return_value = ("project-slug", "topic-slug")
+                                mock_get_location.return_value = (
+                                    "project-slug",
+                                    "topic-slug",
+                                )
                                 mock_path = Path("/mock/path")
                                 mock_get_path.return_value = mock_path
-                                
+
                                 # Test function
                                 save_article(mock_article)
-                                
+
                                 # Verify calls
-                                mock_get_topic.assert_called_once_with(mock_article.topic_id)
-                                mock_get_location.assert_called_once_with(mock_article.topic_id)
+                                mock_get_topic.assert_called_once_with(
+                                    mock_article.topic_id
+                                )
+                                mock_get_location.assert_called_once_with(
+                                    mock_article.topic_id
+                                )
                                 mock_get_path.assert_called_once()
-                                mock_to_files.assert_called_once_with(mock_article, mock_path)
+                                mock_to_files.assert_called_once_with(
+                                    mock_article, mock_path
+                                )
 
 
 def test_get_article():
@@ -153,12 +169,12 @@ def test_get_article():
                 created_at=datetime(2023, 1, 1, 12, 0, 0),
             )
             mock_to_article.return_value = mock_article
-            
+
             # Test function with path.exists=True
             with patch("pathlib.Path.exists", return_value=True):
                 article = get_article("test-article-123")
                 assert article == mock_article
-            
+
             # Test function with path.exists=False
             with patch("pathlib.Path.exists", return_value=False):
                 article = get_article("non-existent-article")
@@ -173,16 +189,16 @@ def test_list_articles():
                 # Setup mocks
                 mock_path = Path("/mock/vault")
                 mock_get_path.return_value = mock_path
-                
+
                 # Create Mock paths with proper parent structure
                 metadata_file1 = MagicMock(spec=Path)
                 metadata_file1.parent.parent.parent.parent = mock_path
-                
+
                 metadata_file2 = MagicMock(spec=Path)
                 metadata_file2.parent.parent.parent.parent = mock_path
-                
+
                 mock_glob.return_value = [metadata_file1, metadata_file2]
-                
+
                 mock_article1 = Article(
                     id="article1",
                     title="Article 1",
@@ -191,7 +207,7 @@ def test_list_articles():
                     version=1,
                     created_at=datetime(2023, 1, 1, 12, 0, 0),
                 )
-                
+
                 mock_article2 = Article(
                     id="article2",
                     title="Article 2",
@@ -200,9 +216,9 @@ def test_list_articles():
                     version=1,
                     created_at=datetime(2023, 1, 2, 12, 0, 0),
                 )
-                
+
                 mock_to_article.side_effect = [mock_article1, mock_article2]
-                
+
                 # Test function
                 articles = list_articles()
                 assert len(articles) == 2
@@ -235,7 +251,7 @@ def test_update_article(mock_article, mock_topic):
                 with patch("src.api.db.topic_db.save_topic") as mock_save_topic:
                     # Setup topic mock
                     mock_get_topic.return_value = mock_topic
-                    
+
                     # Test function
                     feed_item = FeedItem(
                         title="Feed Item",
@@ -244,13 +260,15 @@ def test_update_article(mock_article, mock_topic):
                         accessed_at=datetime.now(),
                         content_hash="test_hash_12345",
                     )
-                    result = update_article("test-article-123", "Updated content", feed_item)
-                    
+                    result = update_article(
+                        "test-article-123", "Updated content", feed_item
+                    )
+
                     # Verify result
                     assert result.content == "Updated content"
                     assert result.source_feed == feed_item
                     assert result.version == 2
-                    
+
                     # Verify calls
                     assert mock_save.call_count == 2  # Save both old and new article
                     mock_get_topic.assert_called_once()
@@ -269,7 +287,7 @@ def test_get_article_history(mock_article):
     # Create mock articles for different versions
     mock_v1 = mock_article
     mock_v1.next_version = "article-v2"
-    
+
     mock_v2 = Article(
         id="article-v2",
         title=mock_article.title,
@@ -282,14 +300,14 @@ def test_get_article_history(mock_article):
         next_version=None,
         source_feed=None,
     )
-    
+
     with patch("src.api.db.article_db.get_article") as mock_get:
         # Mock get_article to return different versions
         mock_get.side_effect = lambda id: {
             mock_v1.id: mock_v1,
-            mock_v2.id: mock_v2
+            mock_v2.id: mock_v2,
         }.get(id)
-        
+
         # Test function
         result = get_article_history(mock_v1.id)
         assert len(result) == 2
@@ -302,7 +320,7 @@ def test_get_latest_version(mock_article):
     # Create mock articles for different versions
     mock_v1 = mock_article
     mock_v1.next_version = "article-v2"
-    
+
     mock_v2 = Article(
         id="article-v2",
         title=mock_article.title,
@@ -315,14 +333,14 @@ def test_get_latest_version(mock_article):
         next_version=None,
         source_feed=None,
     )
-    
+
     with patch("src.api.db.article_db.get_article") as mock_get:
         # Mock get_article to return different versions
         mock_get.side_effect = lambda id: {
             mock_v1.id: mock_v1,
-            mock_v2.id: mock_v2
+            mock_v2.id: mock_v2,
         }.get(id)
-        
+
         # Test function
         result = get_latest_version(mock_v1.id)
         assert result.id == mock_v2.id
@@ -338,12 +356,12 @@ def test_mark_article_deleted():
                 mock_path = MagicMock(spec=Path)
                 mock_path.exists.return_value = True
                 mock_find.return_value = (mock_path, "article")
-                
+
                 # Mock the rmtree function to avoid actually removing files
                 with patch("src.api.db.article_db.rmtree") as mock_rmtree:
                     # Test function
                     result = mark_article_deleted("test-article-123")
-                    
+
                     # Verify results
                     assert result is True
                     mock_rmtree.assert_called_once_with(mock_path)

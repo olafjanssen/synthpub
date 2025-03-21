@@ -13,9 +13,14 @@ import yaml
 from ..models.feed_item import FeedItem
 from ..models.topic import Topic
 from . import article_db, project_db
-from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
-                     find_entity_by_id, get_hierarchical_path,
-                     remove_from_entity_cache)
+from .common import (
+    add_to_entity_cache,
+    create_slug,
+    ensure_path_exists,
+    find_entity_by_id,
+    get_hierarchical_path,
+    remove_from_entity_cache,
+)
 
 # In-memory cache for topics
 _topic_cache: Dict[str, Topic] = {}
@@ -34,7 +39,7 @@ def _ensure_cache():
 def _load_all_topics_from_disk() -> List[Topic]:
     """Internal function to load topics directly from disk."""
     topics = []
-    
+
     # For each project directory
     for project_dir in project_db._get_project_directories():
         # Get subdirectories which are topics
@@ -43,18 +48,22 @@ def _load_all_topics_from_disk() -> List[Topic]:
             if metadata_file.exists():
                 with open(metadata_file, "r", encoding="utf-8") as f:
                     topic_data = yaml.safe_load(f)
-                    
+
                     # Process feed items if present
                     if "processed_feeds" in topic_data:
                         processed_feeds = []
                         for feed_item in topic_data["processed_feeds"]:
-                            if "accessed_at" in feed_item and isinstance(feed_item["accessed_at"], str):
-                                feed_item["accessed_at"] = datetime.fromisoformat(feed_item["accessed_at"])
+                            if "accessed_at" in feed_item and isinstance(
+                                feed_item["accessed_at"], str
+                            ):
+                                feed_item["accessed_at"] = datetime.fromisoformat(
+                                    feed_item["accessed_at"]
+                                )
                             processed_feeds.append(FeedItem(**feed_item))
                         topic_data["processed_feeds"] = processed_feeds
-                    
+
                     topics.append(Topic(**topic_data))
-    
+
     return topics
 
 
@@ -66,13 +75,13 @@ def get_topic_path(project_slug: str, topic_slug: str) -> Path:
 def get_topic_location(topic_id: str) -> Tuple[Optional[str], Optional[str]]:
     """
     Find where a topic is stored in the hierarchical structure.
-    
+
     Returns:
         Tuple of (project_slug, topic_slug) or (None, None) if not found
     """
     # First check if we can find it directly using the entity cache
     topic_path, entity_type = find_entity_by_id(topic_id)
-    
+
     if topic_path is not None and entity_type == "topic":
         # Extract slugs from path
         # Structure is: vault/project_slug/topic_slug
@@ -80,10 +89,10 @@ def get_topic_location(topic_id: str) -> Tuple[Optional[str], Optional[str]]:
         project_slug = topic_path.parent.name
         # Ensure we're returning strings, not Path objects
         return str(project_slug), str(topic_slug)
-    
+
     # Fallback to checking projects
     project_slug_map = project_db.get_project_slug_map()
-    
+
     # For each project
     for project in project_db.list_projects():
         if topic_id in project.topic_ids:
@@ -95,7 +104,7 @@ def get_topic_location(topic_id: str) -> Tuple[Optional[str], Optional[str]]:
                 if topic:
                     topic_slug = create_slug(topic.name)
                     return project_slug, topic_slug
-    
+
     return None, None
 
 
@@ -107,31 +116,33 @@ def save_topic(topic: Topic) -> None:
         if topic.id in project.topic_ids:
             project_id = project.id
             break
-    
+
     if not project_id:
-        raise ValueError(f"Cannot save topic {topic.id}: not associated with any project")
-    
+        raise ValueError(
+            f"Cannot save topic {topic.id}: not associated with any project"
+        )
+
     # Get project slug
     project_result = project_db.get_project(project_id)
     if project_result is None:
         raise ValueError(f"Cannot find project {project_id}")
-    
+
     # At this point we know project is not None
     project = project_result
-    
+
     project_slug = create_slug(project.title)
     topic_slug = create_slug(topic.name)
-    
+
     # Build path
     topic_path = get_hierarchical_path(project_slug, topic_slug)
     ensure_path_exists(topic_path)
-    
+
     # Create metadata file
     filename = topic_path / "metadata.yaml"
-    
+
     # Convert to dict and save
     topic_dict = topic.model_dump()
-    
+
     # Process feed items if present
     if "processed_feeds" in topic_dict:
         for item in topic_dict["processed_feeds"]:
@@ -139,14 +150,14 @@ def save_topic(topic: Topic) -> None:
                 del item["needs_further_processing"]
             if "accessed_at" in item and not isinstance(item["accessed_at"], str):
                 item["accessed_at"] = item["accessed_at"].isoformat()
-    
+
     # Add the slug to metadata
     topic_dict["slug"] = topic_slug
-    
+
     with open(filename, "w", encoding="utf-8") as f:
         yaml.safe_dump(topic_dict, f, sort_keys=False, allow_unicode=True)
         f.flush()  # Ensure data is written to disk
-    
+
     # Update cache
     _topic_cache[topic.id] = topic
     add_to_entity_cache(topic.id, topic_path, "topic")
@@ -155,34 +166,38 @@ def save_topic(topic: Topic) -> None:
 def get_topic(topic_id: str) -> Optional[Topic]:
     """Retrieve topic by id from cache or disk."""
     _ensure_cache()
-    
+
     # First check in-memory cache
     if topic_id in _topic_cache:
         return _topic_cache[topic_id]
-    
+
     # If not in memory cache, try to find using entity cache
     topic_path, entity_type = find_entity_by_id(topic_id)
-    
+
     if topic_path and entity_type == "topic":
         metadata_file = topic_path / "metadata.yaml"
-        
+
         if metadata_file.exists():
             with open(metadata_file, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
-                
+
                 # Process feed items if present
                 if "processed_feeds" in data:
                     processed_feeds = []
                     for feed_item in data["processed_feeds"]:
-                        if "accessed_at" in feed_item and isinstance(feed_item["accessed_at"], str):
-                            feed_item["accessed_at"] = datetime.fromisoformat(feed_item["accessed_at"])
+                        if "accessed_at" in feed_item and isinstance(
+                            feed_item["accessed_at"], str
+                        ):
+                            feed_item["accessed_at"] = datetime.fromisoformat(
+                                feed_item["accessed_at"]
+                            )
                         processed_feeds.append(FeedItem(**feed_item))
                     data["processed_feeds"] = processed_feeds
-                
+
                 topic = Topic(**data)
                 _topic_cache[topic_id] = topic
                 return topic
-    
+
     return None
 
 
@@ -190,22 +205,26 @@ def get_topic_by_slug(project_slug: str, topic_slug: str) -> Optional[Topic]:
     """Retrieve topic by project slug and topic slug."""
     path = get_hierarchical_path(project_slug, topic_slug)
     filename = path / "metadata.yaml"
-    
+
     if not filename.exists():
         return None
-    
+
     with open(filename, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
-        
+
         # Process feed items if present
         if "processed_feeds" in data:
             processed_feeds = []
             for feed_item in data["processed_feeds"]:
-                if "accessed_at" in feed_item and isinstance(feed_item["accessed_at"], str):
-                    feed_item["accessed_at"] = datetime.fromisoformat(feed_item["accessed_at"])
+                if "accessed_at" in feed_item and isinstance(
+                    feed_item["accessed_at"], str
+                ):
+                    feed_item["accessed_at"] = datetime.fromisoformat(
+                        feed_item["accessed_at"]
+                    )
                 processed_feeds.append(FeedItem(**feed_item))
             data["processed_feeds"] = processed_feeds
-        
+
         topic = Topic(**data)
         _topic_cache[topic.id] = topic
         return topic
@@ -227,12 +246,12 @@ def create_topic(name: str, description: str, project_id: str) -> Topic:
     """Create a new topic and add to cache."""
     topic_id = str(uuid.uuid4())
     topic = Topic(id=topic_id, name=name, description=description)
-    
+
     # Add this topic to the project
     project = project_db.add_topic_to_project(project_id, topic_id)
     if not project:
         raise ValueError(f"Cannot add topic to project {project_id}: project not found")
-    
+
     save_topic(topic)
     return topic
 
@@ -243,7 +262,7 @@ def mark_topic_deleted(topic_id: str) -> bool:
     topic = get_topic(topic_id)
     if not topic:
         return False
-    
+
     # Mark the associated article as deleted if it exists
     if topic.article:
         try:
@@ -251,27 +270,27 @@ def mark_topic_deleted(topic_id: str) -> bool:
         except Exception as e:
             print(f"Failed to delete article {topic.article}: {str(e)}")
             # Continue with topic deletion even if article deletion fails
-    
+
     # Find where the topic is stored using the entity cache
     topic_path, entity_type = find_entity_by_id(topic_id)
-    
+
     if not topic_path or entity_type != "topic" or not topic_path.exists():
         return False
-    
+
     # Remove the directory
     rmtree(topic_path)
-    
+
     # Remove from caches
     _topic_cache.pop(topic_id, None)
     remove_from_entity_cache(topic_id)
-    
+
     # Remove this topic from all projects that reference it
     projects = project_db.list_projects()
     for project in projects:
         if topic_id in project.topic_ids:
             project.topic_ids.remove(topic_id)
             project_db.save_project(project)
-    
+
     return True
 
 
@@ -280,41 +299,41 @@ def update_topic(topic_id: str, updated_data: dict) -> Optional[Topic]:
     topic = get_topic(topic_id)
     if not topic:
         return None
-    
+
     # Get current location
     project_slug, old_topic_slug = get_topic_location(topic_id)
     if not project_slug or not old_topic_slug:
         return None
-    
+
     # Store the old name for comparison
     old_name = topic.name
-    
+
     # Update topic fields
     for key, value in updated_data.items():
         if hasattr(topic, key):
             setattr(topic, key, value)
-    
+
     # Check if name changed (which affects the slug)
     if old_name != topic.name:
         # Generate the new slug
         new_topic_slug = create_slug(topic.name)
-        
+
         if old_topic_slug != new_topic_slug:
             # Get paths
             old_path = get_hierarchical_path(project_slug, old_topic_slug)
-            
+
             # Remove from entity cache
             remove_from_entity_cache(topic_id)
-            
+
             # Save to new location (which will update caches)
             save_topic(topic)
-            
+
             # Remove old directory if it exists
             if old_path.exists():
                 rmtree(old_path)
-                
+
             return topic
-    
+
     # If name didn't change, just save
     save_topic(topic)
     return topic
@@ -330,4 +349,4 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
             feed_items.append(FeedItem(**item))
         except Exception as e:
             print(f"Error parsing feed item: {e}")
-    return feed_items 
+    return feed_items

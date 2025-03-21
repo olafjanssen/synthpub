@@ -219,4 +219,4 @@ def mark_article_deleted(article_id: str) -> bool:
 
     # Move/rename the file
     move(filename, new_filename)
-    return True 
+    return True

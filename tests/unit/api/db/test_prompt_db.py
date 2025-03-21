@@ -175,7 +175,9 @@ def test_load_all_prompts_from_disk():
 
 def test_db_path():
     """Test getting the database path."""
-    with patch("src.api.db.prompt_db.get_db_path", return_value=Path("/mock/db/prompts")):
+    with patch(
+        "src.api.db.prompt_db.get_db_path", return_value=Path("/mock/db/prompts")
+    ):
         result = DB_PATH()
         assert result == Path("/mock/db/prompts")
 

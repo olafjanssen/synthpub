@@ -390,7 +390,8 @@ def test_remove_from_cache():
                 with patch("pathlib.Path.exists", return_value=True):
                     with patch("pathlib.Path.unlink") as mock_unlink:
                         with patch(
-                            "src.api.db.cache_manager._cache_metadata", {url: mock_metadata}
+                            "src.api.db.cache_manager._cache_metadata",
+                            {url: mock_metadata},
                         ) as mock_cache_metadata:
                             with patch(
                                 "src.api.db.cache_manager._cache_size_bytes", 1024
@@ -412,7 +413,9 @@ def test_clear_cache():
     """Test clearing the entire cache."""
     mock_files = [Path("/mock/db/cache/file1.json"), Path("/mock/db/cache/file2.json")]
 
-    with patch("src.api.db.cache_manager.CACHE_PATH", return_value=Path("/mock/db/cache")):
+    with patch(
+        "src.api.db.cache_manager.CACHE_PATH", return_value=Path("/mock/db/cache")
+    ):
         with patch("pathlib.Path.glob", return_value=mock_files):
             with patch("pathlib.Path.unlink") as mock_unlink:
                 with patch(
@@ -528,7 +531,9 @@ def test_get_cache_info(mock_cache_content):
             assert result["content"] == mock_cache_content["content"]
 
             # Test with a URL not in cache
-            with patch("src.api.db.cache_manager._get_cache_metadata", return_value=None):
+            with patch(
+                "src.api.db.cache_manager._get_cache_metadata", return_value=None
+            ):
                 result = get_cache_info("http://example.com/not-in-cache")
                 assert result is None
 

@@ -27,38 +27,40 @@ def create_slug(name: str) -> str:
     # Convert to lowercase
     name = name.lower()
     # Replace spaces and special chars with hyphens
-    name = re.sub(r'[^a-z0-9]+', '-', name)
+    name = re.sub(r"[^a-z0-9]+", "-", name)
     # Remove leading/trailing hyphens
-    name = name.strip('-')
+    name = name.strip("-")
     # Ensure we have a valid slug (no empty string)
     if not name:
         name = "untitled"
     return name
 
 
-def get_hierarchical_path(project_slug: Optional[str] = None, 
-                          topic_slug: Optional[str] = None,
-                          article_timestamp: Optional[str] = None) -> Path:
+def get_hierarchical_path(
+    project_slug: Optional[str] = None,
+    topic_slug: Optional[str] = None,
+    article_timestamp: Optional[str] = None,
+) -> Path:
     """
     Build a hierarchical path for the vault storage.
-    
+
     Args:
         project_slug: The slug for the project directory
         topic_slug: The slug for the topic directory
         article_timestamp: The timestamp folder for the article
-        
+
     Returns:
         Path object with the appropriate hierarchy
     """
     base_path = get_db_path("vault")
-    
+
     if project_slug:
         base_path = base_path / project_slug
         if topic_slug:
             base_path = base_path / topic_slug
             if article_timestamp:
                 base_path = base_path / article_timestamp
-            
+
     return base_path
 
 
@@ -70,22 +72,26 @@ def ensure_path_exists(path: Path) -> None:
 def get_article_path(project_slug: str, topic_slug: str, timestamp: datetime) -> Path:
     """
     Generate a canonical article path with consistent timestamp format.
-    
+
     Args:
         project_slug: The slug for the project
         topic_slug: The slug for the topic
         timestamp: The timestamp to use (typically article.updated_at or article.created_at)
-    
+
     Returns:
         Path to the article directory
     """
     # Format timestamp as YYYY-MM-DD-HHMMSS
-    timestamp_prefix = timestamp.strftime("%Y-%m-%d-%H%M%S") if timestamp else datetime.now(UTC).strftime("%Y-%m-%d-%H%M%S")
-    
+    timestamp_prefix = (
+        timestamp.strftime("%Y-%m-%d-%H%M%S")
+        if timestamp
+        else datetime.now(UTC).strftime("%Y-%m-%d-%H%M%S")
+    )
+
     # Get article directory path
     article_path = get_hierarchical_path(project_slug, topic_slug, timestamp_prefix)
     ensure_path_exists(article_path)
-    
+
     return article_path
 
 
@@ -100,12 +106,12 @@ def _initialize_entity_cache():
     This improves subsequent lookups significantly.
     """
     global _cache_initialized
-    
+
     if _cache_initialized:
         return
-    
+
     vault_path = get_hierarchical_path()
-    
+
     # Use recursive glob to find all metadata.yaml files
     for metadata_file in vault_path.glob("**/metadata.yaml"):
         try:
@@ -114,7 +120,7 @@ def _initialize_entity_cache():
                 if data and "id" in data:
                     entity_id = data["id"]
                     parent_dir = metadata_file.parent
-                    
+
                     # Determine entity type based on directory structure
                     if parent_dir.parent.parent == vault_path:
                         # Structure is: vault/project/topic/metadata.yaml
@@ -128,7 +134,7 @@ def _initialize_entity_cache():
         except (yaml.YAMLError, IOError):
             # Skip files with errors
             continue
-    
+
     _cache_initialized = True
 
 
@@ -142,7 +148,7 @@ def invalidate_entity_cache():
 def add_to_entity_cache(entity_id: str, path: Path, entity_type: str):
     """
     Add an entity to the cache after creating or updating it.
-    
+
     Args:
         entity_id: The unique ID of the entity
         path: Path to the entity's directory
@@ -155,7 +161,7 @@ def add_to_entity_cache(entity_id: str, path: Path, entity_type: str):
 def remove_from_entity_cache(entity_id: str):
     """
     Remove an entity from the cache when it's deleted.
-    
+
     Args:
         entity_id: The unique ID of the entity to remove
     """
@@ -167,24 +173,24 @@ def remove_from_entity_cache(entity_id: str):
 def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
     """
     Find any entity (project, topic, article) by its ID using cache.
-    
+
     Args:
         entity_id: The unique ID to search for
-    
+
     Returns:
         Tuple of (path to entity directory, entity type)
         where entity type is one of 'project', 'topic', 'article'
     """
     # Initialize cache if not already done
     _initialize_entity_cache()
-    
+
     # Check if entity is in cache
     if entity_id in _entity_id_cache:
         return _entity_id_cache[entity_id]
-    
+
     # If not in cache, scan files again (could be a new entity)
     vault_path = get_hierarchical_path()
-    
+
     for metadata_file in vault_path.glob("**/metadata.yaml"):
         try:
             with open(metadata_file, "r", encoding="utf-8") as f:
@@ -192,7 +198,7 @@ def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
                 if data and "id" in data and data["id"] == entity_id:
                     # Determine entity type based on directory structure
                     parent_dir = metadata_file.parent
-                    
+
                     if parent_dir.parent.parent == vault_path:
                         # Structure is: vault/project/topic/metadata.yaml
                         _entity_id_cache[entity_id] = (parent_dir, "topic")
@@ -208,5 +214,5 @@ def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
         except (yaml.YAMLError, IOError):
             # Skip files with errors
             continue
-    
+
     return None, None

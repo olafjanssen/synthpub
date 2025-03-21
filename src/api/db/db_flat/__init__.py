@@ -1,1 +1,1 @@
-"""Flat database implementations.""" 
+"""Flat database implementations."""

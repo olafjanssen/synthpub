@@ -163,4 +163,4 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
             feed_items.append(FeedItem(**item))
         except Exception as e:
             error("DB", "Feed item parsing", f"Error parsing feed item: {e}")
-    return feed_items 
+    return feed_items
