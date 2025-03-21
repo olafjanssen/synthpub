@@ -7,18 +7,12 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 import yaml
 
-from src.api.db.project_db import (
-    _get_project_directories,
-    add_topic_to_project,
-    create_project,
-    get_project,
-    get_project_by_slug,
-    list_projects,
-    mark_project_deleted,
-    remove_topic_from_project,
-    save_project,
-    update_project,
-)
+from src.api.db.project_db import (_get_project_directories,
+                                   add_topic_to_project, create_project,
+                                   get_project, get_project_by_slug,
+                                   list_projects, mark_project_deleted,
+                                   remove_topic_from_project, save_project,
+                                   update_project)
 from src.api.models.project import Project
 
 

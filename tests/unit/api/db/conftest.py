@@ -16,7 +16,3 @@ if os.path.exists(src_dir) and str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
     print(f"Added {src_dir} to Python path")
 
-# If we're running the hierarchical DB implementation, ensure the environment variable is set
-if os.environ.get("DB_IMPLEMENTATION") != "flat":
-    os.environ["DB_IMPLEMENTATION"] = "hierarchical"
-    print("Set DB_IMPLEMENTATION to hierarchical")
