@@ -165,13 +165,7 @@ cython_debug/
 #.idea/
 
 # Local database
-db/topics/
-db/articles/
-db/projects/
-db/logs/
-db/prompts
-db/_cache/
-settings.toml
+db/*
 settings.yaml
 
 # Keys and credentials
