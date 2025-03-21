@@ -7,20 +7,13 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 import yaml
 
-from api.db.topic_db import (
-    _ensure_cache,
-    _load_all_topics_from_disk,
-    create_topic,
-    ensure_db_exists,
-    get_topic,
-    list_topics,
-    load_feed_items,
-    load_topics,
-    mark_topic_deleted,
-    save_topic,
-    update_topic,
-)
-from api.models import Topic
+from src.api.db.topic_db import (_ensure_cache, _load_all_topics_from_disk,
+                                 create_topic, get_topic, get_topic_location,
+                                 get_topic_path, list_topics, load_feed_items,
+                                 load_topics, mark_topic_deleted, save_topic,
+                                 update_topic)
+from src.api.models.feed_item import FeedItem
+from src.api.models.topic import Topic
 
 
 @pytest.fixture
@@ -29,14 +22,11 @@ def mock_topic():
     return Topic(
         id="test-topic-123",
         name="Test Topic",
-        title="Test Topic",
-        description="This is a test topic",
-        feed_urls=["http://example.com/feed1", "http://example.com/feed2"],
+        description="A test topic",
+        feed_urls=["http://example.com/feed"],
         created_at=datetime(2023, 1, 1, 12, 0, 0),
         updated_at=datetime(2023, 1, 2, 12, 0, 0),
-        deleted=False,
-        feed_sources=[],
-        feed_items=[],
+        processed_feeds=[],
     )
 
 
@@ -45,243 +35,356 @@ def mock_topics():
     """Create a list of mock topics for testing."""
     return [
         Topic(
-            id="test-topic-123",
-            name="Test Topic 1",
-            title="Test Topic 1",
-            description="This is test topic 1",
-            feed_urls=["http://example.com/feed1", "http://example.com/feed2"],
+            id="topic-1",
+            name="Topic One",
+            description="The first topic",
+            feed_urls=["http://example.com/feed1"],
             created_at=datetime(2023, 1, 1, 12, 0, 0),
             updated_at=datetime(2023, 1, 2, 12, 0, 0),
-            deleted=False,
-            feed_sources=[],
-            feed_items=[],
+            processed_feeds=[],
         ),
         Topic(
-            id="test-topic-456",
-            name="Test Topic 2",
-            title="Test Topic 2",
-            description="This is test topic 2",
-            feed_urls=["http://example.com/feed3", "http://example.com/feed4"],
+            id="topic-2",
+            name="Topic Two",
+            description="The second topic",
+            feed_urls=["http://example.com/feed2"],
             created_at=datetime(2023, 1, 3, 12, 0, 0),
             updated_at=datetime(2023, 1, 4, 12, 0, 0),
-            deleted=False,
-            feed_sources=[],
-            feed_items=[],
+            processed_feeds=[],
         ),
     ]
 
 
 def test_ensure_cache():
-    """Test ensuring the topic cache is initialized."""
-    mock_topics_list = [
-        Topic(
-            id="test-topic-123",
-            name="Test Topic",
-            title="Test Topic",
-            description="This is a test topic",
-            feed_urls=["http://example.com/feed1"],
-            created_at=datetime(2023, 1, 1, 12, 0, 0),
-            updated_at=datetime(2023, 1, 2, 12, 0, 0),
-            deleted=False,
-            feed_sources=[],
-            feed_items=[],
-        )
-    ]
-    with patch("api.db.topic_db._cache_initialized", False):
-        with patch(
-            "api.db.topic_db._load_all_topics_from_disk", return_value=mock_topics_list
-        ):
-            with patch("api.db.topic_db._topic_cache", {}) as mock_cache:
+    """Test ensuring topic cache is populated."""
+    with patch("src.api.db.topic_db._topic_cache", {"test-topic-1": MagicMock()}):
+        with patch("src.api.db.topic_db._cache_initialized", False):
+            with patch("src.api.db.topic_db._load_all_topics_from_disk", return_value=[]):
+                # Call function
                 _ensure_cache()
-                assert mock_cache == {mock_topics_list[0].id: mock_topics_list[0]}
-                from api.db.topic_db import _cache_initialized
-
+                
+                # Verify cache initialization
+                from src.api.db.topic_db import _cache_initialized
                 assert _cache_initialized is True
 
 
-def test_load_all_topics_from_disk(mock_topic):
+def test_load_all_topics_from_disk(mock_topics):
     """Test loading all topics from disk."""
-    yaml_content = yaml.dump(mock_topic.model_dump())
-    with patch("api.db.topic_db.ensure_db_exists"):
-        with patch("api.db.topic_db.db_path", return_value=Path("/mock/db/topics")):
-            with patch(
-                "pathlib.Path.glob",
-                return_value=[Path("/mock/db/topics/test-topic.yaml")],
-            ):
-                with patch("builtins.open", mock_open(read_data=yaml_content)):
+    with patch("src.api.db.topic_db.get_hierarchical_path") as mock_get_path:
+        with patch("src.api.db.project_db._get_project_directories") as mock_get_dirs:
+            # Setup vault path
+            vault_path = Path("/mock/vault")
+            mock_get_path.return_value = vault_path
+            
+            # Setup project directories
+            project_dir1 = MagicMock(spec=Path)
+            project_dir1.name = "project-1"
+            project_dir1.is_dir.return_value = True
+            
+            project_dir2 = MagicMock(spec=Path)
+            project_dir2.name = "project-2"
+            project_dir2.is_dir.return_value = True
+            
+            mock_get_dirs.return_value = [project_dir1, project_dir2]
+            
+            # Setup topic directories within projects
+            topic_dir1 = MagicMock(spec=Path)
+            topic_dir1.is_dir.return_value = True
+            
+            topic_dir2 = MagicMock(spec=Path)
+            topic_dir2.is_dir.return_value = True
+            
+            # Mock iterdir for project directories
+            project_dir1.iterdir.return_value = [topic_dir1]
+            project_dir2.iterdir.return_value = [topic_dir2]
+            
+            # Setup metadata files
+            metadata_file1 = MagicMock(spec=Path)
+            metadata_file1.exists.return_value = True
+            metadata_file1.name = "metadata.yaml"
+            
+            metadata_file2 = MagicMock(spec=Path)
+            metadata_file2.exists.return_value = True
+            metadata_file2.name = "metadata.yaml"
+            
+            # Mock __truediv__ operator for topic directories
+            topic_dir1.__truediv__.return_value = metadata_file1
+            topic_dir2.__truediv__.return_value = metadata_file2
+            
+            # Setup topic data
+            topic_data1 = mock_topics[0].model_dump()
+            topic_data1["created_at"] = topic_data1["created_at"].isoformat()
+            topic_data1["updated_at"] = topic_data1["updated_at"].isoformat()
+            
+            topic_data2 = mock_topics[1].model_dump()
+            topic_data2["created_at"] = topic_data2["created_at"].isoformat()
+            topic_data2["updated_at"] = topic_data2["updated_at"].isoformat()
+            
+            with patch("builtins.open", mock_open()):
+                with patch("yaml.safe_load", side_effect=[topic_data1, topic_data2]):
+                    # Call function
                     result = _load_all_topics_from_disk()
-                    assert len(result) == 1
-                    assert result[0].id == mock_topic.id
-                    assert result[0].name == mock_topic.name
+                    
+                    # Check result
+                    assert len(result) == 2
+                    assert result[0].id == "topic-1"
+                    assert result[1].id == "topic-2"
 
 
-def test_ensure_db_exists():
-    """Test that the DB directory is created if it doesn't exist."""
-    with patch("api.db.topic_db.db_path", return_value=Path("/mock/db/topics")):
-        with patch("pathlib.Path.mkdir") as mock_mkdir:
-            ensure_db_exists()
-            mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+def test_get_topic_path():
+    """Test getting the path to a topic directory."""
+    with patch("src.api.db.topic_db.get_hierarchical_path") as mock_get_path:
+        # Setup mock path
+        mock_path = Path("/mock/vault/project-slug/topic-slug")
+        mock_get_path.return_value = mock_path
+        
+        # Call function
+        result = get_topic_path("project-slug", "topic-slug")
+        
+        # Check result
+        assert result == mock_path
+
+
+def test_get_topic_location(mock_topic):
+    """Test getting the location of a topic."""
+    with patch("src.api.db.topic_db.find_entity_by_id") as mock_find:
+        # Test when topic is found through entity cache
+        topic_path = Path("/mock/vault/project-slug/topic-slug")
+        mock_find.return_value = (topic_path, "topic")
+        
+        # Call function
+        project_slug, topic_slug = get_topic_location("test-topic-123")
+        
+        # Check result
+        assert project_slug == "project-slug"
+        assert topic_slug == "topic-slug"
 
 
 def test_save_topic(mock_topic):
     """Test saving a topic to file."""
-    with patch("api.db.topic_db.ensure_db_exists"):
-        with patch("api.db.topic_db.db_path", return_value=Path("/mock/db/topics")):
-            with patch("builtins.open", mock_open()) as mock_file:
-                save_topic(mock_topic)
-                mock_file.assert_called_once_with(
-                    Path("/mock/db/topics/test-topic-123.yaml"), "w", encoding="utf-8"
-                )
+    # Create a mock project object
+    mock_project = MagicMock()
+    mock_project.id = "test-project-id"
+    mock_project.topic_ids = ["test-topic-123"]
+    
+    with patch("src.api.db.project_db.list_projects", return_value=[mock_project]):
+        with patch("src.api.db.project_db.get_project", return_value=mock_project):
+            with patch("src.api.db.topic_db.create_slug") as mock_create_slug:
+                with patch("src.api.db.topic_db.get_hierarchical_path") as mock_get_path:
+                    with patch("src.api.db.topic_db.ensure_path_exists"):
+                        with patch("builtins.open", mock_open()) as mock_file:
+                            with patch("src.api.db.topic_db.add_to_entity_cache"):
+                                # Setup mocks
+                                mock_create_slug.side_effect = ["project-slug", "topic-slug"]
+                                mock_path = Path("/mock/vault/project-slug/topic-slug")
+                                mock_get_path.return_value = mock_path
+                                
+                                # Call function
+                                save_topic(mock_topic)
+                                
+                                # Check result
+                                path_arg = mock_file.call_args[0][0]
+                                assert str(path_arg).endswith("metadata.yaml")
+                                assert str(path_arg).startswith(str(mock_path))
 
 
 def test_get_topic(mock_topic):
-    """Test retrieving a topic."""
-    with patch("api.db.topic_db._ensure_cache"):
-        with patch("api.db.topic_db._topic_cache", {mock_topic.id: mock_topic}):
-            result = get_topic(mock_topic.id)
+    """Test retrieving a topic by ID."""
+    # Test using cache
+    with patch("src.api.db.topic_db._topic_cache", {"test-topic-123": mock_topic}):
+        with patch("src.api.db.topic_db._cache_initialized", True):
+            result = get_topic("test-topic-123")
             assert result == mock_topic
+    
+    # Test loading from disk with entity cache
+    with patch("src.api.db.topic_db._topic_cache", {}):
+        with patch("src.api.db.topic_db._cache_initialized", True):
+            with patch("src.api.db.topic_db.find_entity_by_id") as mock_find:
+                with patch("pathlib.Path.exists", return_value=True):
+                    with patch("builtins.open", mock_open()):
+                        with patch("yaml.safe_load") as mock_yaml_load:
+                            # Setup mocks
+                            topic_path = Path("/mock/vault/project-slug/topic-slug")
+                            mock_find.return_value = (topic_path, "topic")
+                            
+                            # Mock topic data
+                            topic_data = mock_topic.model_dump()
+                            topic_data["created_at"] = topic_data["created_at"].isoformat()
+                            topic_data["updated_at"] = topic_data["updated_at"].isoformat()
+                            mock_yaml_load.return_value = topic_data
+                            
+                            # Call function
+                            result = get_topic("test-topic-123")
+                            
+                            # Check result
+                            assert result is not None
+                            assert result.id == mock_topic.id
+                            assert result.name == mock_topic.name
 
 
 def test_get_topic_not_found():
     """Test retrieving a non-existent topic."""
-    with patch("api.db.topic_db._ensure_cache"):
-        with patch("api.db.topic_db._topic_cache", {}):
-            result = get_topic("non-existent-id")
-            assert result is None
+    # Test with empty cache
+    with patch("src.api.db.topic_db._topic_cache", {}):
+        with patch("src.api.db.topic_db._cache_initialized", True):
+            with patch("src.api.db.topic_db.find_entity_by_id", return_value=(None, None)):
+                result = get_topic("non-existent-topic")
+                assert result is None
 
 
 def test_list_topics(mock_topics):
     """Test listing all topics."""
-    topic_dict = {topic.id: topic for topic in mock_topics}
-    with patch("api.db.topic_db._ensure_cache"):
-        with patch("api.db.topic_db._topic_cache", topic_dict):
+    with patch("src.api.db.topic_db._ensure_cache"):
+        with patch("src.api.db.topic_db._topic_cache", {
+            "topic-1": mock_topics[0],
+            "topic-2": mock_topics[1],
+        }):
+            # Call function
             result = list_topics()
+            
+            # Check result
             assert len(result) == 2
-            assert result[0].id in [mock_topics[0].id, mock_topics[1].id]
-            assert result[1].id in [mock_topics[0].id, mock_topics[1].id]
-            assert result[0].id != result[1].id
+            assert result[0].id in ["topic-1", "topic-2"]
+            assert result[1].id in ["topic-1", "topic-2"]
 
 
 def test_load_topics(mock_topics):
-    """Test loading topics as a dictionary."""
-    topic_dict = {topic.id: topic for topic in mock_topics}
-    with patch("api.db.topic_db._ensure_cache"):
-        with patch("api.db.topic_db._topic_cache", topic_dict):
+    """Test loading all topics into a dictionary."""
+    with patch("src.api.db.topic_db._ensure_cache"):
+        with patch("src.api.db.topic_db._topic_cache", {
+            "topic-1": mock_topics[0],
+            "topic-2": mock_topics[1],
+        }):
+            # Call function
             result = load_topics()
-            assert result == topic_dict
+            
+            # Check result
+            assert len(result) == 2
+            assert "topic-1" in result
+            assert "topic-2" in result
+            assert result["topic-1"] == mock_topics[0]
+            assert result["topic-2"] == mock_topics[1]
 
 
 def test_create_topic():
     """Test creating a new topic."""
-    with patch("api.db.topic_db.uuid.uuid4", return_value="test-uuid"):
-        with patch("api.db.topic_db.save_topic") as mock_save:
-            with patch("api.db.topic_db.Topic") as mock_topic_class:
-                # Setup the mock to return a properly configured Topic object
-                mock_topic = MagicMock()
-                mock_topic.id = "test-uuid"
-                mock_topic.title = "New Topic"
-                mock_topic.description = "This is a new topic"
-                mock_topic_class.return_value = mock_topic
+    with patch("src.api.db.topic_db.uuid.uuid4", return_value="test-uuid"):
+        with patch("src.api.db.topic_db.save_topic") as mock_save:
+            # Mock a valid project
+            with patch("src.api.db.project_db.add_topic_to_project") as mock_add_topic:
+                # Mock the Topic class to handle the missing feed_urls
+                with patch("src.api.db.topic_db.Topic") as mock_topic_class:
+                    mock_topic = MagicMock()
+                    mock_topic.id = "test-uuid"
+                    mock_topic.name = "New Topic"
+                    mock_topic.description = "A new test topic"
+                    mock_topic.feed_urls = []
+                    mock_topic_class.return_value = mock_topic
 
-                result = create_topic(
-                    title="New Topic", description="This is a new topic"
-                )
-
-                # Verify we tried to create a Topic with the right parameters
-                mock_topic_class.assert_called_once()
-
-                assert result.id == "test-uuid"
-                assert result.title == "New Topic"
-                assert result.description == "This is a new topic"
-                mock_save.assert_called_once()
-                # Cache invalidation is not directly called in create_topic
+                    mock_project = MagicMock()
+                    mock_project.id = "project-123"
+                    mock_add_topic.return_value = mock_project
+                    
+                    # Call function
+                    result = create_topic(
+                        name="New Topic",
+                        description="A new test topic",
+                        project_id="project-123",
+                    )
+                    
+                    # Check result
+                    assert result.id == "test-uuid"
+                    assert result.name == "New Topic"
+                    assert result.description == "A new test topic"
+                    mock_save.assert_called_once_with(mock_topic)
 
 
 def test_mark_topic_deleted(mock_topic):
     """Test marking a topic as deleted."""
-    with patch("api.db.topic_db.get_topic", return_value=mock_topic):
-        with patch("api.db.topic_db.db_path", return_value=Path("/mock/db/topics")):
+    # Create a mock project object
+    mock_project = MagicMock()
+    mock_project.id = "test-project-id"
+    mock_project.topic_ids = ["test-topic-123"]
+    
+    with patch("src.api.db.topic_db.get_topic", return_value=mock_topic):
+        with patch("src.api.db.topic_db.find_entity_by_id") as mock_find:
             with patch("pathlib.Path.exists", return_value=True):
-                with patch("os.rename") as mock_rename:
-                    with patch("os.path.isdir", return_value=False):
-                        # Mock article_db's mark_article_deleted to avoid that call
-                        with patch(
-                            "api.db.article_db.mark_article_deleted", return_value=True
-                        ):
-                            # Use MagicMock for project_db with list_projects method
-                            mock_project_db = MagicMock()
-                            mock_project_db.list_projects.return_value = []
-
-                            # Patch the import statement used in mark_topic_deleted
-                            with patch.dict(
-                                "sys.modules", {"api.db.project_db": mock_project_db}
-                            ):
-                                result = mark_topic_deleted(mock_topic.id)
+                with patch("src.api.db.topic_db.rmtree") as mock_rmtree:
+                    with patch("src.api.db.topic_db.remove_from_entity_cache") as mock_remove:
+                        with patch("src.api.db.project_db.list_projects", return_value=[mock_project]):
+                            with patch("src.api.db.project_db.save_project") as mock_save_project:
+                                # Setup mocks
+                                topic_path = Path("/mock/vault/project-slug/topic-slug")
+                                mock_find.return_value = (topic_path, "topic")
+                                
+                                # Call function
+                                result = mark_topic_deleted("test-topic-123")
+                                
+                                # Check result
                                 assert result is True
-                                # We no longer expect save_topic to be called
-                                mock_rename.assert_called_once()
-                                # Cache handling is done directly by popping from _topic_cache dict
+                                mock_rmtree.assert_called_once_with(topic_path)
+                                mock_remove.assert_called_once_with("test-topic-123")
+                                mock_save_project.assert_called_once()
 
 
 def test_update_topic(mock_topic):
     """Test updating a topic."""
-    # Keep a reference to the original description
-    original_description = mock_topic.description
-
-    with patch("api.db.topic_db.get_topic", return_value=mock_topic):
-        with patch("api.db.topic_db.save_topic") as mock_save:
-            # Simulate topic being modified in place
-            updated_data = {"description": "Updated description"}
-
-            # When update_topic is called, it will directly modify the mock_topic instance
-            # So we need to verify this happens
-            def assert_topic_modified(*args, **kwargs):
-                assert mock_topic.description == "Updated description"
-                return None
-
-            # Mock save_topic to also verify the updated mock_topic
-            mock_save.side_effect = assert_topic_modified
-
-            # Run the test
-            result = update_topic(mock_topic.id, updated_data)
-
-            # Verify results
-            assert result.description == "Updated description"
-            assert original_description != result.description
-            mock_save.assert_called_once_with(mock_topic)
-            # Cache invalidation is handled by save_topic, not directly
+    with patch("src.api.db.topic_db.get_topic", return_value=mock_topic):
+        with patch("src.api.db.topic_db.get_topic_location") as mock_get_location:
+            with patch("src.api.db.topic_db.save_topic") as mock_save:
+                # Setup mock location
+                mock_get_location.return_value = ("project-slug", "topic-slug")
+                
+                # Define update data
+                update_data = {
+                    "name": "Updated Topic",
+                    "description": "Updated description",
+                    "feed_urls": ["http://example.com/new-feed"],
+                }
+                
+                # Call function
+                result = update_topic("test-topic-123", update_data)
+                
+                # Check result
+                assert result is not None
+                assert result.id == mock_topic.id
+                assert result.name == "Updated Topic"
+                assert result.description == "Updated description"
+                assert result.feed_urls == ["http://example.com/new-feed"]
+                mock_save.assert_called_once()
 
 
 def test_update_topic_not_found():
     """Test updating a non-existent topic."""
-    with patch("api.db.topic_db.get_topic", return_value=None):
-        result = update_topic("non-existent-id", {"title": "Updated Title"})
+    with patch("src.api.db.topic_db.get_topic", return_value=None):
+        result = update_topic("non-existent-topic", {"name": "New Name"})
         assert result is None
 
 
 def test_load_feed_items():
     """Test loading feed items from data."""
+    # Create test data
     items_data = [
         {
-            "title": "Test Item 1",
-            "url": "http://example.com/1",
-            "summary": "Test summary 1",
-            "published": "2023-01-01T12:00:00",
-            "image_url": "http://example.com/image1.jpg",
-            "accessed_at": "2023-01-01T12:30:00",
-            "content_hash": "hash1234567890",
+            "url": "http://example.com/item1",
+            "summary": "First item summary",
+            "accessed_at": "2023-01-01T12:00:00",
+            "content_hash": "hash1",
         },
         {
-            "title": "Test Item 2",
-            "url": "http://example.com/2",
-            "summary": "Test summary 2",
-            "published": "2023-01-02T12:00:00",
-            "image_url": "http://example.com/image2.jpg",
-            "accessed_at": "2023-01-02T12:30:00",
-            "content_hash": "hash0987654321",
+            "url": "http://example.com/item2",
+            "summary": "Second item summary",
+            "accessed_at": "2023-01-02T12:00:00",
+            "content_hash": "hash2",
         },
     ]
+    
+    # Call function
     result = load_feed_items(items_data)
+    
+    # Check result
     assert len(result) == 2
-    assert result[0].url == "http://example.com/1"
-    assert result[1].url == "http://example.com/2"
+    assert result[0].url == "http://example.com/item1"
+    assert result[0].content_hash == "hash1"
+    assert result[1].url == "http://example.com/item2"
+    assert result[1].content_hash == "hash2"

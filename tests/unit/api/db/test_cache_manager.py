@@ -7,7 +7,7 @@ from unittest.mock import call, mock_open, patch
 
 import pytest
 
-from api.db.cache_manager import (
+from src.api.db.cache_manager import (
     CACHE_PATH,
     _cleanup_cache,
     _get_cache_metadata,
@@ -92,10 +92,10 @@ def test_sanitize_filename():
 def test_get_cache_path():
     """Test getting the cache path for a URL."""
     with patch(
-        "api.db.cache_manager._sanitize_filename", return_value="sanitized_filename"
+        "src.api.db.cache_manager._sanitize_filename", return_value="sanitized_filename"
     ):
         with patch(
-            "api.db.cache_manager.CACHE_PATH", return_value=Path("/mock/db/cache")
+            "src.api.db.cache_manager.CACHE_PATH", return_value=Path("/mock/db/cache")
         ):
             result = _get_cache_path("http://example.com/article")
             assert result == Path("/mock/db/cache/sanitized_filename.json")
@@ -124,20 +124,20 @@ def test_initialize_cache(mock_cache_dir):
         "connector": "example_connector",
     }
 
-    with patch("api.db.cache_manager.CACHE_PATH", return_value=mock_cache_dir):
-        with patch("api.db.cache_manager.ensure_cache_exists"):
+    with patch("src.api.db.cache_manager.CACHE_PATH", return_value=mock_cache_dir):
+        with patch("src.api.db.cache_manager.ensure_cache_exists"):
             with patch("pathlib.Path.glob", return_value=mock_files):
                 with patch(
-                    "api.db.cache_manager._process_cache_file",
+                    "src.api.db.cache_manager._process_cache_file",
                     side_effect=[mock_metadata1, mock_metadata2],
                 ):
                     # Reset _cache_initialized to False for the test
-                    with patch("api.db.cache_manager._cache_initialized", False):
+                    with patch("src.api.db.cache_manager._cache_initialized", False):
                         with patch(
-                            "api.db.cache_manager._cache_metadata", {}
+                            "src.api.db.cache_manager._cache_metadata", {}
                         ) as mock_cache_metadata:
                             with patch(
-                                "api.db.cache_manager._cache_size_bytes", 0
+                                "src.api.db.cache_manager._cache_size_bytes", 0
                             ) as mock_cache_size:
                                 _initialize_cache()
 
@@ -171,7 +171,7 @@ def test_process_cache_file(mock_cache_content):
 def test_process_cache_file_invalid_json():
     """Test processing a cache file with invalid JSON."""
     with patch("builtins.open", mock_open(read_data="invalid json")):
-        with patch("api.db.cache_manager.error") as mock_error:
+        with patch("src.api.db.cache_manager.error") as mock_error:
             result = _process_cache_file(Path("/mock/db/cache/test_file.json"))
             assert result is None
             mock_error.assert_called_once()
@@ -201,9 +201,9 @@ def test_remove_expired_files():
         "http://example.com/valid": valid_metadata,
     }
 
-    with patch("api.db.cache_manager._cache_metadata", mock_cache_metadata):
-        with patch("api.db.cache_manager._cache_size_bytes", 3072):
-            with patch("api.db.cache_manager.remove_from_cache") as mock_remove:
+    with patch("src.api.db.cache_manager._cache_metadata", mock_cache_metadata):
+        with patch("src.api.db.cache_manager._cache_size_bytes", 3072):
+            with patch("src.api.db.cache_manager.remove_from_cache") as mock_remove:
                 _remove_expired_files()
 
                 # Check that only the expired file was removed
@@ -240,10 +240,10 @@ def test_cleanup_cache():
     }
 
     # Total cache size: 550MB (over the 500MB limit)
-    with patch("api.db.cache_manager._cache_metadata", mock_cache_metadata):
-        with patch("api.db.cache_manager._cache_size_bytes", 550 * 1024 * 1024):
-            with patch("api.db.cache_manager.MAX_CACHE_SIZE_MB", 500):
-                with patch("api.db.cache_manager.remove_from_cache") as mock_remove:
+    with patch("src.api.db.cache_manager._cache_metadata", mock_cache_metadata):
+        with patch("src.api.db.cache_manager._cache_size_bytes", 550 * 1024 * 1024):
+            with patch("src.api.db.cache_manager.MAX_CACHE_SIZE_MB", 500):
+                with patch("src.api.db.cache_manager.remove_from_cache") as mock_remove:
                     _cleanup_cache()
 
                     # Should remove oldest files until cache is under 90% of limit (450MB)
@@ -260,14 +260,14 @@ def test_cleanup_cache():
 
 def test_cache_path(mock_cache_dir):
     """Test getting the cache path."""
-    with patch("api.db.cache_manager.get_db_path", return_value=mock_cache_dir):
+    with patch("src.api.db.cache_manager.get_db_path", return_value=mock_cache_dir):
         result = CACHE_PATH()
         assert result == mock_cache_dir
 
 
 def test_ensure_cache_exists(mock_cache_dir):
     """Test ensuring the cache directory exists."""
-    with patch("api.db.cache_manager.CACHE_PATH", return_value=mock_cache_dir):
+    with patch("src.api.db.cache_manager.CACHE_PATH", return_value=mock_cache_dir):
         with patch("pathlib.Path.mkdir") as mock_mkdir:
             ensure_cache_exists()
             mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
@@ -280,13 +280,13 @@ def test_get_from_cache(mock_cache_content):
     json_content = json.dumps(mock_cache_content)
 
     # Mock that the cache is initialized and the URL is in cache metadata
-    with patch("api.db.cache_manager._initialize_cache"):
+    with patch("src.api.db.cache_manager._initialize_cache"):
         with patch(
-            "api.db.cache_manager._get_cache_metadata",
+            "src.api.db.cache_manager._get_cache_metadata",
             return_value={"expiration": int(time.time()) + 3600},  # Not expired
         ):
             with patch(
-                "api.db.cache_manager._get_cache_path",
+                "src.api.db.cache_manager._get_cache_path",
                 return_value=Path("/mock/db/cache/test_file.json"),
             ):
                 with patch("pathlib.Path.exists", return_value=True):
@@ -301,12 +301,12 @@ def test_get_from_cache_expired():
     url = "http://example.com/article"
 
     # Mock that the cache is initialized and the URL is in cache but expired
-    with patch("api.db.cache_manager._initialize_cache"):
+    with patch("src.api.db.cache_manager._initialize_cache"):
         with patch(
-            "api.db.cache_manager._get_cache_metadata",
+            "src.api.db.cache_manager._get_cache_metadata",
             return_value={"expiration": int(time.time()) - 3600},  # Expired 1 hour ago
         ):
-            with patch("api.db.cache_manager.remove_from_cache") as mock_remove:
+            with patch("src.api.db.cache_manager.remove_from_cache") as mock_remove:
                 result = get_from_cache(url)
                 assert result is None
                 mock_remove.assert_called_once_with(url)
@@ -317,8 +317,8 @@ def test_get_from_cache_not_found():
     url = "http://example.com/article"
 
     # Mock that the cache is initialized but URL is not in cache
-    with patch("api.db.cache_manager._initialize_cache"):
-        with patch("api.db.cache_manager._get_cache_metadata", return_value=None):
+    with patch("src.api.db.cache_manager._initialize_cache"):
+        with patch("src.api.db.cache_manager._get_cache_metadata", return_value=None):
             result = get_from_cache(url)
             assert result is None
 
@@ -329,23 +329,23 @@ def test_add_to_cache(mock_cache_content):
     url = "http://example.com/article"
     content = mock_cache_content["content"]
 
-    with patch("api.db.cache_manager._initialize_cache"):
-        with patch("api.db.cache_manager.ensure_cache_exists"):
+    with patch("src.api.db.cache_manager._initialize_cache"):
+        with patch("src.api.db.cache_manager.ensure_cache_exists"):
             with patch(
-                "api.db.cache_manager._get_cache_path",
+                "src.api.db.cache_manager._get_cache_path",
                 return_value=Path("/mock/db/cache/test_file.json"),
             ):
                 with patch("builtins.open", mock_open()) as mock_file:
                     with patch("json.dump") as mock_json_dump:
                         with patch("os.path.getsize", return_value=1024):
                             with patch(
-                                "api.db.cache_manager._cache_metadata", {}
+                                "src.api.db.cache_manager._cache_metadata", {}
                             ) as mock_cache_metadata:
                                 with patch(
-                                    "api.db.cache_manager._cache_size_bytes", 0
+                                    "src.api.db.cache_manager._cache_size_bytes", 0
                                 ) as mock_cache_size:
                                     with patch(
-                                        "api.db.cache_manager._cleanup_cache"
+                                        "src.api.db.cache_manager._cleanup_cache"
                                     ) as mock_cleanup:
                                         add_to_cache(url, content)
 
@@ -379,21 +379,21 @@ def test_remove_from_cache():
     # Set up cache metadata with the URL
     mock_metadata = {"url": url, "size": 1024}
 
-    with patch("api.db.cache_manager._initialize_cache"):
+    with patch("src.api.db.cache_manager._initialize_cache"):
         with patch(
-            "api.db.cache_manager._get_cache_metadata", return_value=mock_metadata
+            "src.api.db.cache_manager._get_cache_metadata", return_value=mock_metadata
         ):
             with patch(
-                "api.db.cache_manager._get_cache_path",
+                "src.api.db.cache_manager._get_cache_path",
                 return_value=Path("/mock/db/cache/test_file.json"),
             ):
                 with patch("pathlib.Path.exists", return_value=True):
                     with patch("pathlib.Path.unlink") as mock_unlink:
                         with patch(
-                            "api.db.cache_manager._cache_metadata", {url: mock_metadata}
+                            "src.api.db.cache_manager._cache_metadata", {url: mock_metadata}
                         ) as mock_cache_metadata:
                             with patch(
-                                "api.db.cache_manager._cache_size_bytes", 1024
+                                "src.api.db.cache_manager._cache_size_bytes", 1024
                             ) as mock_cache_size:
                                 remove_from_cache(url)
 
@@ -412,17 +412,17 @@ def test_clear_cache():
     """Test clearing the entire cache."""
     mock_files = [Path("/mock/db/cache/file1.json"), Path("/mock/db/cache/file2.json")]
 
-    with patch("api.db.cache_manager.CACHE_PATH", return_value=Path("/mock/db/cache")):
+    with patch("src.api.db.cache_manager.CACHE_PATH", return_value=Path("/mock/db/cache")):
         with patch("pathlib.Path.glob", return_value=mock_files):
             with patch("pathlib.Path.unlink") as mock_unlink:
                 with patch(
-                    "api.db.cache_manager._cache_metadata", {"url1": {}, "url2": {}}
+                    "src.api.db.cache_manager._cache_metadata", {"url1": {}, "url2": {}}
                 ) as mock_cache_metadata:
                     with patch(
-                        "api.db.cache_manager._cache_size_bytes", 1024
+                        "src.api.db.cache_manager._cache_size_bytes", 1024
                     ) as mock_cache_size:
                         with patch(
-                            "api.db.cache_manager._cache_initialized", True
+                            "src.api.db.cache_manager._cache_initialized", True
                         ) as mock_cache_initialized:
                             clear_cache()
 
@@ -458,8 +458,8 @@ def test_find_cache_files():
         },
     }
 
-    with patch("api.db.cache_manager._initialize_cache"):
-        with patch("api.db.cache_manager._cache_metadata", mock_metadata):
+    with patch("src.api.db.cache_manager._initialize_cache"):
+        with patch("src.api.db.cache_manager._cache_metadata", mock_metadata):
             # Test with a URL pattern
             result = find_cache_files("article1")
             assert len(result) == 1
@@ -487,7 +487,7 @@ def test_get_file_metadata(mock_cache_content):
 def test_get_file_metadata_invalid_json():
     """Test getting metadata from a cache file with invalid JSON."""
     with patch("builtins.open", mock_open(read_data="invalid json")):
-        with patch("api.db.cache_manager.error") as mock_error:
+        with patch("src.api.db.cache_manager.error") as mock_error:
             result = _get_file_metadata(Path("/mock/db/cache/test_file.json"))
             assert result is None
             mock_error.assert_called_once()
@@ -500,8 +500,8 @@ def test_get_cache_metadata():
     # Mock metadata
     mock_metadata = {"url": url, "type": "article", "connector": "example_connector"}
 
-    with patch("api.db.cache_manager._initialize_cache"):
-        with patch("api.db.cache_manager._cache_metadata", {url: mock_metadata}):
+    with patch("src.api.db.cache_manager._initialize_cache"):
+        with patch("src.api.db.cache_manager._cache_metadata", {url: mock_metadata}):
             result = _get_cache_metadata(url)
             assert result == mock_metadata
 
@@ -516,11 +516,11 @@ def test_get_cache_info(mock_cache_content):
     url = "http://example.com/article"
 
     with patch(
-        "api.db.cache_manager._get_cache_metadata",
+        "src.api.db.cache_manager._get_cache_metadata",
         return_value=mock_cache_content["metadata"],
     ):
         with patch(
-            "api.db.cache_manager.get_from_cache",
+            "src.api.db.cache_manager.get_from_cache",
             return_value=mock_cache_content["content"],
         ):
             result = get_cache_info(url)
@@ -528,7 +528,7 @@ def test_get_cache_info(mock_cache_content):
             assert result["content"] == mock_cache_content["content"]
 
             # Test with a URL not in cache
-            with patch("api.db.cache_manager._get_cache_metadata", return_value=None):
+            with patch("src.api.db.cache_manager._get_cache_metadata", return_value=None):
                 result = get_cache_info("http://example.com/not-in-cache")
                 assert result is None
 
@@ -545,8 +545,8 @@ def test_get_all_connectors():
         },
     }
 
-    with patch("api.db.cache_manager._initialize_cache"):
-        with patch("api.db.cache_manager._cache_metadata", mock_metadata):
+    with patch("src.api.db.cache_manager._initialize_cache"):
+        with patch("src.api.db.cache_manager._cache_metadata", mock_metadata):
             result = get_all_connectors()
             # Should return unique connectors
             assert sorted(result) == ["connector1", "connector2"]

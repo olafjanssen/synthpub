@@ -14,8 +14,9 @@ import yaml
 from ..models.article import Article
 from ..models.feed_item import FeedItem
 from . import topic_db
-from .common import (create_slug, ensure_path_exists, find_entity_by_id,
-                     get_article_path, get_hierarchical_path)
+from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
+                     find_entity_by_id, get_article_path,
+                     get_hierarchical_path, remove_from_entity_cache)
 
 
 def get_article_location(article_id: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
@@ -122,6 +123,9 @@ def save_article(article: Article) -> None:
     content_file = article_path / "article.md"
     if not metadata_file.exists() or not content_file.exists():
         raise ValueError(f"Failed to save article to {article_path}")
+    
+    # Update entity cache
+    add_to_entity_cache(article.id, article_path, "article")
     
     # Update topic to reference this article if not already set
     if not topic.article:
@@ -307,6 +311,9 @@ def mark_article_deleted(article_id: str) -> bool:
     # Remove the directory
     if article_path.exists():
         rmtree(article_path)
+    
+    # Remove from entity cache
+    remove_from_entity_cache(article_id)
     
     # Also delete any old versions
     article = get_article(article_id)

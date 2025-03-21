@@ -11,7 +11,9 @@ from typing import Dict, List, Optional
 import yaml
 
 from ..models.project import Project
-from .common import create_slug, ensure_path_exists, get_hierarchical_path
+from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
+                     find_entity_by_id, get_hierarchical_path,
+                     remove_from_entity_cache)
 
 
 def save_project(project: Project) -> None:
@@ -40,6 +42,30 @@ def save_project(project: Project) -> None:
     with open(filename, "w", encoding="utf-8") as f:
         yaml.safe_dump(project_dict, f, sort_keys=False, allow_unicode=True)
         f.flush()  # Ensure data is written to disk
+    
+    # Update the cache
+    add_to_entity_cache(project.id, project_path, "project")
+
+
+def get_project(project_id: str) -> Optional[Project]:
+    """Retrieve project by id using the entity cache."""
+    project_path, entity_type = find_entity_by_id(project_id)
+    
+    if not project_path or entity_type != "project":
+        return None
+    
+    metadata_file = project_path / "metadata.yaml"
+    if not metadata_file.exists():
+        return None
+    
+    with open(metadata_file, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+        # Convert ISO format strings back to datetime
+        data["created_at"] = datetime.fromisoformat(data["created_at"])
+        if data["updated_at"]:
+            data["updated_at"] = datetime.fromisoformat(data["updated_at"])
+        
+        return Project(**data)
 
 
 def get_project_by_slug(slug: str) -> Optional[Project]:
@@ -58,15 +84,6 @@ def get_project_by_slug(slug: str) -> Optional[Project]:
             data["updated_at"] = datetime.fromisoformat(data["updated_at"])
         
         return Project(**data)
-
-
-def get_project(project_id: str) -> Optional[Project]:
-    """Retrieve project by id by searching through all projects."""
-    projects = list_projects()
-    for project in projects:
-        if project.id == project_id:
-            return project
-    return None
 
 
 def _get_project_directories() -> List[Path]:
@@ -130,15 +147,6 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
         if hasattr(project, key):
             setattr(project, key, value)
     
-    # Filter out any topic IDs that no longer exist
-    from . import topic_db
-    if hasattr(project, "topic_ids") and project.topic_ids:
-        valid_topic_ids = []
-        for topic_id in project.topic_ids:
-            if topic_db.get_topic(topic_id) is not None:
-                valid_topic_ids.append(topic_id)
-        project.topic_ids = valid_topic_ids
-    
     # Update the timestamp
     project.updated_at = datetime.now(UTC)
     
@@ -147,20 +155,18 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
     if old_slug != new_slug:
         # If the slug changed, we need to move the directory
         old_path = get_hierarchical_path(old_slug)
-        new_path = get_hierarchical_path(new_slug)
         
-        # Create the new path
-        ensure_path_exists(new_path.parent)
+        # Remove from cache with old path
+        remove_from_entity_cache(project_id)
         
-        # Move all contents
+        # Save to new location (which will update cache)
+        save_project(project)
+        
+        # Remove old directory if it exists
         if old_path.exists():
-            # Instead of using 'shutil.move', we'll save to the new location
-            # and then delete the old directory to avoid permission issues
-            save_project(project)
-            
-            # Remove the old directory
             rmtree(old_path)
-            return project
+            
+        return project
     
     # If no slug change, just save
     save_project(project)
@@ -169,19 +175,20 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
 
 def mark_project_deleted(project_id: str) -> bool:
     """Mark a project as deleted by removing its directory."""
-    project = get_project(project_id)
-    if not project:
-        return False
+    project_path, entity_type = find_entity_by_id(project_id)
     
-    # Get the project slug
-    slug = create_slug(project.title)
-    project_path = get_hierarchical_path(slug)
+    if not project_path or entity_type != "project":
+        return False
     
     if not project_path.exists():
         return False
     
     # Remove the directory and all contents
     rmtree(project_path)
+    
+    # Remove from cache
+    remove_from_entity_cache(project_id)
+    
     return True
 
 

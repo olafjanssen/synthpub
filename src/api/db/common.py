@@ -89,9 +89,84 @@ def get_article_path(project_slug: str, topic_slug: str, timestamp: datetime) ->
     return article_path
 
 
+# Cache for entity lookups
+_entity_id_cache = {}  # Maps entity_id to (path, entity_type)
+_cache_initialized = False
+
+
+def _initialize_entity_cache():
+    """
+    Initialize the entity cache by scanning all metadata.yaml files once.
+    This improves subsequent lookups significantly.
+    """
+    global _cache_initialized
+    
+    if _cache_initialized:
+        return
+    
+    vault_path = get_hierarchical_path()
+    
+    # Use recursive glob to find all metadata.yaml files
+    for metadata_file in vault_path.glob("**/metadata.yaml"):
+        try:
+            with open(metadata_file, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+                if data and "id" in data:
+                    entity_id = data["id"]
+                    parent_dir = metadata_file.parent
+                    
+                    # Determine entity type based on directory structure
+                    if parent_dir.parent.parent == vault_path:
+                        # Structure is: vault/project/topic/metadata.yaml
+                        _entity_id_cache[entity_id] = (parent_dir, "topic")
+                    elif parent_dir.parent == vault_path:
+                        # Structure is: vault/project/metadata.yaml
+                        _entity_id_cache[entity_id] = (parent_dir, "project")
+                    else:
+                        # Structure is: vault/project/topic/timestamp/metadata.yaml
+                        _entity_id_cache[entity_id] = (parent_dir, "article")
+        except (yaml.YAMLError, IOError):
+            # Skip files with errors
+            continue
+    
+    _cache_initialized = True
+
+
+def invalidate_entity_cache():
+    """Clear the entity cache to force reloading on next request."""
+    global _cache_initialized
+    _entity_id_cache.clear()
+    _cache_initialized = False
+
+
+def add_to_entity_cache(entity_id: str, path: Path, entity_type: str):
+    """
+    Add an entity to the cache after creating or updating it.
+    
+    Args:
+        entity_id: The unique ID of the entity
+        path: Path to the entity's directory
+        entity_type: Type of entity ('project', 'topic', or 'article')
+    """
+    _initialize_entity_cache()
+    _entity_id_cache[entity_id] = (path, entity_type)
+
+
+def remove_from_entity_cache(entity_id: str):
+    """
+    Remove an entity from the cache when it's deleted.
+    
+    Args:
+        entity_id: The unique ID of the entity to remove
+    """
+    _initialize_entity_cache()
+    if entity_id in _entity_id_cache:
+        del _entity_id_cache[entity_id]
+
+
 def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
     """
-    Find any entity (project, topic, article) by its ID.
+    Find any entity (project, topic, article) by its ID using cache.
     
     Args:
         entity_id: The unique ID to search for
@@ -100,10 +175,16 @@ def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
         Tuple of (path to entity directory, entity type)
         where entity type is one of 'project', 'topic', 'article'
     """
-    # Search through all metadata.yaml files in the vault
+    # Initialize cache if not already done
+    _initialize_entity_cache()
+    
+    # Check if entity is in cache
+    if entity_id in _entity_id_cache:
+        return _entity_id_cache[entity_id]
+    
+    # If not in cache, scan files again (could be a new entity)
     vault_path = get_hierarchical_path()
     
-    # Use recursive glob to find all metadata.yaml files
     for metadata_file in vault_path.glob("**/metadata.yaml"):
         try:
             with open(metadata_file, "r", encoding="utf-8") as f:
@@ -114,12 +195,15 @@ def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
                     
                     if parent_dir.parent.parent == vault_path:
                         # Structure is: vault/project/topic/metadata.yaml
+                        _entity_id_cache[entity_id] = (parent_dir, "topic")
                         return parent_dir, "topic"
                     elif parent_dir.parent == vault_path:
                         # Structure is: vault/project/metadata.yaml
+                        _entity_id_cache[entity_id] = (parent_dir, "project")
                         return parent_dir, "project"
                     else:
                         # Structure is: vault/project/topic/timestamp/metadata.yaml
+                        _entity_id_cache[entity_id] = (parent_dir, "article")
                         return parent_dir, "article"
         except (yaml.YAMLError, IOError):
             # Skip files with errors

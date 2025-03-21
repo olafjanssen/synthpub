@@ -13,7 +13,9 @@ import yaml
 from ..models.feed_item import FeedItem
 from ..models.topic import Topic
 from . import article_db, project_db
-from .common import create_slug, ensure_path_exists, get_hierarchical_path
+from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
+                     find_entity_by_id, get_hierarchical_path,
+                     remove_from_entity_cache)
 
 # In-memory cache for topics
 _topic_cache: Dict[str, Topic] = {}
@@ -68,7 +70,18 @@ def get_topic_location(topic_id: str) -> Tuple[Optional[str], Optional[str]]:
     Returns:
         Tuple of (project_slug, topic_slug) or (None, None) if not found
     """
-    # Get all projects
+    # First check if we can find it directly using the entity cache
+    topic_path, entity_type = find_entity_by_id(topic_id)
+    
+    if topic_path is not None and entity_type == "topic":
+        # Extract slugs from path
+        # Structure is: vault/project_slug/topic_slug
+        topic_slug = topic_path.name
+        project_slug = topic_path.parent.name
+        # Ensure we're returning strings, not Path objects
+        return str(project_slug), str(topic_slug)
+    
+    # Fallback to checking projects
     project_slug_map = project_db.get_project_slug_map()
     
     # For each project
@@ -99,9 +112,12 @@ def save_topic(topic: Topic) -> None:
         raise ValueError(f"Cannot save topic {topic.id}: not associated with any project")
     
     # Get project slug
-    project = project_db.get_project(project_id)
-    if not project:
+    project_result = project_db.get_project(project_id)
+    if project_result is None:
         raise ValueError(f"Cannot find project {project_id}")
+    
+    # At this point we know project is not None
+    project = project_result
     
     project_slug = create_slug(project.title)
     topic_slug = create_slug(topic.name)
@@ -133,12 +149,41 @@ def save_topic(topic: Topic) -> None:
     
     # Update cache
     _topic_cache[topic.id] = topic
+    add_to_entity_cache(topic.id, topic_path, "topic")
 
 
 def get_topic(topic_id: str) -> Optional[Topic]:
     """Retrieve topic by id from cache or disk."""
     _ensure_cache()
-    return _topic_cache.get(topic_id)
+    
+    # First check in-memory cache
+    if topic_id in _topic_cache:
+        return _topic_cache[topic_id]
+    
+    # If not in memory cache, try to find using entity cache
+    topic_path, entity_type = find_entity_by_id(topic_id)
+    
+    if topic_path and entity_type == "topic":
+        metadata_file = topic_path / "metadata.yaml"
+        
+        if metadata_file.exists():
+            with open(metadata_file, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+                
+                # Process feed items if present
+                if "processed_feeds" in data:
+                    processed_feeds = []
+                    for feed_item in data["processed_feeds"]:
+                        if "accessed_at" in feed_item and isinstance(feed_item["accessed_at"], str):
+                            feed_item["accessed_at"] = datetime.fromisoformat(feed_item["accessed_at"])
+                        processed_feeds.append(FeedItem(**feed_item))
+                    data["processed_feeds"] = processed_feeds
+                
+                topic = Topic(**data)
+                _topic_cache[topic_id] = topic
+                return topic
+    
+    return None
 
 
 def get_topic_by_slug(project_slug: str, topic_slug: str) -> Optional[Topic]:
@@ -161,7 +206,9 @@ def get_topic_by_slug(project_slug: str, topic_slug: str) -> Optional[Topic]:
                 processed_feeds.append(FeedItem(**feed_item))
             data["processed_feeds"] = processed_feeds
         
-        return Topic(**data)
+        topic = Topic(**data)
+        _topic_cache[topic.id] = topic
+        return topic
 
 
 def list_topics() -> List[Topic]:
@@ -205,20 +252,18 @@ def mark_topic_deleted(topic_id: str) -> bool:
             print(f"Failed to delete article {topic.article}: {str(e)}")
             # Continue with topic deletion even if article deletion fails
     
-    # Find where the topic is stored
-    project_slug, topic_slug = get_topic_location(topic_id)
-    if not project_slug or not topic_slug:
-        return False
+    # Find where the topic is stored using the entity cache
+    topic_path, entity_type = find_entity_by_id(topic_id)
     
-    topic_path = get_hierarchical_path(project_slug, topic_slug)
-    if not topic_path.exists():
+    if not topic_path or entity_type != "topic" or not topic_path.exists():
         return False
     
     # Remove the directory
     rmtree(topic_path)
     
-    # Remove from cache
+    # Remove from caches
     _topic_cache.pop(topic_id, None)
+    remove_from_entity_cache(topic_id)
     
     # Remove this topic from all projects that reference it
     projects = project_db.list_projects()
@@ -257,12 +302,11 @@ def update_topic(topic_id: str, updated_data: dict) -> Optional[Topic]:
         if old_topic_slug != new_topic_slug:
             # Get paths
             old_path = get_hierarchical_path(project_slug, old_topic_slug)
-            new_path = get_hierarchical_path(project_slug, new_topic_slug)
             
-            # Create new directory
-            ensure_path_exists(new_path)
+            # Remove from entity cache
+            remove_from_entity_cache(topic_id)
             
-            # Save to new location
+            # Save to new location (which will update caches)
             save_topic(topic)
             
             # Remove old directory if it exists

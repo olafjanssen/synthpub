@@ -7,13 +7,19 @@ import os
 import sys
 from pathlib import Path
 
-# Add the parent directory to the Python path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Set environment variable for flat DB
+os.environ["DB_IMPLEMENTATION"] = "flat"
 
+# Add the parent directory to the Python path
+current_dir = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(current_dir))
+
+# Import hierarchical implementation directly
 from api.db import article_db as hier_article_db
 from api.db import project_db as hier_project_db
 from api.db import topic_db as hier_topic_db
-from api.db.common import ensure_path_exists, get_hierarchical_path
+from api.db.common import (ensure_path_exists, get_article_path, get_db_path,
+                           get_hierarchical_path)
 from api.db.db_flat import article_db as flat_article_db
 from api.db.db_flat import project_db as flat_project_db
 from api.db.db_flat import topic_db as flat_topic_db
@@ -143,6 +149,7 @@ def main():
     print("\nMigration complete!")
     print("To use the hierarchical DB structure, set the DB_IMPLEMENTATION environment variable to 'hierarchical'")
     print("Example: export DB_IMPLEMENTATION=hierarchical")
+
 
 if __name__ == "__main__":
     main() 
