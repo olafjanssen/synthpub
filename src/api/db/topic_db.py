@@ -2,21 +2,23 @@
 Database operations for topics using hierarchical folder structure.
 """
 
+import os
+import shutil
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from shutil import rmtree
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import yaml
 
-from ..models.feed_item import FeedItem
-from ..models.topic import Topic
+from ..models.project import Project
+from ..models.topic import FeedItem, Topic
 from . import article_db, project_db
 from .common import (
     add_to_entity_cache,
     create_slug,
     ensure_path_exists,
+    ensure_unique_slug,
     find_entity_by_id,
     get_hierarchical_path,
     remove_from_entity_cache,
@@ -128,13 +130,18 @@ def save_topic(topic: Topic) -> None:
         raise ValueError(f"Cannot find project {project_id}")
 
     # At this point we know project is not None
-    project = project_result
+    project = project_result  # Now project has the type Project, not Optional[Project]
 
-    project_slug = create_slug(project.title)
-    topic_slug = create_slug(topic.name)
+    # Create safe project slug
+    safe_project_slug = create_slug(project.title)
+    # Get the project path for passing to ensure_unique_slug
+    project_path = get_hierarchical_path(safe_project_slug)
+
+    # Create unique topic slug
+    topic_slug = ensure_unique_slug(topic.name, "topic", project_path)
 
     # Build path
-    topic_path = get_hierarchical_path(project_slug, topic_slug)
+    topic_path = get_hierarchical_path(safe_project_slug, topic_slug)
     ensure_path_exists(topic_path)
 
     # Create metadata file
@@ -278,7 +285,7 @@ def mark_topic_deleted(topic_id: str) -> bool:
         return False
 
     # Remove the directory
-    rmtree(topic_path)
+    shutil.rmtree(topic_path)
 
     # Remove from caches
     _topic_cache.pop(topic_id, None)
@@ -295,47 +302,45 @@ def mark_topic_deleted(topic_id: str) -> bool:
 
 
 def update_topic(topic_id: str, updated_data: dict) -> Optional[Topic]:
-    """Update a topic and refresh cache."""
+    """Update a topic with new data."""
     topic = get_topic(topic_id)
     if not topic:
         return None
 
-    # Get current location
+    # Get project and topic info before update
     project_slug, old_topic_slug = get_topic_location(topic_id)
     if not project_slug or not old_topic_slug:
         return None
-
-    # Store the old name for comparison
-    old_name = topic.name
 
     # Update topic fields
     for key, value in updated_data.items():
         if hasattr(topic, key):
             setattr(topic, key, value)
 
-    # Check if name changed (which affects the slug)
-    if old_name != topic.name:
-        # Generate the new slug
-        new_topic_slug = create_slug(topic.name)
+    # Check if the slug will change due to name update
+    # Get project path for generating unique slug
+    project_path = get_hierarchical_path(project_slug)
 
-        if old_topic_slug != new_topic_slug:
-            # Get paths
-            old_path = get_hierarchical_path(project_slug, old_topic_slug)
+    # Create unique slug for new topic name
+    new_topic_slug = ensure_unique_slug(topic.name, "topic", project_path)
 
-            # Remove from entity cache
-            remove_from_entity_cache(topic_id)
+    if old_topic_slug != new_topic_slug:
+        # If the slug changed, we need to move the directory
+        old_path = get_hierarchical_path(project_slug, old_topic_slug)
 
-            # Save to new location (which will update caches)
-            save_topic(topic)
+        # Remove from cache with old path
+        remove_from_entity_cache(topic_id)
 
-            # Remove old directory if it exists
-            if old_path.exists():
-                rmtree(old_path)
+        # Save to new location (which will update cache)
+        save_topic(topic)
 
-            return topic
+        # Remove old directory if it exists
+        if old_path.exists():
+            shutil.rmtree(old_path)
+    else:
+        # Just save in place
+        save_topic(topic)
 
-    # If name didn't change, just save
-    save_topic(topic)
     return topic
 
 

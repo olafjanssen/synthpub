@@ -2,10 +2,11 @@
 Database operations for projects using hierarchical folder structure.
 """
 
+import os
+import shutil
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
-from shutil import rmtree
 from typing import Dict, List, Optional
 
 import yaml
@@ -15,6 +16,7 @@ from .common import (
     add_to_entity_cache,
     create_slug,
     ensure_path_exists,
+    ensure_unique_slug,
     find_entity_by_id,
     get_hierarchical_path,
     remove_from_entity_cache,
@@ -23,8 +25,8 @@ from .common import (
 
 def save_project(project: Project) -> None:
     """Save project to YAML file in its slug-named folder."""
-    # Create slug from title
-    project_slug = create_slug(project.title)
+    # Create unique slug from title
+    project_slug = ensure_unique_slug(project.title, "project")
 
     # Build path
     project_path = get_hierarchical_path(project_slug)
@@ -156,7 +158,9 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
     project.updated_at = datetime.now(UTC)
 
     # Check if the slug changed due to title update
-    new_slug = create_slug(project.title)
+    # Get unique slug for the new title
+    new_slug = ensure_unique_slug(project.title, "project")
+
     if old_slug != new_slug:
         # If the slug changed, we need to move the directory
         old_path = get_hierarchical_path(old_slug)
@@ -169,7 +173,7 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
 
         # Remove old directory if it exists
         if old_path.exists():
-            rmtree(old_path)
+            shutil.rmtree(old_path)
 
         return project
 
@@ -189,7 +193,7 @@ def mark_project_deleted(project_id: str) -> bool:
         return False
 
     # Remove the directory and all contents
-    rmtree(project_path)
+    shutil.rmtree(project_path)
 
     # Remove from cache
     remove_from_entity_cache(project_id)

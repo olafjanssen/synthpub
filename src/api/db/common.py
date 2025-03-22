@@ -36,6 +36,40 @@ def create_slug(name: str) -> str:
     return name
 
 
+def ensure_unique_slug(
+    name: str, entity_type: str, parent_path: Optional[Path] = None
+) -> str:
+    """
+    Create a unique slug for the given name and entity type.
+
+    Args:
+        name: The name to create a slug from
+        entity_type: Type of entity ('project', 'topic', or 'article')
+        parent_path: For topics, the parent project path; None for projects
+
+    Returns:
+        A unique slug string
+    """
+    base_slug = create_slug(name)
+    slug = base_slug
+    counter = 1
+
+    # For projects, we check at the vault level
+    if entity_type == "project":
+        base_path = get_hierarchical_path()
+        while (base_path / slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+    # For topics, we check within the parent project
+    elif entity_type == "topic" and parent_path:
+        while (parent_path / slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+    # For articles, we don't need to check as they use timestamps
+
+    return slug
+
+
 def get_hierarchical_path(
     project_slug: Optional[str] = None,
     topic_slug: Optional[str] = None,
