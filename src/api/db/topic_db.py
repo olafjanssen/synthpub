@@ -5,7 +5,7 @@ Database operations for topics using hierarchical folder structure.
 import os
 import shutil
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 

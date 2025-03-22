@@ -4,7 +4,7 @@ Database operations for articles using hierarchical folder structure with markdo
 
 import os
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from shutil import rmtree
 from typing import List, Optional, Tuple
@@ -206,7 +206,7 @@ def create_article(
         topic_id=topic_id,
         content=content,
         version=version,
-        created_at=created_at or datetime.now(UTC),
+        created_at=created_at or datetime.now(timezone.utc),
         updated_at=updated_at,
     )
 
@@ -241,7 +241,7 @@ def update_article(
         content=content,
         version=current_article.version + 1,
         created_at=current_article.created_at,
-        updated_at=datetime.now(UTC),
+        updated_at=datetime.now(timezone.utc),
         previous_version=current_article.id,
         next_version=None,  # This is the latest version
         source_feed=feed_item,  # Store the feed item that triggered this update

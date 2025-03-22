@@ -1,15 +1,18 @@
 """Database operations for articles using markdown files with YAML front matter (flat structure)."""
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from shutil import move
 from typing import List, Optional
 
 import yaml
+from fastapi.encoders import jsonable_encoder
 
 from ...models.article import Article
 from ...models.feed_item import FeedItem
+from ...utils.id_generator import generate_id
 from ..common import get_db_path
+from .storage import get_articles_path, load_yaml, save_yaml
 
 
 def DB_PATH():
@@ -107,8 +110,8 @@ def list_articles() -> List[Article]:
 
 def create_article(
     title: str,
-    topic_id: str,
     content: str,
+    topic_id: str,
     version: int = 1,
     created_at: Optional[datetime] = None,
     updated_at: Optional[datetime] = None,
@@ -117,10 +120,11 @@ def create_article(
     article = Article(
         id=str(uuid.uuid4()),
         title=title,
-        topic_id=topic_id,
         content=content,
+        topic_id=topic_id,
         version=version,
-        created_at=created_at or datetime.now(UTC),  # Use provided date or current time
+        created_at=created_at
+        or datetime.now(timezone.utc),  # Use provided date or current time
         updated_at=updated_at,  # Use provided update date or None for new articles
     )
 
@@ -155,7 +159,7 @@ def update_article(
         content=content,
         version=current_article.version + 1,
         created_at=current_article.created_at,
-        updated_at=datetime.now(UTC),
+        updated_at=datetime.now(timezone.utc),
         previous_version=current_article.id,
         next_version=None,  # This is the latest version
         source_feed=feed_item,  # Store the feed item that triggered this update

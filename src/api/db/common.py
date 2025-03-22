@@ -2,7 +2,7 @@
 
 import os
 import re
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
@@ -119,7 +119,7 @@ def get_article_path(project_slug: str, topic_slug: str, timestamp: datetime) ->
     timestamp_prefix = (
         timestamp.strftime("%Y-%m-%d-%H%M%S")
         if timestamp
-        else datetime.now(UTC).strftime("%Y-%m-%d-%H%M%S")
+        else datetime.now(timezone.utc).strftime("%Y-%m-%d-%H%M%S")
     )
 
     # Get article directory path

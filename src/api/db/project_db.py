@@ -5,7 +5,7 @@ Database operations for projects using hierarchical folder structure.
 import os
 import shutil
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -134,7 +134,7 @@ def create_project(
         description=description,
         topic_ids=topic_ids or [],
         thumbnail_url=thumbnail_url,
-        created_at=datetime.now(UTC),
+        created_at=datetime.now(timezone.utc),
     )
     save_project(project)
     return project
@@ -155,7 +155,7 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
             setattr(project, key, value)
 
     # Update the timestamp
-    project.updated_at = datetime.now(UTC)
+    project.updated_at = datetime.now(timezone.utc)
 
     # Check if the slug changed due to title update
     # Get unique slug for the new title
@@ -209,7 +209,7 @@ def add_topic_to_project(project_id: str, topic_id: str) -> Optional[Project]:
 
     if topic_id not in project.topic_ids:
         project.topic_ids.append(topic_id)
-        project.updated_at = datetime.now(UTC)
+        project.updated_at = datetime.now(timezone.utc)
         save_project(project)
 
     return project
@@ -223,7 +223,7 @@ def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Projec
 
     if topic_id in project.topic_ids:
         project.topic_ids.remove(topic_id)
-        project.updated_at = datetime.now(UTC)
+        project.updated_at = datetime.now(timezone.utc)
         save_project(project)
 
     return project
