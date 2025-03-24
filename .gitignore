@@ -164,8 +164,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Local database
-db/*
+# Local databases
+db*/
 settings.yaml
 
 # Keys and credentials
