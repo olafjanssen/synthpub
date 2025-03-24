@@ -56,8 +56,3 @@ class Converter(Protocol):
                 "No suitable handler",
                 f"Type: {content_type}, Handler: {cls.__name__}",
             )
-
-    @classmethod
-    def connect_signals(cls):
-        """Connect to conversion signals."""
-        convert_requested.connect(cls.handle_convert_requested)

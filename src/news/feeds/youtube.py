@@ -3,7 +3,7 @@ YouTube connector for fetching transcripts from YouTube videos, channels, and pl
 """
 
 import os
-from typing import Dict, List
+from typing import Any, Dict, List
 from urllib.parse import ParseResult, parse_qs, urlparse
 
 from googleapiclient.discovery import build
@@ -32,7 +32,7 @@ def fetch_youtube_transcript(video_id: str) -> str:
         return ""
 
 
-def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, str]]:
+def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, Any]]:
     """Fetch transcripts from all videos in a playlist"""
     youtube = build("youtube", "v3", developerKey=get_api_key())
     items = []
@@ -64,7 +64,7 @@ def fetch_youtube_videos_playlist(playlist_id: str) -> List[Dict[str, str]]:
         return []
 
 
-def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
+def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, Any]]:
     """Fetch transcripts from all videos in a channel"""
     youtube = build("youtube", "v3", developerKey=get_api_key())
     items = []
@@ -105,7 +105,7 @@ def fetch_youtube_videos_handle(handle: str) -> List[Dict[str, str]]:
         return []
 
 
-def fetch_youtube_videos_channel(channel_id: str) -> List[Dict[str, str]]:
+def fetch_youtube_videos_channel(channel_id: str) -> List[Dict[str, Any]]:
     """Fetch transcripts from all videos in a channel by channel ID"""
     youtube = build("youtube", "v3", developerKey=get_api_key())
     items = []
@@ -137,7 +137,7 @@ def fetch_youtube_videos_channel(channel_id: str) -> List[Dict[str, str]]:
         return []
 
 
-def _handle_channel_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
+def _handle_channel_url(parsed_url: ParseResult) -> List[Dict[str, Any]]:
     """Handle YouTube channel URL."""
     path_parts = [p for p in parsed_url.path.split("/") if p]
     if "@" in parsed_url.path:
@@ -149,13 +149,13 @@ def _handle_channel_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
     return []
 
 
-def _handle_playlist_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
+def _handle_playlist_url(parsed_url: ParseResult) -> List[Dict[str, Any]]:
     """Handle YouTube playlist URL."""
     playlist_id = parse_qs(parsed_url.query).get("list", [""])[0]
     return fetch_youtube_videos_playlist(playlist_id) if playlist_id else []
 
 
-def _handle_video_url(parsed_url: ParseResult) -> List[Dict[str, str]]:
+def _handle_video_url(parsed_url: ParseResult) -> List[Dict[str, Any]]:
     """Handle YouTube video URL."""
     video_id = None
     if parsed_url.netloc == "youtu.be":
@@ -195,7 +195,7 @@ class YouTubeConnector(FeedConnector):
         )
 
     @staticmethod
-    def fetch_content(url: str) -> List[Dict[str, str]]:
+    def fetch_content(url: str) -> List[Dict[str, Any]]:
         """Fetch content from YouTube URL."""
         info("YOUTUBE", "Fetching content", url)
         try:

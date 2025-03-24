@@ -50,8 +50,3 @@ class Publisher(Protocol):
                 cls.publish_content(publish_url, sender)
             except Exception as e:
                 error("PUBLISH", "Failed", f"URL: {publish_url}, Error: {str(e)}")
-
-    @classmethod
-    def connect_signals(cls):
-        """Connect to feed update signals."""
-        publish_requested.connect(cls.handle_publish_requested)

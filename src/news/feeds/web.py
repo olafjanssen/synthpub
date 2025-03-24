@@ -2,7 +2,7 @@
 Web connector for fetching and parsing webpage content.
 """
 
-from typing import Dict, List
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 import requests
@@ -20,7 +20,7 @@ HEADERS = {
 }
 
 
-def fetch_webpage(url: str) -> Dict[str, str]:
+def fetch_webpage(url: str) -> Dict[str, Any]:
     """
     Fetch content from a webpage and extract useful text.
 
@@ -59,7 +59,7 @@ class WebConnector(FeedConnector):
         return parsed.scheme in ("http", "https")
 
     @staticmethod
-    def fetch_content(url: str) -> List[Dict[str, str]]:
+    def fetch_content(url: str) -> List[Dict[str, Any]]:
         try:
             content = fetch_webpage(url)  # Your existing function
             return [content]
