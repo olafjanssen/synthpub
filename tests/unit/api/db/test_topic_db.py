@@ -102,9 +102,11 @@ def test_load_all_topics_from_disk(mock_topics):
             # Setup topic directories within projects
             topic_dir1 = MagicMock(spec=Path)
             topic_dir1.is_dir.return_value = True
+            topic_dir1.name = "topic-1"
 
             topic_dir2 = MagicMock(spec=Path)
             topic_dir2.is_dir.return_value = True
+            topic_dir2.name = "topic-2"
 
             # Mock iterdir for project directories
             project_dir1.iterdir.return_value = [topic_dir1]
@@ -127,10 +129,20 @@ def test_load_all_topics_from_disk(mock_topics):
             topic_data1 = mock_topics[0].model_dump()
             topic_data1["created_at"] = topic_data1["created_at"].isoformat()
             topic_data1["updated_at"] = topic_data1["updated_at"].isoformat()
+            # Ensure required fields are present
+            if "processed_feeds" not in topic_data1:
+                topic_data1["processed_feeds"] = []
+            # Add slug field
+            topic_data1["slug"] = "topic-1"
 
             topic_data2 = mock_topics[1].model_dump()
             topic_data2["created_at"] = topic_data2["created_at"].isoformat()
             topic_data2["updated_at"] = topic_data2["updated_at"].isoformat()
+            # Ensure required fields are present
+            if "processed_feeds" not in topic_data2:
+                topic_data2["processed_feeds"] = []
+            # Add slug field
+            topic_data2["slug"] = "topic-2"
 
             with patch("builtins.open", mock_open()):
                 with patch("yaml.safe_load", side_effect=[topic_data1, topic_data2]):
@@ -295,72 +307,69 @@ def test_load_topics(mock_topics):
             assert result["topic-2"] == mock_topics[1]
 
 
-def test_create_topic():
+@patch("uuid.uuid4", return_value="test-uuid")
+@patch("src.api.db.topic_db.save_topic")
+@patch("src.api.db.topic_db.datetime")
+@patch("src.api.db.project_db.get_project")
+@patch("src.api.db.project_db.add_topic_to_project")
+@patch("src.api.db.topic_db.Topic")
+def test_create_topic(mock_topic_class, mock_add_topic, mock_get_project, mock_datetime, mock_save, mock_uuid):
     """Test creating a new topic."""
-    with patch("src.api.db.topic_db.uuid.uuid4", return_value="test-uuid"):
-        with patch("src.api.db.topic_db.save_topic") as mock_save:
-            # Mock a valid project
-            with patch("src.api.db.project_db.add_topic_to_project") as mock_add_topic:
-                # Mock the Topic class to handle the missing feed_urls
-                with patch("src.api.db.topic_db.Topic") as mock_topic_class:
-                    mock_topic = MagicMock()
-                    mock_topic.id = "test-uuid"
-                    mock_topic.name = "New Topic"
-                    mock_topic.description = "A new test topic"
-                    mock_topic.feed_urls = []
-                    mock_topic_class.return_value = mock_topic
-
-                    mock_project = MagicMock()
-                    mock_project.id = "project-123"
-                    mock_add_topic.return_value = mock_project
-
-                    # Call function
-                    result = create_topic(
-                        name="New Topic",
-                        description="A new test topic",
-                        project_id="project-123",
-                    )
-
-                    # Check result
-                    assert result.id == "test-uuid"
-                    assert result.name == "New Topic"
-                    assert result.description == "A new test topic"
-                    mock_save.assert_called_once_with(mock_topic)
-
-
-def test_mark_topic_deleted(mock_topic):
-    """Test marking a topic as deleted."""
-    # Create a mock project object
+    # Setup mock datetime
+    mock_date = datetime(2023, 1, 1, 12, 0, 0)
+    mock_datetime.now.return_value = mock_date
+    
+    # Setup mock project
     mock_project = MagicMock()
-    mock_project.id = "test-project-id"
-    mock_project.topic_ids = ["test-topic-123"]
+    mock_project.id = "project-123"
+    mock_project.topic_ids = []
+    mock_project.slug = "project-slug"
+    mock_get_project.return_value = mock_project
+    mock_add_topic.return_value = mock_project
+    
+    # Setup mock Topic
+    mock_topic = MagicMock()
+    mock_topic.id = "test-uuid"
+    mock_topic.name = "New Topic"
+    mock_topic.description = "A new test topic"
+    mock_topic.slug = "new-topic-slug"
+    mock_topic_class.return_value = mock_topic
 
-    with patch("src.api.db.topic_db.get_topic", return_value=mock_topic):
-        with patch("src.api.db.topic_db.find_entity_by_id") as mock_find:
-            with patch("pathlib.Path.exists", return_value=True):
-                with patch("src.api.db.topic_db.rmtree") as mock_rmtree:
-                    with patch(
-                        "src.api.db.topic_db.remove_from_entity_cache"
-                    ) as mock_remove:
-                        with patch(
-                            "src.api.db.project_db.list_projects",
-                            return_value=[mock_project],
-                        ):
-                            with patch(
-                                "src.api.db.project_db.save_project"
-                            ) as mock_save_project:
-                                # Setup mocks
-                                topic_path = Path("/mock/vault/project-slug/topic-slug")
-                                mock_find.return_value = (topic_path, "topic")
+    # Mock ensure_unique_slug to return a predictable value
+    with patch("src.api.db.topic_db.ensure_unique_slug", return_value="new-topic-slug"):
+        # Call function with the correct parameters
+        result = create_topic(
+            name="New Topic",
+            description="A new test topic",
+            project_id="project-123",
+        )
 
-                                # Call function
-                                result = mark_topic_deleted("test-topic-123")
+        # Check result
+        assert result.id == "test-uuid"
+        assert result.name == "New Topic"
+        assert result.description == "A new test topic"
+        assert result.slug == "new-topic-slug"
+        mock_save.assert_called_once_with(mock_topic)
+        mock_add_topic.assert_called_once_with("project-123", "test-uuid")
 
-                                # Check result
-                                assert result is True
-                                mock_rmtree.assert_called_once_with(topic_path)
-                                mock_remove.assert_called_once_with("test-topic-123")
-                                mock_save_project.assert_called_once()
+
+@patch("src.api.db.topic_db.find_entity_by_id")
+@patch("pathlib.Path.exists", return_value=True)
+@patch("src.api.db.topic_db.shutil.rmtree")
+@patch("src.api.db.topic_db.remove_from_entity_cache")
+def test_mark_topic_deleted(mock_remove, mock_rmtree, mock_exists, mock_find):
+    """Test marking a topic as deleted."""
+    # Setup mocks
+    topic_path = Path("/mock/vault/project-slug/topic-slug")
+    mock_find.return_value = (topic_path, "topic")
+
+    # Call function
+    result = mark_topic_deleted("test-topic-123")
+
+    # Check result
+    assert result is True
+    mock_rmtree.assert_called_once_with(topic_path)
+    mock_remove.assert_called_once()
 
 
 def test_update_topic(mock_topic):
