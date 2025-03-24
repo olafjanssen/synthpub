@@ -5,7 +5,7 @@ Unit tests for the FeedItem model.
 import hashlib
 from datetime import datetime, timezone
 
-from api.models.feed_item import FeedItem
+from src.api.models.feed_item import FeedItem
 
 
 def test_feed_item_creation():

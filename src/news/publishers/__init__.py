@@ -10,7 +10,3 @@ PUBLISHERS = [
     GitLabPublisher,
     FTPPublisher,
 ]
-
-# Connect signals for all publishers
-for publisher in PUBLISHERS:
-    publisher.connect_signals()

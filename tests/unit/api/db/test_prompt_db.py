@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from api.db.prompt_db import (
+from src.api.db.prompt_db import (
     DB_PATH,
     _copy_default_prompts,
     _ensure_cache,
@@ -15,7 +15,7 @@ from api.db.prompt_db import (
     get_prompt,
     list_prompts,
 )
-from api.models import Prompt
+from src.api.models import Prompt
 
 
 @pytest.fixture
@@ -62,14 +62,14 @@ def mock_prompts():
 
 def test_ensure_cache(mock_prompts):
     """Test ensuring the prompt cache is initialized."""
-    with patch("api.db.prompt_db._cache_initialized", False):
-        with patch("api.db.prompt_db.ensure_db_exists"):
-            with patch("api.db.prompt_db._copy_default_prompts"):
+    with patch("src.api.db.prompt_db._cache_initialized", False):
+        with patch("src.api.db.prompt_db.ensure_db_exists"):
+            with patch("src.api.db.prompt_db._copy_default_prompts"):
                 with patch(
-                    "api.db.prompt_db._load_all_prompts_from_disk",
+                    "src.api.db.prompt_db._load_all_prompts_from_disk",
                     return_value=mock_prompts,
                 ):
-                    with patch("api.db.prompt_db._prompt_cache", {}) as mock_cache:
+                    with patch("src.api.db.prompt_db._prompt_cache", {}) as mock_cache:
                         with patch("pathlib.Path.exists", return_value=True):
                             with patch("pathlib.Path.mkdir", return_value=None):
                                 _ensure_cache()
@@ -77,7 +77,7 @@ def test_ensure_cache(mock_prompts):
                                     mock_prompts[0].id: mock_prompts[0],
                                     mock_prompts[1].id: mock_prompts[1],
                                 }
-                                from api.db.prompt_db import _cache_initialized
+                                from src.api.db.prompt_db import _cache_initialized
 
                                 assert _cache_initialized is True
 
@@ -95,10 +95,6 @@ def test_copy_default_prompts():
     src_file1 = resources_path / "prompt1.md"
     src_file2 = resources_path / "prompt2.md"
 
-    # Define destination files
-    dest_file1 = db_path / "prompt1.md"
-    dest_file2 = db_path / "prompt2.md"
-
     # We'll mock that dest_file1 exists and dest_file2 doesn't
 
     # Mock for Path constructors - returns our predefined paths
@@ -107,9 +103,9 @@ def test_copy_default_prompts():
     mock_path.side_effect = lambda *args: resources_path
 
     # Set up our mocks
-    with patch("api.db.prompt_db.DB_PATH", return_value=db_path):
+    with patch("src.api.db.prompt_db.DB_PATH", return_value=db_path):
         # Mock Path construction to return our resources_path
-        with patch("api.db.prompt_db.Path", mock_path):
+        with patch("src.api.db.prompt_db.Path", mock_path):
             # Mock exists checks
             with patch.object(Path, "exists") as mock_exists:
                 mock_exists.side_effect = lambda: True
@@ -149,7 +145,7 @@ def test_load_all_prompts_from_disk():
     prompt2_content = "This is the template for prompt 2"
 
     # Mock the file system operations
-    with patch("api.db.prompt_db.DB_PATH", return_value=Path("/mock/db/prompts")):
+    with patch("src.api.db.prompt_db.DB_PATH", return_value=Path("/mock/db/prompts")):
         with patch("pathlib.Path.glob", return_value=prompt_files):
             with patch("pathlib.Path.mkdir", return_value=None):
                 with patch("pathlib.Path.exists", return_value=True):
@@ -158,7 +154,7 @@ def test_load_all_prompts_from_disk():
                         "pathlib.Path.read_text",
                         side_effect=[prompt1_content, prompt2_content],
                     ):
-                        with patch("api.db.prompt_db.error"):
+                        with patch("src.api.db.prompt_db.error"):
                             # Get the return value from the function
                             result = _load_all_prompts_from_disk()
 
@@ -175,14 +171,16 @@ def test_load_all_prompts_from_disk():
 
 def test_db_path():
     """Test getting the database path."""
-    with patch("api.db.prompt_db.get_db_path", return_value=Path("/mock/db/prompts")):
+    with patch(
+        "src.api.db.prompt_db.get_db_path", return_value=Path("/mock/db/prompts")
+    ):
         result = DB_PATH()
         assert result == Path("/mock/db/prompts")
 
 
 def test_ensure_db_exists():
     """Test that the DB directory is created if it doesn't exist."""
-    with patch("api.db.prompt_db.DB_PATH", return_value=Path("/mock/db/prompts")):
+    with patch("src.api.db.prompt_db.DB_PATH", return_value=Path("/mock/db/prompts")):
         with patch("pathlib.Path.mkdir") as mock_mkdir:
             ensure_db_exists()
             mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
@@ -190,16 +188,16 @@ def test_ensure_db_exists():
 
 def test_get_prompt(mock_prompt):
     """Test retrieving a prompt."""
-    with patch("api.db.prompt_db._ensure_cache"):
-        with patch("api.db.prompt_db._prompt_cache", {mock_prompt.id: mock_prompt}):
+    with patch("src.api.db.prompt_db._ensure_cache"):
+        with patch("src.api.db.prompt_db._prompt_cache", {mock_prompt.id: mock_prompt}):
             result = get_prompt(mock_prompt.id)
             assert result == mock_prompt
 
 
 def test_get_prompt_not_found():
     """Test retrieving a non-existent prompt."""
-    with patch("api.db.prompt_db._ensure_cache"):
-        with patch("api.db.prompt_db._prompt_cache", {}):
+    with patch("src.api.db.prompt_db._ensure_cache"):
+        with patch("src.api.db.prompt_db._prompt_cache", {}):
             result = get_prompt("non-existent-id")
             assert result is None
 
@@ -207,8 +205,8 @@ def test_get_prompt_not_found():
 def test_list_prompts(mock_prompts):
     """Test listing all prompts."""
     prompt_dict = {prompt.id: prompt for prompt in mock_prompts}
-    with patch("api.db.prompt_db._ensure_cache"):
-        with patch("api.db.prompt_db._prompt_cache", prompt_dict):
+    with patch("src.api.db.prompt_db._ensure_cache"):
+        with patch("src.api.db.prompt_db._prompt_cache", prompt_dict):
             result = list_prompts()
             assert len(result) == 2
             # Check that ids match (order may vary)

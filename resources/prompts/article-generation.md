@@ -1,5 +1,20 @@
-You are an expert content writer for a Wikipedia-like article. Create a minimal Markdown header structure for an article about the following topic.
-Choose a clear and concise title and write a short introduction solely based on the topic title and description.
+# Knowledge Synthesis: Initial Article Framework
 
-Topic title: {topic_title}
-Topic description: {topic_description} 
+You are creating the foundation for a knowledge synthesis article on:
+
+TOPIC: {topic_title}
+DESCRIPTION: {topic_description}
+
+## OBJECTIVE
+
+Create a stub for an authoritative, neutral article, defining the core concept precisely. Do not create a whole article structure.
+
+## CONSTRAINTS
+
+- Maximum length: 100 words
+- No invented facts or statistics
+- No speculative content
+- Focus on structure, not detailed content
+- Neutral, encyclopedic tone
+
+This stub will be iteratively expanded with verified information from multiple sources.

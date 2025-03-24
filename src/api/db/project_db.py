@@ -1,36 +1,44 @@
 """
-Database operations for projects using individual YAML files.
+Database operations for projects using hierarchical folder structure.
 """
 from http.client import HTTPException
 from logging import info
+import shutil
 import uuid
-from datetime import UTC, datetime
-from shutil import move
-from typing import List, Optional
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, List, Optional
 
 import yaml
 
-from api.models.project import Project
-
-from . import topic_db
-from .common import get_db_path
-
-
-def DB_PATH():
-    return get_db_path("projects")
-
-
-def ensure_db_exists():
-    """Create the projects directory if it doesn't exist."""
-    DB_PATH().mkdir(parents=True, exist_ok=True)
+from ..models.project import Project
+from .common import (
+    add_to_entity_cache,
+    create_slug,
+    ensure_path_exists,
+    ensure_unique_slug,
+    find_entity_by_id,
+    get_hierarchical_path,
+    remove_from_entity_cache,
+)
 
 
 def save_project(project: Project) -> None:
-    """Save project to individual YAML file."""
-    ensure_db_exists()
+    """Save project to YAML file in its slug-named folder."""
+    # Use existing slug if available, otherwise create a new one
+    
+    if project.slug:
+        project_slug = project.slug
+    else:
+        project_slug = ensure_unique_slug(project.title, "project")
+        project.slug = project_slug
 
-    # Generate filename from id
-    filename = DB_PATH() / f"{project.id}.yaml"
+    # Build path
+    project_path = get_hierarchical_path(project_slug)
+    ensure_path_exists(project_path)
+
+    # Create metadata file
+    filename = project_path / "metadata.yaml"
 
     # Convert to dict and save
     project_dict = project.model_dump()
@@ -42,12 +50,37 @@ def save_project(project: Project) -> None:
 
     with open(filename, "w", encoding="utf-8") as f:
         yaml.safe_dump(project_dict, f, sort_keys=False, allow_unicode=True)
+        f.flush()  # Ensure data is written to disk
+
+    # Update the cache
+    add_to_entity_cache(project.id, project_path, "project")
 
 
 def get_project(project_id: str) -> Optional[Project]:
-    """Retrieve project by id."""
-    print(f"GET PROJECT FROM DBCALLED: {project_id}")
-    filename = DB_PATH() / f"{project_id}.yaml"
+    """Retrieve project by id using the entity cache."""
+    project_path, entity_type = find_entity_by_id(project_id)
+
+    if not project_path or entity_type != "project":
+        return None
+
+    metadata_file = project_path / "metadata.yaml"
+    if not metadata_file.exists():
+        return None
+
+    with open(metadata_file, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+        # Convert ISO format strings back to datetime
+        data["created_at"] = datetime.fromisoformat(data["created_at"])
+        if data["updated_at"]:
+            data["updated_at"] = datetime.fromisoformat(data["updated_at"])
+
+        return Project(**data)
+
+
+def get_project_by_slug(slug: str) -> Optional[Project]:
+    """Retrieve project by slug."""
+    path = get_hierarchical_path(slug)
+    filename = path / "metadata.yaml"
 
     if not filename.exists():
         return None
@@ -58,23 +91,37 @@ def get_project(project_id: str) -> Optional[Project]:
         data["created_at"] = datetime.fromisoformat(data["created_at"])
         if data["updated_at"]:
             data["updated_at"] = datetime.fromisoformat(data["updated_at"])
+
         return Project(**data)
 
 
-def list_projects() -> List[Project]:
-    """List all active (non-deleted) projects."""
-    ensure_db_exists()
+def _get_project_directories() -> List[Path]:
+    """Get all project directories."""
+    vault_path = get_hierarchical_path()
+    ensure_path_exists(vault_path)
 
+    # Get all directories in the vault directory
+    return [d for d in vault_path.iterdir() if d.is_dir()]
+
+
+def list_projects() -> List[Project]:
+    """List all projects by reading from hierarchical structure."""
     projects = []
-    # Correctly exclude files that start with '_'
-    for file in DB_PATH().glob("*.yaml"):
-        if not file.name.startswith("_"):
-            with open(file, "r", encoding="utf-8") as f:
+
+    for project_dir in _get_project_directories():
+        metadata_file = project_dir / "metadata.yaml"
+        if metadata_file.exists():
+            with open(metadata_file, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
                 # Convert ISO format strings back to datetime
                 data["created_at"] = datetime.fromisoformat(data["created_at"])
                 if data["updated_at"]:
                     data["updated_at"] = datetime.fromisoformat(data["updated_at"])
+                
+                # Set slug from directory name if not already set
+                if not data.get("slug"):
+                    data["slug"] = project_dir.name
+                
                 projects.append(Project(**data))
 
     return projects
@@ -88,61 +135,59 @@ def create_project(
 ) -> Project:
     """Create a new project."""
     project_id = str(uuid.uuid4())
+    project_slug = ensure_unique_slug(title, "project")
+    
     project = Project(
         id=project_id,
         title=title,
         description=description,
         topic_ids=topic_ids or [],
         thumbnail_url=thumbnail_url,
-        created_at=datetime.now(UTC),
+        slug=project_slug,
+        created_at=datetime.now(timezone.utc),
     )
     save_project(project)
     return project
 
 
 def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
-    """
-    Update a project with new data.
-    Returns updated Project if successful, None if project not found.
-    """
+    """Update a project with new data."""
     project = get_project(project_id)
     if not project:
         return None
+
+    # Get the current slug before updates
+    old_slug = project.slug or create_slug(project.title)
 
     # Update project fields
     for key, value in updated_data.items():
         if hasattr(project, key):
             setattr(project, key, value)
 
-    # Filter out any topic IDs that no longer exist
-    if hasattr(project, "topic_ids") and project.topic_ids:
-        valid_topic_ids = []
-        for topic_id in project.topic_ids:
-            if topic_db.get_topic(topic_id) is not None:
-                valid_topic_ids.append(topic_id)
-        project.topic_ids = valid_topic_ids
-
     # Update the timestamp
-    project.updated_at = datetime.now(UTC)
+    project.updated_at = datetime.now(timezone.utc)
 
+    # Save the project
     save_project(project)
     return project
 
 
 def mark_project_deleted(project_id: str) -> bool:
-    """
-    Mark a project as deleted by prefixing its filename with '_'.
-    Returns True if successful, False if project not found.
-    """
-    filename = DB_PATH() / f"{project_id}.yaml"
-    if not filename.exists():
+    """Mark a project as deleted by removing its directory."""
+    project_path, entity_type = find_entity_by_id(project_id)
+
+    if not project_path or entity_type != "project":
         return False
 
-    # New filename with '_' prefix
-    new_filename = DB_PATH() / f"_{project_id}.yaml"
+    if not project_path.exists():
+        return False
 
-    # Move/rename the file
-    move(filename, new_filename)
+    # Remove the directory and all contents
+    shutil.rmtree(project_path)
+
+    # Remove from cache
+    remove_from_entity_cache(project_id)
+
     return True
 
 def add_topic_to_project(project_id: str, topic_id: str):
@@ -158,13 +203,10 @@ def add_topic_to_project(project_id: str, topic_id: str):
     
     if topic_id not in project.topic_ids:
         project.topic_ids.append(topic_id)
-    
-  
-    updated_data = {"topic_ids": project.topic_ids}
-    
-    update_project(project_id, updated_data)
-    info("PROJECT", "Updated", f"Added topic {topic_id} to project {project_id}")
+        project.updated_at = datetime.now(timezone.utc)
+        save_project(project)
 
+    return project
 
 
 def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Project]:
@@ -175,7 +217,13 @@ def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Projec
 
     if topic_id in project.topic_ids:
         project.topic_ids.remove(topic_id)
-        project.updated_at = datetime.now(UTC)
+        project.updated_at = datetime.now(timezone.utc)
         save_project(project)
 
     return project
+
+
+def get_project_slug_map() -> Dict[str, str]:
+    """Return a mapping of project IDs to their slugs."""
+    projects = list_projects()
+    return {project.id: project.slug or create_slug(project.title) for project in projects}
