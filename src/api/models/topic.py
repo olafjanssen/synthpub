@@ -22,6 +22,10 @@ class TopicBase(BaseModel):
         default=None,
         description="URL of the thumbnail image, can be auto-generated if not provided",
     )
+    slug: Optional[str] = Field(
+        default=None,
+        description="URL-friendly version of the name for use in paths",
+    )
 
 
 class TopicCreate(TopicBase):
@@ -44,6 +48,10 @@ class TopicUpdate(BaseModel):
     thumbnail_url: Optional[str] = Field(
         default=None,
         description="Updated thumbnail URL, use 'auto' for automatic generation",
+    )
+    slug: Optional[str] = Field(
+        default=None,
+        description="Updated URL-friendly version of the name",
     )
 
 
@@ -90,7 +98,7 @@ class Topic(TopicBase):
         self.processed_feeds = self.processed_feeds or []
 
     def add_representation(
-        self, content_type: str, content: str, metadata: Dict = None
+        self, content_type: str, content: str, metadata: Optional[Dict] = None
     ) -> None:
         """Add a new representation to the topic."""
         if metadata is None:

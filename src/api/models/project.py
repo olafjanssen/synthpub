@@ -18,6 +18,10 @@ class ProjectBase(BaseModel):
         default=None,
         description="URL of the thumbnail image, can be auto-generated if not provided",
     )
+    slug: Optional[str] = Field(
+        default=None,
+        description="URL-friendly version of the title for use in paths",
+    )
 
 
 class ProjectCreate(ProjectBase):
@@ -39,6 +43,10 @@ class ProjectUpdate(BaseModel):
     thumbnail_url: Optional[str] = Field(
         default=None,
         description="Updated thumbnail URL, use 'auto' for automatic generation",
+    )
+    slug: Optional[str] = Field(
+        default=None,
+        description="Updated URL-friendly version of the title",
     )
 
 

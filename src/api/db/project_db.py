@@ -12,21 +12,20 @@ from typing import Dict, List, Optional
 import yaml
 
 from ..models.project import Project
-from .common import (
-    add_to_entity_cache,
-    create_slug,
-    ensure_path_exists,
-    ensure_unique_slug,
-    find_entity_by_id,
-    get_hierarchical_path,
-    remove_from_entity_cache,
-)
+from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
+                     ensure_unique_slug, find_entity_by_id,
+                     get_hierarchical_path, remove_from_entity_cache)
 
 
 def save_project(project: Project) -> None:
     """Save project to YAML file in its slug-named folder."""
-    # Create unique slug from title
-    project_slug = ensure_unique_slug(project.title, "project")
+    # Use existing slug if available, otherwise create a new one
+    
+    if project.slug:
+        project_slug = project.slug
+    else:
+        project_slug = ensure_unique_slug(project.title, "project")
+        project.slug = project_slug
 
     # Build path
     project_path = get_hierarchical_path(project_slug)
@@ -42,9 +41,6 @@ def save_project(project: Project) -> None:
     project_dict["created_at"] = project_dict["created_at"].isoformat()
     if project_dict["updated_at"]:
         project_dict["updated_at"] = project_dict["updated_at"].isoformat()
-
-    # Add the slug to metadata
-    project_dict["slug"] = project_slug
 
     with open(filename, "w", encoding="utf-8") as f:
         yaml.safe_dump(project_dict, f, sort_keys=False, allow_unicode=True)
@@ -115,6 +111,11 @@ def list_projects() -> List[Project]:
                 data["created_at"] = datetime.fromisoformat(data["created_at"])
                 if data["updated_at"]:
                     data["updated_at"] = datetime.fromisoformat(data["updated_at"])
+                
+                # Set slug from directory name if not already set
+                if not data.get("slug"):
+                    data["slug"] = project_dir.name
+                
                 projects.append(Project(**data))
 
     return projects
@@ -128,12 +129,15 @@ def create_project(
 ) -> Project:
     """Create a new project."""
     project_id = str(uuid.uuid4())
+    project_slug = ensure_unique_slug(title, "project")
+    
     project = Project(
         id=project_id,
         title=title,
         description=description,
         topic_ids=topic_ids or [],
         thumbnail_url=thumbnail_url,
+        slug=project_slug,
         created_at=datetime.now(timezone.utc),
     )
     save_project(project)
@@ -147,7 +151,7 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
         return None
 
     # Get the current slug before updates
-    old_slug = create_slug(project.title)
+    old_slug = project.slug or create_slug(project.title)
 
     # Update project fields
     for key, value in updated_data.items():
@@ -157,27 +161,7 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
     # Update the timestamp
     project.updated_at = datetime.now(timezone.utc)
 
-    # Check if the slug changed due to title update
-    # Get unique slug for the new title
-    new_slug = ensure_unique_slug(project.title, "project")
-
-    if old_slug != new_slug:
-        # If the slug changed, we need to move the directory
-        old_path = get_hierarchical_path(old_slug)
-
-        # Remove from cache with old path
-        remove_from_entity_cache(project_id)
-
-        # Save to new location (which will update cache)
-        save_project(project)
-
-        # Remove old directory if it exists
-        if old_path.exists():
-            shutil.rmtree(old_path)
-
-        return project
-
-    # If no slug change, just save
+    # Save the project
     save_project(project)
     return project
 
@@ -232,4 +216,4 @@ def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Projec
 def get_project_slug_map() -> Dict[str, str]:
     """Return a mapping of project IDs to their slugs."""
     projects = list_projects()
-    return {project.id: create_slug(project.title) for project in projects}
+    return {project.id: project.slug or create_slug(project.title) for project in projects}

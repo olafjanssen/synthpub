@@ -7,22 +7,16 @@ import shutil
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, cast
 
 import yaml
 
 from ..models.project import Project
 from ..models.topic import FeedItem, Topic
 from . import article_db, project_db
-from .common import (
-    add_to_entity_cache,
-    create_slug,
-    ensure_path_exists,
-    ensure_unique_slug,
-    find_entity_by_id,
-    get_hierarchical_path,
-    remove_from_entity_cache,
-)
+from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
+                     ensure_unique_slug, find_entity_by_id,
+                     get_hierarchical_path, remove_from_entity_cache)
 
 # In-memory cache for topics
 _topic_cache: Dict[str, Topic] = {}
@@ -64,6 +58,10 @@ def _load_all_topics_from_disk() -> List[Topic]:
                             processed_feeds.append(FeedItem(**feed_item))
                         topic_data["processed_feeds"] = processed_feeds
 
+                    # Set slug from directory name if not already set
+                    if not topic_data.get("slug"):
+                        topic_data["slug"] = topic_dir.name
+                        
                     topics.append(Topic(**topic_data))
 
     return topics
@@ -99,13 +97,16 @@ def get_topic_location(topic_id: str) -> Tuple[Optional[str], Optional[str]]:
     for project in project_db.list_projects():
         if topic_id in project.topic_ids:
             # Topic belongs to this project
-            project_slug = project_slug_map.get(project.id)
-            if project_slug:
+            project_slug = project_slug_map.get(project.id, "")
+            if project_slug:  # Check if we got a valid slug
                 # Find the topic within this project
                 topic = get_topic(topic_id)
                 if topic:
-                    topic_slug = create_slug(topic.name)
-                    return project_slug, topic_slug
+                    # Create a topic slug (either use existing or generate new one)
+                    if topic.slug:
+                        return project_slug, topic.slug
+                    else:
+                        return project_slug, create_slug(topic.name)
 
     return None, None
 
@@ -132,13 +133,18 @@ def save_topic(topic: Topic) -> None:
     # At this point we know project is not None
     project = project_result  # Now project has the type Project, not Optional[Project]
 
-    # Create safe project slug
-    safe_project_slug = create_slug(project.title)
-    # Get the project path for passing to ensure_unique_slug
-    project_path = get_hierarchical_path(safe_project_slug)
-
-    # Create unique topic slug
-    topic_slug = ensure_unique_slug(topic.name, "topic", project_path)
+    # Create safe project slug - always use a string
+    safe_project_slug: str = project.slug if project.slug else create_slug(project.title)
+    
+    # Use existing topic slug if available, otherwise create a new one
+    if topic.slug:
+        topic_slug = topic.slug
+    else:
+        # Get the project path for passing to ensure_unique_slug
+        project_path = get_hierarchical_path(safe_project_slug)
+        # Create unique topic slug
+        topic_slug = ensure_unique_slug(topic.name, "topic", project_path)
+        topic.slug = topic_slug
 
     # Build path
     topic_path = get_hierarchical_path(safe_project_slug, topic_slug)
@@ -157,9 +163,6 @@ def save_topic(topic: Topic) -> None:
                 del item["needs_further_processing"]
             if "accessed_at" in item and not isinstance(item["accessed_at"], str):
                 item["accessed_at"] = item["accessed_at"].isoformat()
-
-    # Add the slug to metadata
-    topic_dict["slug"] = topic_slug
 
     with open(filename, "w", encoding="utf-8") as f:
         yaml.safe_dump(topic_dict, f, sort_keys=False, allow_unicode=True)
@@ -201,6 +204,10 @@ def get_topic(topic_id: str) -> Optional[Topic]:
                         processed_feeds.append(FeedItem(**feed_item))
                     data["processed_feeds"] = processed_feeds
 
+                # Set slug from directory name if not already set
+                if not data.get("slug"):
+                    data["slug"] = topic_path.name
+                    
                 topic = Topic(**data)
                 _topic_cache[topic_id] = topic
                 return topic
@@ -232,6 +239,10 @@ def get_topic_by_slug(project_slug: str, topic_slug: str) -> Optional[Topic]:
                 processed_feeds.append(FeedItem(**feed_item))
             data["processed_feeds"] = processed_feeds
 
+        # Set slug from path if not already set
+        if not data.get("slug"):
+            data["slug"] = topic_slug
+            
         topic = Topic(**data)
         _topic_cache[topic.id] = topic
         return topic
@@ -252,7 +263,20 @@ def load_topics() -> Dict[str, Topic]:
 def create_topic(name: str, description: str, project_id: str) -> Topic:
     """Create a new topic and add to cache."""
     topic_id = str(uuid.uuid4())
-    topic = Topic(id=topic_id, name=name, description=description)
+    
+    # Get project to determine where topic should be stored
+    project = project_db.get_project(project_id)
+    if not project:
+        raise ValueError(f"Project with ID {project_id} not found")
+    
+    # Create safe project slug - ensure it's a string
+    project_slug: str = project.slug if project.slug else create_slug(project.title)
+    
+    # Get project path for generating unique topic slug
+    project_path = get_hierarchical_path(project_slug)
+    topic_slug = ensure_unique_slug(name, "topic", project_path)
+    
+    topic = Topic(id=topic_id, name=name, description=description, slug=topic_slug)
 
     # Add this topic to the project
     project = project_db.add_topic_to_project(project_id, topic_id)
@@ -317,29 +341,9 @@ def update_topic(topic_id: str, updated_data: dict) -> Optional[Topic]:
         if hasattr(topic, key):
             setattr(topic, key, value)
 
-    # Check if the slug will change due to name update
-    # Get project path for generating unique slug
-    project_path = get_hierarchical_path(project_slug)
 
-    # Create unique slug for new topic name
-    new_topic_slug = ensure_unique_slug(topic.name, "topic", project_path)
-
-    if old_topic_slug != new_topic_slug:
-        # If the slug changed, we need to move the directory
-        old_path = get_hierarchical_path(project_slug, old_topic_slug)
-
-        # Remove from cache with old path
-        remove_from_entity_cache(topic_id)
-
-        # Save to new location (which will update cache)
-        save_topic(topic)
-
-        # Remove old directory if it exists
-        if old_path.exists():
-            shutil.rmtree(old_path)
-    else:
-        # Just save in place
-        save_topic(topic)
+    # Just save in place
+    save_topic(topic)
 
     return topic
 
