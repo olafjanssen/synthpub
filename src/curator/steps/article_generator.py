@@ -3,6 +3,7 @@ Article generator step for the curator workflow.
 
 This module handles generating new articles for topics that don't have one yet.
 """
+
 from typing import Any, Callable, Dict
 from datetime import datetime
 
@@ -22,7 +23,7 @@ from curator import version_graph
 def should_generate(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
     """
     Create a routing function that decides if we need to generate a new article.
-    
+
     Args:
         true_node: Node to route to if article needs to be generated
         false_node: Node to route to if article exists
@@ -30,19 +31,21 @@ def should_generate(true_node: str, false_node: str) -> Callable[[Dict[str, Any]
     Returns:
         A function that takes state and returns the next node identifier.
     """
+
     def _should_generate_router(state: Dict[str, Any]) -> str:
         if not state.get("existing_article"):
             debug("CURATOR", "No existing article, need to generate one")
             return true_node
         debug("CURATOR", "Article exists, checking relevance")
         return false_node
-        
+
     return _should_generate_router
+
 
 def process(state: Dict[str, Any]) -> Dict[str, Any]:
     """
     Generate a new article if one doesn't exist for the topic.
-    
+
     Args:
         state: Current workflow state with topic and existing_article.
         
@@ -86,10 +89,11 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
         new_state["error_step"] = "article_generator"
         return new_state
 
+
 def generate_article(topic: Topic) -> Article:
     """
     Generate a new article for the topic.
-    
+
     Args:
         topic: The topic for which the article is to be generated.
         
@@ -109,7 +113,7 @@ def generate_article(topic: Topic) -> Article:
     prompt_data = get_prompt('article-generation')
     if not prompt_data:
         raise ValueError("Article generation prompt not found in the database")
-    
+
     # Create and format the prompt
     prompt = PromptTemplate.from_template(prompt_data.template)
     
@@ -130,6 +134,7 @@ def generate_article(topic: Topic) -> Article:
     # Update the topic with the new article ID and save changes
     topic.article = new_article.id
     save_topic(topic)
-    
+
     info("GENERATOR", "Article generated", f"Topic: {topic_title}")
     return new_article
+

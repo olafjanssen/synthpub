@@ -1,27 +1,38 @@
-You are evaluating if new content is relevant to the following topic and existing article.
+# Knowledge Synthesis: Source Relevance Assessment
 
-Topic title: {topic_title}
-Topic description: {topic_description}
+OBJECTIVE: Determine if new information contributes meaningful content to the existing knowledge synthesis.
 
-Here is an existing article for this topic
+CONTEXT:
+Topic: {topic_title}
+Description: {topic_description}
+
+EXISTING ARTICLE:
 -------------
-
 {article}
-
 -------------
 
-This is a new source of information that is relevant for this topic:
+CANDIDATE SOURCE:
 -------------
-
 {new_context}
-
 -------------
 
-Determine if the new content is relevant to the topic or existing article. Consider the following:
+## ASSESSMENT FRAMEWORK
 
-1. Does it provide new information about the topic?
-2. Does it expand on concepts mentioned in the existing article?
-3. Does it provide context, examples, or details that would enhance the article?
-4. Is it directly related to the topic described?
+1. INFORMATION VALUE ANALYSIS
+   - Does the source contain factual content absent from the existing article?
+   - Does it provide quantitative data, specific examples, or detailed explanations?
+   - Does it introduce important perspectives, applications, or implications?
+   - Does it offer temporal context (historical development or future directions)?
 
-Provide your assessment in a structured format with a boolean value for relevance and an explanation. 
+2. QUALITY EVALUATION
+   - Is the information specific rather than general?
+   - Does it add precision to existing statements?
+   - Does it provide domain-specific terminology or frameworks?
+   - Does it correct, update, or refine existing content?
+
+3. CONTEXTUAL RELEVANCE
+   - Does it directly address the core topic or only tangentially relate?
+   - Does it expand understanding of topics already identified as important?
+   - Does it fill gaps explicitly noted in the existing article?
+   - Does it address aspects of the topic description not yet covered?
+

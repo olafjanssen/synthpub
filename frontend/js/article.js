@@ -1,5 +1,4 @@
-/** @global {Object} marked */
-/** @global {Object} DOMPurify */
+/*global marked, DOMPurify */
 
 const API_URL = '/api';
 
@@ -76,7 +75,11 @@ function displayArticle(article) {
     const contentElement = document.getElementById('article-text');
     const htmlContent = marked.parse(article.content);
     // Sanitize the HTML content before rendering
-    contentElement.innerHTML = DOMPurify.sanitize(htmlContent);
+    contentElement.innerHTML = DOMPurify.sanitize(htmlContent, {
+        USE_PROFILES: { html: true },
+        FORBID_TAGS: ['script', 'style', 'iframe', 'frame', 'object', 'embed'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover']
+    });
 }
 
 function setupVersionNavigation(article) {

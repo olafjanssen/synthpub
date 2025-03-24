@@ -1,4 +1,5 @@
 """Converter connector initialization."""
+
 from .content import Content
 from .openai_tts import OpenAITTS
 from .piper_tts import PiperTTS
@@ -13,7 +14,3 @@ CONVERTERS = [
     Prompt,
     PodcastEpisodeRSSConverter,
 ]
-
-# Connect signals for all converters
-for converter in CONVERTERS:
-    converter.connect_signals()

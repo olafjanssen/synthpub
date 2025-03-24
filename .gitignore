@@ -164,17 +164,28 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Local database
-db/topics/
-db/articles/
-db/projects/
-db/logs/
-db/prompts
-db/_cache/
-settings.toml
+# Local databases
+/db*/
 settings.yaml
 
 # Keys and credentials
 creds/
 
 .DS_Store
+.vscode/
+
+# macOS
+.DS_Store
+
+# Build and distribution
+dist/
+build/
+
+# Virtual environments 
+venv*/
+
+# Cache directories
+.pytest_cache/
+.mypy_cache/
+__pycache__/
+.coverage

@@ -1,6 +1,7 @@
 # SynthPub - An AI Curated Digital Garden
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/09786f5f3e3d4890a9afc8ebcd9a04cc)](https://app.codacy.com/gh/olafjanssen/synthpub?utm_source=github.com&utm_medium=referral&utm_content=olafjanssen/synthpub&utm_campaign=Badge_Grade)
 
 ## Overview
 
@@ -25,7 +26,7 @@ The platform represents a strategic experiment in using artificial intelligence 
 - Text-to-speech conversion using OpenAI TTS or local Piper TTS
 - Content pruning and quality assessment
 
-See the [implementation documentation](IMPLEMENTATION.md) for important architectural decisions.
+See the [implementation documentation](docs/IMPLEMENTATION.md) for important architectural decisions.
 
 ## Getting Started
 
@@ -39,7 +40,7 @@ See the [implementation documentation](IMPLEMENTATION.md) for important architec
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/synthpub.git
+   git clone https://github.com/olafjanssen/synthpub.git
    cd synthpub
    ```
 
@@ -106,66 +107,9 @@ curl http://localhost:8000/api/topics/AI%20Ethics
 curl http://localhost:8000/api/topics/
 ```
 
-### Text-to-Speech Conversion
 
-SynthPub supports two text-to-speech conversion methods:
 
-#### OpenAI TTS
-
-Uses OpenAI's cloud-based TTS service. Requires an OpenAI API key.
-
-```bash
-# Convert a topic's text to speech using OpenAI TTS
-curl -X POST http://localhost:8000/api/topics/AI%20Ethics/convert \
-    -H "Content-Type: application/json" \
-    -d '{"type": "openai-tts"}'
-```
-
-#### Piper TTS (Local)
-
-Uses the Piper TTS library for local, offline text-to-speech conversion. Voice models are automatically downloaded from Hugging Face when needed.
-
-1. Install the Piper Python library:
-
-   ```bash
-   pip install piper-tts requests
-   ```
-
-2. Convert a topic's text to speech:
-
-   ```bash
-   # Convert a topic's text to speech using Piper TTS
-   curl -X POST http://localhost:8000/api/topics/AI%20Ethics/convert \
-       -H "Content-Type: application/json" \
-       -d '{"type": "piper-tts"}'
-   ```
-
-3. Specify a voice (optional):
-
-   ```bash
-   # Convert a topic's text to speech using a specific voice
-   curl -X POST http://localhost:8000/api/topics/AI%20Ethics/convert \
-       -H "Content-Type: application/json" \
-       -d '{"type": "piper-tts", "metadata": {"voice": "en_US-lessac-medium"}}'
-   ```
-
-The first time you use a voice, it will be automatically downloaded from Hugging Face and cached locally. Subsequent uses of the same voice will use the cached version.
-
-See the `examples/piper_tts_example.py` script for a demonstration of how to use the PiperTTS module programmatically, including how to list available voices.
-
-## Docker Deployment
-
-### Building and Running with Docker
-
-```bash
-# Build the Docker image
-docker build -t synthpub .
-
-# Run the container
-docker run -p 8000:8000 -v $(pwd)/db:/app/db -v $(pwd)/creds:/app/creds synthpub
-```
-
-### Using Docker Compose
+### Deployment using Docker Compose
 
 ```bash
 # Build and start the application
@@ -180,24 +124,19 @@ docker-compose down
 Build the desktop app:
 
 ```bash
-./desktop_build.sh
+./scripts/desktop_build.sh
 ```
 
 ## Project Structure
 
 ```
 synthpub/
-├── src/               # Source code
-│   ├── api/           # API modules
-│   ├── core/          # Core functionality
-│   ├── utils/         # Utility functions
-├── resources/         # Resource files
-│   ├── prompts/       # LLM prompt templates
-├── db/                # Database files
-├── examples/          # Example scripts
-├── docs/              # Documentation
-├── tests/             # Test suite
-└── README.md          # This file
+├── src/              # Source code for the application
+├── tests/            # Test files
+├── docs/             # Documentation
+├── frontend/         # Frontend resources
+├── resources/        # General resources
+└── scripts/          # Utility scripts
 ```
 
 ## Contributing
@@ -219,3 +158,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - OpenAI for providing the LLM capabilities
 - Pexels for the image API
 - Piper TTS for local text-to-speech conversion
+
+## Disclaimers
+
+### AI Development and Documentation
+
+![AI-Human Collaboration](resources/images/cyborg-black.svg)
+
+This project is developed using Cursor AI for code generation, documentation, and development assistance. While human developers review and validate the code, a significant portion of the implementation, documentation, and architectural decisions are generated or assisted by AI tools. 
+
+The project represents a true AI-human collaboration where AI tools are not just assistants but active participants in the development process. While human developers maintain final control and make critical decisions, the majority of the codebase and documentation is AI-generated and then refined through human review and modification.
