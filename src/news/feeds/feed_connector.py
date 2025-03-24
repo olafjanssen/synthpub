@@ -6,6 +6,7 @@ from typing_extensions import runtime_checkable
 
 from api.db.cache_manager import add_to_cache, get_from_cache
 from api.models.feed_item import FeedItem
+from curator.topic_updater import process_feed_item, processing_queue
 from utils.logging import debug, error, info
 
 
@@ -25,7 +26,7 @@ class FeedConnector(Protocol):
         ...
 
     @staticmethod
-    def fetch_content(url: str) -> List[Dict[str, str]]:
+    def fetch_content(url: str) -> List[Dict[str, Any]]:
         """
         Fetch content from the given URL.
 
@@ -34,16 +35,6 @@ class FeedConnector(Protocol):
             Additional optional keys:
             - needs_further_processing: bool - Whether this item needs to be processed by another connector
         """
-        ...
-
-    @staticmethod
-    def _process_cached_items(cached_data: Dict[str, Any]) -> List[Dict[str, str]]:
-        """Process cached feed items."""
-        ...
-
-    @staticmethod
-    def _process_feed_item(item: Dict[str, str], topic_id: str) -> None:
-        """Process a single feed item."""
         ...
 
     @classmethod
@@ -73,7 +64,7 @@ class FeedConnector(Protocol):
             cached_data = get_from_cache(feed_url)
             if cached_data:
                 debug("FEED", "Using cached data", feed_url)
-                items = cls._process_cached_items(cached_data)
+                items = cached_data["items"]
             else:
                 # Fetch fresh content
                 items = cls.fetch_content(feed_url)
@@ -85,7 +76,24 @@ class FeedConnector(Protocol):
 
             # Process each item
             for item in items:
-                cls._process_feed_item(item, topic_id)
+                feed_item = FeedItem.create(
+                    item.get("url"),
+                    item.get("content", ""),
+                    item.get("needs_further_processing", False),
+                )
+                processing_queue.put(
+                    (
+                        topic_id,
+                        (
+                            item.get("content")
+                            if not feed_item.needs_further_processing
+                            else None
+                        ),
+                        feed_item,
+                    )
+                )
+                # process_feed_item(topic_id, item.get("url"))
+                # cls._process_feed_item(item, topic_id)
 
         except Exception as e:
             error("FEED", "Processing error", f"URL: {feed_url}, Error: {str(e)}")

@@ -71,7 +71,7 @@ def check_and_update_topics():
         for topic in topics:
             if should_update_topic(topic):
                 info("SCHEDULER", "Signaling topic update", topic.id)
-                queue_topic_update(topic.id, sender="news_scheduler")
+                queue_topic_update(topic.id)
                 _last_checked_times[topic.id] = datetime.now()
 
     except Exception as e:

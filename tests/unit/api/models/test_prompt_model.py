@@ -2,7 +2,7 @@
 Unit tests for the Prompt model.
 """
 
-from api.models.prompt import Prompt
+from src.api.models.prompt import Prompt
 
 
 def test_prompt_creation():

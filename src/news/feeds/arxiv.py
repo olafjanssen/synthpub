@@ -3,7 +3,7 @@ Arxiv connector for fetching research papers and their PDF contents.
 """
 
 import io
-from typing import Dict, List
+from typing import Any, Dict, List
 from urllib.parse import unquote, urlparse
 
 import arxiv
@@ -64,7 +64,7 @@ class ArxivConnector(FeedConnector):
         return parsed.scheme == "arxiv"
 
     @staticmethod
-    def fetch_content(url: str) -> List[Dict[str, str]]:
+    def fetch_content(url: str) -> List[Dict[str, Any]]:
         """
         Fetch papers from Arxiv based on search query.
 

@@ -19,16 +19,13 @@ def debug_test_name(request):
 @pytest.fixture(autouse=True)
 def mock_scheduler(monkeypatch):
     """Mock the scheduler to prevent it from running during tests."""
-    print("MOCKING SCHEDULER")
 
     def mock_start_scheduler_thread():
         """Mock start_scheduler_thread to do nothing."""
-        print("MOCK START SCHEDULER CALLED")
         pass
 
     def mock_stop_scheduler_thread():
         """Mock stop_scheduler_thread to do nothing."""
-        print("MOCK STOP SCHEDULER CALLED")
         pass
 
     # Mock both scheduler functions

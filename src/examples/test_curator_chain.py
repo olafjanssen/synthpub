@@ -38,7 +38,9 @@ def main():
             name="Climate Change",
             description="Information about climate change, its effects, and mitigation strategies.",
             feed_urls=["https://example.com/climate-feed"],
-            publish_urls=["https://example.com/publish"],
+            publish_urls=[
+                "convert://prompt/radio-transcript | convert://piper-tts/en_US-kristin-medium | file:///Users/olafjanssen/Documents/Radio4Brainport/test.mp3"
+            ],
         )
         info("TEST", "Created test topic", topic.name)
 

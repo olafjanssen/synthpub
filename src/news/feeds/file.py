@@ -3,7 +3,7 @@ File system connector for processing local files using glob patterns.
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from urllib.parse import unquote, urlparse
 
 from utils.logging import error
@@ -64,7 +64,7 @@ def _process_file(file_path: Path) -> Optional[Dict[str, str]]:
         return None
 
 
-def fetch_files(url: str) -> List[Dict[str, str]]:
+def fetch_files(url: str) -> List[Dict[str, Any]]:
     """Fetch content from files matching the glob pattern."""
     path_pattern = parse_file_url(url)
     results = []
@@ -108,7 +108,7 @@ class FileConnector(FeedConnector):
         return parsed.scheme == "file"
 
     @staticmethod
-    def fetch_content(url: str) -> List[Dict[str, str]]:
+    def fetch_content(url: str) -> List[Dict[str, Any]]:
         try:
             return fetch_files(url)
         except Exception as e:

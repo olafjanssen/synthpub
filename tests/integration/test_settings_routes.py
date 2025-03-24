@@ -14,7 +14,7 @@ def mock_settings(monkeypatch):
         "db_path": "/test/path/to/db",
         "env_vars": {
             "OPENAI_API_KEY": "test-api-key",
-            "MISTRAL_API_KEY": "test-mistral-key",
+            "MISTRAL_API_KEY": "test-mistralai-key",
             "YOUTUBE_API_KEY": "test-youtube-key",
             "GITLAB_TOKEN": "test-gitlab-token",
             "FTP_USERNAME": "test-ftp-user",
@@ -27,7 +27,7 @@ def mock_settings(monkeypatch):
                 "max_tokens": 4000,
             },
             "article_refinement": {
-                "provider": "mistral",
+                "provider": "mistralai",
                 "model_name": "mistral-medium",
                 "max_tokens": 3000,
             },
@@ -90,7 +90,7 @@ def test_get_env_vars_desktop(client, mock_settings, mock_webview):
     response = client.get("/api/settings/env-vars")
     assert response.status_code == 200
     assert response.json()["variables"]["OPENAI_API_KEY"] == "test-api-key"
-    assert response.json()["variables"]["MISTRAL_API_KEY"] == "test-mistral-key"
+    assert response.json()["variables"]["MISTRAL_API_KEY"] == "test-mistralai-key"
 
 
 def test_get_env_vars_web(client, mock_settings, mock_webview):
@@ -107,19 +107,19 @@ def test_update_env_vars_desktop(client, mock_settings, mock_webview):
     """Test updating environment variables in desktop mode."""
     mock_webview.windows = [mock_webview]
 
-    new_vars = {"OPENAI_API_KEY": "new-api-key", "MISTRAL_API_KEY": "new-mistral-key"}
+    new_vars = {"OPENAI_API_KEY": "new-api-key", "MISTRAL_API_KEY": "new-mistralai-key"}
 
     response = client.post("/api/settings/env-vars", json=new_vars)
     assert response.status_code == 200
     assert mock_settings["env_vars"]["OPENAI_API_KEY"] == "new-api-key"
-    assert mock_settings["env_vars"]["MISTRAL_API_KEY"] == "new-mistral-key"
+    assert mock_settings["env_vars"]["MISTRAL_API_KEY"] == "new-mistralai-key"
 
 
 def test_update_env_vars_web(client, mock_settings, mock_webview):
     """Test updating environment variables in web mode (should be forbidden)."""
     mock_webview.windows = []
 
-    new_vars = {"OPENAI_API_KEY": "new-api-key", "MISTRAL_API_KEY": "new-mistral-key"}
+    new_vars = {"OPENAI_API_KEY": "new-api-key", "MISTRAL_API_KEY": "new-mistralai-key"}
 
     response = client.post("/api/settings/env-vars", json=new_vars)
     assert response.status_code == 403

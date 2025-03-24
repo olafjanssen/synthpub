@@ -1,3 +1,6 @@
+# No MKL - https://github.com/nuitka/nuitka/issues/1504
+nomkl
+
 # Core dependencies
 langchain
 langchain-community
@@ -15,6 +18,7 @@ tomli
 tomli_w
 blinker
 defusedxml>=0.7.1
+networkx
 
 # LLM integration
 langchain-ollama
@@ -32,7 +36,7 @@ arxiv
 PyPDF2
 
 # Media processing
-piper-tts
+piper-tts>=1.2.0
 numpy
 pydub
 

@@ -4,7 +4,7 @@ Gmail connector for fetching email content from Gmail inbox.
 
 import base64
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 from google.auth.transport.requests import Request
@@ -71,7 +71,7 @@ def get_email_content(message: Dict) -> str:
     return ""
 
 
-def fetch_gmail_content(max_results: int = 50) -> List[Dict[str, str]]:
+def fetch_gmail_content(max_results: int = 50) -> List[Dict[str, Any]]:
     """
     Fetch content from recent Gmail messages.
 
@@ -141,7 +141,7 @@ class GmailConnector(FeedConnector):
         return parsed.scheme == "gmail"
 
     @staticmethod
-    def fetch_content(url: str) -> List[Dict[str, str]]:
+    def fetch_content(url: str) -> List[Dict[str, Any]]:
         try:
             # For the gmail:// URL, fetch the message list
             return fetch_gmail_content()
