@@ -19,8 +19,9 @@ from curator.topic_updater import (
     queue_topic_update,
 )
 from services.pexels_service import get_random_thumbnail
-from ..db.project_db import add_topic_to_project
 from utils.logging import debug, error, info
+
+from ..db.project_db import add_topic_to_project
 
 router = APIRouter()
 
@@ -51,20 +52,16 @@ def request_topic_publish(topic):
     responses={500: {"description": "Internal server error"}},
 )
 async def create_topic_for_project(
-    project_id: str,
-    topic: TopicCreate,
-    background_tasks: BackgroundTasks
+    project_id: str, topic: TopicCreate, background_tasks: BackgroundTasks
 ):
     """Create a new topic for a specific project and optionally generate an article."""
     try:
         topic_id = str(uuid4())
-                
 
         thumbnail_url = topic.thumbnail_url
         if not thumbnail_url or thumbnail_url.lower() in ["auto", "none", ""]:
             thumbnail_data = get_random_thumbnail(f"{topic.name} {topic.description}")
             thumbnail_url = thumbnail_data.get("thumbnail_url")
-        
 
         topic_data = Topic(
             id=topic_id,
@@ -76,13 +73,11 @@ async def create_topic_for_project(
             processed_feeds=[],
             thumbnail_url=thumbnail_url,
         )
-        
-    
+
         save_topic(topic_data)
         info("TOPIC", "Created", topic.name)
-  
+
         add_topic_to_project(project_id, topic_id)
-        
 
         if topic.feed_urls:
             background_tasks.add_task(request_topic_update, topic_id)
@@ -92,7 +87,9 @@ async def create_topic_for_project(
         return topic_data
     except Exception as e:
         error("TOPIC", "Creation error", str(e))
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Internal server error: {str(e)}"
+        ) from e
 
 
 @router.get(

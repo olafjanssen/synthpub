@@ -186,7 +186,7 @@ def test_list_projects(
     project_dir1 = MagicMock(spec=Path)
     project_dir1.__truediv__.return_value = Path("/mock/vault/project-1/metadata.yaml")
     project_dir1.name = "project-1"  # Add name attribute
-    
+
     project_dir2 = MagicMock(spec=Path)
     project_dir2.__truediv__.return_value = Path("/mock/vault/project-2/metadata.yaml")
     project_dir2.name = "project-2"  # Add name attribute
@@ -202,7 +202,7 @@ def test_list_projects(
             "topic_ids": ["topic-1", "topic-2"],
             "created_at": "2023-01-01T12:00:00",
             "updated_at": "2023-01-02T12:00:00",
-            "slug": "project-1"  # Add slug field
+            "slug": "project-1",  # Add slug field
         },
         {
             "id": "project-2",
@@ -211,7 +211,7 @@ def test_list_projects(
             "topic_ids": ["topic-3"],
             "created_at": "2023-01-03T12:00:00",
             "updated_at": "2023-01-04T12:00:00",
-            "slug": "project-2"  # Add slug field
+            "slug": "project-2",  # Add slug field
         },
     ]
 

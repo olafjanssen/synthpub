@@ -1,12 +1,13 @@
 """
 Database operations for projects using hierarchical folder structure.
 """
-from utils.logging import info
+
 import shutil
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional  
+from typing import Dict, List, Optional
+
 import yaml
 
 from ..models.project import Project
@@ -24,7 +25,7 @@ from .common import (
 def save_project(project: Project) -> None:
     """Save project to YAML file in its slug-named folder."""
     # Use existing slug if available, otherwise create a new one
-    
+
     if project.slug:
         project_slug = project.slug
     else:
@@ -115,11 +116,11 @@ def list_projects() -> List[Project]:
                 data["created_at"] = datetime.fromisoformat(data["created_at"])
                 if data["updated_at"]:
                     data["updated_at"] = datetime.fromisoformat(data["updated_at"])
-                
+
                 # Set slug from directory name if not already set
                 if not data.get("slug"):
                     data["slug"] = project_dir.name
-                
+
                 projects.append(Project(**data))
 
     return projects
@@ -134,7 +135,7 @@ def create_project(
     """Create a new project."""
     project_id = str(uuid.uuid4())
     project_slug = ensure_unique_slug(title, "project")
-    
+
     project = Project(
         id=project_id,
         title=title,
@@ -188,17 +189,16 @@ def mark_project_deleted(project_id: str) -> bool:
 
     return True
 
+
 def add_topic_to_project(project_id: str, topic_id: str):
     """
     Associate a topic with a project.
     Adjust this logic based on your actual project model and DB functions.
     """
-
-
     project = get_project(project_id)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
-    
+        return None
+
     if topic_id not in project.topic_ids:
         project.topic_ids.append(topic_id)
         project.updated_at = datetime.now(timezone.utc)
@@ -212,7 +212,7 @@ def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Projec
     project = get_project(project_id)
     if not project:
         return False
-        
+
     if topic_id in project.topic_ids:
         project.topic_ids.remove(topic_id)
         project.updated_at = datetime.now(timezone.utc)
@@ -224,4 +224,6 @@ def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Projec
 def get_project_slug_map() -> Dict[str, str]:
     """Return a mapping of project IDs to their slugs."""
     projects = list_projects()
-    return {project.id: project.slug or create_slug(project.title) for project in projects}
+    return {
+        project.id: project.slug or create_slug(project.title) for project in projects
+    }

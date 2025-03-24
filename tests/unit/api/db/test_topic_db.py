@@ -313,12 +313,19 @@ def test_load_topics(mock_topics):
 @patch("src.api.db.project_db.get_project")
 @patch("src.api.db.project_db.add_topic_to_project")
 @patch("src.api.db.topic_db.Topic")
-def test_create_topic(mock_topic_class, mock_add_topic, mock_get_project, mock_datetime, mock_save, mock_uuid):
+def test_create_topic(
+    mock_topic_class,
+    mock_add_topic,
+    mock_get_project,
+    mock_datetime,
+    mock_save,
+    mock_uuid,
+):
     """Test creating a new topic."""
     # Setup mock datetime
     mock_date = datetime(2023, 1, 1, 12, 0, 0)
     mock_datetime.now.return_value = mock_date
-    
+
     # Setup mock project
     mock_project = MagicMock()
     mock_project.id = "project-123"
@@ -326,7 +333,7 @@ def test_create_topic(mock_topic_class, mock_add_topic, mock_get_project, mock_d
     mock_project.slug = "project-slug"
     mock_get_project.return_value = mock_project
     mock_add_topic.return_value = mock_project
-    
+
     # Setup mock Topic
     mock_topic = MagicMock()
     mock_topic.id = "test-uuid"
