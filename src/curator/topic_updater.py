@@ -5,10 +5,10 @@ from queue import Queue
 from api.db.cache_manager import get_all_connectors
 from api.db.topic_db import get_topic
 from api.models.feed_item import FeedItem
-from api.signals import convert_requested, publish_requested
-
 # Import the LangGraph-based implementation
 from curator.graph_workflow import process_feed_item as graph_process_feed_item
+from news.converter import CONVERTERS
+from news.publishers import PUBLISHERS
 from utils.logging import debug, error, info, warning
 
 # Single processing queue for all items
@@ -59,16 +59,18 @@ def handle_topic_publishing(sender):
         commands = [cmd.strip() for cmd in publish_url.split("|")]
 
         debug("CONVERT", "Default conversion", "content")
-        convert_requested.send(topic, type="content")
+        commands.insert(0, "convert://content")
 
         for cmd in commands:
             if cmd.startswith("convert://"):
                 conversion_type = cmd.split("://", 1)[1].strip()
                 info("CONVERT", conversion_type, f"Topic: {topic.name}")
-                convert_requested.send(topic, type=conversion_type)
+                for converter in CONVERTERS:
+                    converter.handle_convert_requested(topic, conversion_type)
             else:
                 info("PUBLISH", cmd, f"Topic: {topic.name}")
-                publish_requested.send(topic, publish_url=cmd)
+                for publisher in PUBLISHERS:
+                    publisher.handle_publish_requested(topic, cmd)
 
 
 def process_queue():
