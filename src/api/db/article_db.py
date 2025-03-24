@@ -15,9 +15,15 @@ from ..models.article import Article
 from ..models.feed_item import FeedItem
 from ..models.topic import Representation
 from . import topic_db
-from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
-                     find_entity_by_id, get_article_path,
-                     get_hierarchical_path, remove_from_entity_cache)
+from .common import (
+    add_to_entity_cache,
+    create_slug,
+    ensure_path_exists,
+    find_entity_by_id,
+    get_article_path,
+    get_hierarchical_path,
+    remove_from_entity_cache,
+)
 
 
 def get_article_location(

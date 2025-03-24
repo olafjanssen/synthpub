@@ -90,7 +90,7 @@ class PodcastEpisodeRSSConverter(Converter):
             error(
                 "PODCAST",
                 "Topic not found",
-                f"Cannot find topic for article {article.id}"
+                f"Cannot find topic for article {article.id}",
             )
             return False
 
@@ -237,10 +237,14 @@ class PodcastEpisodeRSSConverter(Converter):
             except Exception as e:
                 error("PODCAST", "RSS update failed", str(e))
                 # Fall back to creating a new RSS
-                return PodcastEpisodeRSSConverter._create_new_rss(article, topic, episode_item)
+                return PodcastEpisodeRSSConverter._create_new_rss(
+                    article, topic, episode_item
+                )
         else:
             # Create a new RSS feed
-            return PodcastEpisodeRSSConverter._create_new_rss(article, topic, episode_item)
+            return PodcastEpisodeRSSConverter._create_new_rss(
+                article, topic, episode_item
+            )
 
     @staticmethod
     def _create_new_rss(article: Article, topic, episode_item) -> str:
@@ -274,7 +278,9 @@ class PodcastEpisodeRSSConverter(Converter):
         return pretty_xml
 
     @staticmethod
-    def _generate_episode_element(article: Article, topic, mp3_url: str | None, file_size: int):
+    def _generate_episode_element(
+        article: Article, topic, mp3_url: str | None, file_size: int
+    ):
         """
         Generate an RSS item element for a podcast episode.
 
@@ -294,7 +300,7 @@ class PodcastEpisodeRSSConverter(Converter):
         SubElement(item, "title").text = article.title
         SubElement(item, "guid").text = article.id
         SubElement(item, "guid").set("isPermaLink", "false")
-        
+
         # Add publication date
         pub_date = SubElement(item, "pubDate")
         pub_date.text = article.created_at.strftime("%a, %d %b %Y %H:%M:%S GMT")
@@ -302,10 +308,18 @@ class PodcastEpisodeRSSConverter(Converter):
         # Get content from the latest representation or fall back to article.content
         if article.representations:
             content = article.representations[-1].content
-            debug("PODCAST", "Using previous representation", f"Type: {article.representations[-1].type}")
+            debug(
+                "PODCAST",
+                "Using previous representation",
+                f"Type: {article.representations[-1].type}",
+            )
         else:
             content = article.content
-            debug("PODCAST", "No previous representations", "Using original article content")
+            debug(
+                "PODCAST",
+                "No previous representations",
+                "Using original article content",
+            )
 
         # Add description
         description = SubElement(item, "description")

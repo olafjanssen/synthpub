@@ -18,12 +18,10 @@ class Content(Converter):
         try:
             # This converter specifically uses the original article content directly
             # regardless of previous representations
-            info(
-                "CONTENT",
-                "Using original content",
-                f"Article: {article.title}"
+            info("CONTENT", "Using original content", f"Article: {article.title}")
+            article.add_representation(
+                content_type, article.content, {"extension": "md"}
             )
-            article.add_representation(content_type, article.content, {"extension": "md"})
             return True
 
         except Exception as e:

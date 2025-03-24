@@ -141,7 +141,9 @@ class FTPPublisher(Publisher):
             else:
                 content = article.content
                 is_binary = False
-                info("FTP", "Using original article content", f"Article: {article.title}")
+                info(
+                    "FTP", "Using original article content", f"Article: {article.title}"
+                )
 
             # Create a file-like object in memory
             if is_binary:

@@ -11,6 +11,7 @@ import wave
 from typing import Any, Dict, List, Optional
 
 import requests
+
 # Import Piper library
 from piper.voice import PiperVoice
 from pydub import AudioSegment
@@ -253,24 +254,32 @@ class PiperTTS(Converter):
     def convert_representation(cls, content_type: str, article: Article) -> bool:
         try:
             info("PIPER_TTS", "Starting conversion", f"Article: {article.title}")
-            
+
             # Parse voice key from content type if specified, or use default
             voice_key = "en_US-lessac-medium"  # Default voice
             if "/" in content_type:
                 _, voice_key = content_type.split("/", 1)
-            
+
             # Use the most recent representation's content, or fall back to article content
             if article.representations:
                 content = article.representations[-1].content
-                info("PIPER_TTS", "Using previous representation", f"Type: {article.representations[-1].type}")
+                info(
+                    "PIPER_TTS",
+                    "Using previous representation",
+                    f"Type: {article.representations[-1].type}",
+                )
             else:
                 content = article.content
-                info("PIPER_TTS", "No previous representations", "Using original article content")
-            
+                info(
+                    "PIPER_TTS",
+                    "No previous representations",
+                    "Using original article content",
+                )
+
             # Split content into manageable chunks
             sentences = cls.split_into_sentences(content)
             info("PIPER_TTS", "Processing chunks", f"Chunks: {len(sentences)}")
-            
+
             # Generate audio for each chunk
             audio_segments = []
             for i, sentence in enumerate(sentences):
@@ -279,20 +288,24 @@ class PiperTTS(Converter):
                     audio_segment = cls.generate_audio(sentence, voice_key)
                     audio_segments.append(audio_segment)
                 except Exception as chunk_error:
-                    error("PIPER_TTS", "Chunk processing failed", f"Chunk {i+1}: {str(chunk_error)}")
+                    error(
+                        "PIPER_TTS",
+                        "Chunk processing failed",
+                        f"Chunk {i+1}: {str(chunk_error)}",
+                    )
                     # Continue with other chunks
-            
+
             if not audio_segments:
                 raise ValueError("No audio was generated from any chunks")
-                
+
             # Concatenate all audio segments
             combined_audio = sum(audio_segments)
-            
+
             # Export to bytes buffer
             buffer = io.BytesIO()
             combined_audio.export(buffer, format="mp3")
             audio_bytes = buffer.getvalue()
-            
+
             # Add audio representation
             total_duration = len(combined_audio) / 1000  # in seconds
             info(
@@ -301,10 +314,16 @@ class PiperTTS(Converter):
                 f"Article: {article.title}, Duration: {total_duration:.1f}s",
             )
             article.add_representation(
-                content_type, audio_bytes.hex(), {"format": "mp3", "binary": True, "extension": "mp3"}
+                content_type,
+                audio_bytes.hex(),
+                {"format": "mp3", "binary": True, "extension": "mp3"},
             )
             return True
-            
+
         except Exception as e:
-            error("PIPER_TTS", "Conversion failed", f"Article: {article.title}, Error: {str(e)}")
+            error(
+                "PIPER_TTS",
+                "Conversion failed",
+                f"Article: {article.title}, Error: {str(e)}",
+            )
             return False

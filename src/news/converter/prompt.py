@@ -66,14 +66,22 @@ Use a clear, concise style appropriate for the content.
     def convert_representation(content_type: str, article: Article) -> bool:
         try:
             info("PROMPT", "Starting conversion", f"Article: {article.title}")
-            
+
             # Use the most recent representation's content, or fall back to article content
             if article.representations:
                 content = article.representations[-1].content
-                info("PROMPT", "Using previous representation", f"Type: {article.representations[-1].type}")
+                info(
+                    "PROMPT",
+                    "Using previous representation",
+                    f"Type: {article.representations[-1].type}",
+                )
             else:
                 content = article.content
-                info("PROMPT", "No previous representations", "Using original article content")
+                info(
+                    "PROMPT",
+                    "No previous representations",
+                    "Using original article content",
+                )
 
             # Get the prompt template to use
             template_text = Prompt._get_prompt_template(content_type)
@@ -93,13 +101,17 @@ Use a clear, concise style appropriate for the content.
                 f"Output length: {len(converted_content)}",
             )
 
-            article.add_representation(content_type, converted_content, {"extension": "txt"})
+            article.add_representation(
+                content_type, converted_content, {"extension": "txt"}
+            )
             info("PROMPT", "Conversion complete", f"Article: {article.title}")
 
             return True
 
         except Exception as e:
             error(
-                "PROMPT", "Conversion failed", f"Article: {article.title}, Error: {str(e)}"
+                "PROMPT",
+                "Conversion failed",
+                f"Article: {article.title}, Error: {str(e)}",
             )
             return False

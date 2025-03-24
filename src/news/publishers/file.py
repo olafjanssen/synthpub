@@ -65,12 +65,14 @@ class FilePublisher(Publisher):
             else:
                 content = article.content
                 is_binary = False
-                info("FILE", "Using original article content", f"Article: {article.title}")
+                info(
+                    "FILE",
+                    "Using original article content",
+                    f"Article: {article.title}",
+                )
 
             FilePublisher.write_content(file_path, content, is_binary)
-            info(
-                "FILE", "Published successfully", f"Path: {file_path}"
-            )
+            info("FILE", "Published successfully", f"Path: {file_path}")
 
             return True
 

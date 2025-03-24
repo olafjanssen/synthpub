@@ -6,6 +6,7 @@ from api.db.article_db import get_article
 from api.db.cache_manager import get_all_connectors
 from api.db.topic_db import get_topic
 from api.models.feed_item import FeedItem
+
 # Import the LangGraph-based implementation
 from curator.graph_workflow import process_feed_item as graph_process_feed_item
 from news.converter import CONVERTERS
@@ -55,13 +56,13 @@ def handle_topic_publishing(sender):
 
     # Process feeds
     topic = sender
-    
+
     # Get the article from the topic
     article_id = topic.article
     if not article_id:
         warning("TOPIC", "No article found", f"Topic: {topic.name}")
         return
-        
+
     article = get_article(article_id)
     if not article:
         warning("TOPIC", "No article found", f"Topic: {topic.name}")
@@ -70,7 +71,7 @@ def handle_topic_publishing(sender):
     for publish_url in topic.publish_urls:
         # split publish_url into piped elements
         commands = [cmd.strip() for cmd in publish_url.split("|")]
-        
+
         # Start with default Content converter
         commands.insert(0, "convert://content")
 
@@ -102,7 +103,7 @@ def process_queue():
                     # Process through curator chain
                     debug("FEED", "Processing content", feed_item.url)
                     result = process_feed_item(topic_id, content, feed_item)
-                                        
+
                     if result.get("refined_article"):
                         # Trigger publishing after processing
                         topic = get_topic(topic_id)
@@ -159,6 +160,7 @@ def process_feed_item(
             f"Step: {result.get('error_step')}, Error: {result.get('error_message')}",
         )
     return result
+
 
 def process_feed_url(topic_id: str, feed_url: str):
     """

@@ -69,7 +69,9 @@ class GitLabPublisher(Publisher):
     @staticmethod
     def publish_content(url: str, article: Article) -> bool:
         try:
-            info("GITLAB", "Publishing content", f"URL: {url}, Article: {article.title}")
+            info(
+                "GITLAB", "Publishing content", f"URL: {url}, Article: {article.title}"
+            )
             host, project_id, branch, file_path = parse_gitlab_url(url)
 
             # Get the API base URL
@@ -85,7 +87,11 @@ class GitLabPublisher(Publisher):
                 info("GITLAB", "Using representation", f"Type: {rep.type}")
             else:
                 content = article.content
-                info("GITLAB", "Using original article content", f"Article: {article.title}")
+                info(
+                    "GITLAB",
+                    "Using original article content",
+                    f"Article: {article.title}",
+                )
 
             # API URLs
             commit_url = f"{api_base}/projects/{project_id}/repository/commits"

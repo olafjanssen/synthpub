@@ -38,7 +38,7 @@ class Article(BaseModel):
     representations: List[Representation] = Field(
         default=[], description="Different content representations of this article"
     )
-    
+
     def add_representation(
         self, content_type: str, content: str, metadata: Optional[Dict] = None
     ) -> None:
