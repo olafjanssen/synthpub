@@ -211,7 +211,7 @@ def remove_topic_from_project(project_id: str, topic_id: str) -> Optional[Projec
     """Remove a topic from a project's topic list."""
     project = get_project(project_id)
     if not project:
-        return False
+        return None
 
     if topic_id in project.topic_ids:
         project.topic_ids.remove(topic_id)
