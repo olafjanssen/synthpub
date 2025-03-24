@@ -1,11 +1,12 @@
 """Article model definitions."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 from .feed_item import FeedItem
+from .topic import Representation
 
 
 class Article(BaseModel):
@@ -34,3 +35,16 @@ class Article(BaseModel):
         default=None,
         description="Feed item that triggered the creation of this article version",
     )
+    representations: List[Representation] = Field(
+        default=[], description="Different content representations of this article"
+    )
+    
+    def add_representation(
+        self, content_type: str, content: str, metadata: Optional[Dict] = None
+    ) -> None:
+        """Add a new representation to the article."""
+        if metadata is None:
+            metadata = {}
+        self.representations.append(
+            Representation(type=content_type, content=content, metadata=metadata)
+        )

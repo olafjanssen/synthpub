@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 
 import requests
 
-from api.models.topic import Topic
+from api.models.article import Article
 from utils.logging import debug, error, info
 
 from .publisher_interface import Publisher
@@ -67,9 +67,9 @@ class GitLabPublisher(Publisher):
         return url.startswith("gitlab://")
 
     @staticmethod
-    def publish_content(url: str, topic: Topic) -> bool:
+    def publish_content(url: str, article: Article) -> bool:
         try:
-            info("GITLAB", "Publishing content", f"URL: {url}, Topic: {topic.name}")
+            info("GITLAB", "Publishing content", f"URL: {url}, Article: {article.title}")
             host, project_id, branch, file_path = parse_gitlab_url(url)
 
             # Get the API base URL
@@ -78,11 +78,14 @@ class GitLabPublisher(Publisher):
             # Get the GitLab token from environment variables
             token = get_api_key()
 
-            # Get the most recent representation
-            rep = topic.representations[-1]
-
-            # Prepare the content
-            content = rep.content
+            # Use the most recent representation if available, otherwise use article content
+            if article.representations:
+                rep = article.representations[-1]
+                content = rep.content
+                info("GITLAB", "Using representation", f"Type: {rep.type}")
+            else:
+                content = article.content
+                info("GITLAB", "Using original article content", f"Article: {article.title}")
 
             # API URLs
             commit_url = f"{api_base}/projects/{project_id}/repository/commits"

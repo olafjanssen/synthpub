@@ -10,7 +10,8 @@ from xml.etree.ElementTree import Element, SubElement
 import defusedxml.ElementTree as ET
 from defusedxml.minidom import parseString
 
-from api.models import Topic
+from api.db import topic_db
+from api.models import Article
 from news.converter.converter_interface import Converter
 from utils.logging import debug, error, info, warning
 
@@ -52,13 +53,13 @@ class PodcastEpisodeRSSConverter(Converter):
         return type_str.startswith("podcast-episode-rss")
 
     @staticmethod
-    def convert_representation(type_str: str, topic: Topic) -> bool:
+    def convert_representation(type_str: str, article: Article) -> bool:
         """
-        Convert a topic into a podcast episode and add it to an RSS feed.
+        Convert an article into a podcast episode and add it to an RSS feed.
 
         Args:
             type_str: Format "podcast-episode-rss/path/to/rss.xml,http://mp3_url.mp3"
-            topic: The topic to convert into a podcast episode
+            article: The article to convert into a podcast episode
 
         Returns:
             bool: True if conversion succeeded
@@ -82,6 +83,16 @@ class PodcastEpisodeRSSConverter(Converter):
         mp3_url = url_parts[1] if len(url_parts) > 1 else None
 
         info("PODCAST", "Processing", f"RSS URL: {rss_url}, MP3 URL: {mp3_url}")
+
+        # Get the topic for additional metadata
+        topic = topic_db.get_topic(article.topic_id)
+        if not topic:
+            error(
+                "PODCAST",
+                "Topic not found",
+                f"Cannot find topic for article {article.id}"
+            )
+            return False
 
         # Check if RSS file exists
         existing_rss = None
@@ -107,33 +118,33 @@ class PodcastEpisodeRSSConverter(Converter):
             warning("PODCAST", "RSS fetch failed", str(e))
             # Continue with creating a new RSS
 
-        # Calculate MP3 file size from previous representations
-        file_size = PodcastEpisodeRSSConverter._get_mp3_file_size(topic)
+        # Calculate MP3 file size from representations
+        file_size = PodcastEpisodeRSSConverter._get_mp3_file_size(article)
 
         # Generate the updated RSS XML
         rss_xml = PodcastEpisodeRSSConverter._generate_or_update_rss(
-            topic, mp3_url, file_size, existing_rss
+            article, topic, mp3_url, file_size, existing_rss
         )
 
-        # Store the RSS XML in the topic's representation
-        topic.add_representation(type_str, rss_xml)
+        # Store the RSS XML in the article's representation
+        article.add_representation(type_str, rss_xml)
 
-        info("PODCAST", "RSS updated", f"Topic: {topic.name}, ID: {topic.id}")
+        info("PODCAST", "RSS updated", f"Article: {article.title}, ID: {article.id}")
         return True
 
     @staticmethod
-    def _get_mp3_file_size(topic: Topic) -> int:
+    def _get_mp3_file_size(article: Article) -> int:
         """
-        Calculate the MP3 file size from previous representations.
+        Calculate the MP3 file size from representations.
 
         Args:
-            topic: The topic with representations
+            article: The article with representations
 
         Returns:
             int: The file size in bytes
         """
-        # Look for MP3 data in previous representations
-        for rep in topic.representations:
+        # Look for MP3 data in representations
+        for rep in article.representations:
             # Check if it's MP3 data (binary data or has binary metadata)
             if getattr(rep.metadata, "format", "") == "mp3":
                 rep_data = rep.content
@@ -155,16 +166,18 @@ class PodcastEpisodeRSSConverter(Converter):
 
     @staticmethod
     def _generate_or_update_rss(
-        topic: Topic,
+        article: Article,
+        topic,
         mp3_url: str | None,
         file_size: int,
         existing_rss: str | None = None,
     ) -> str:
         """
-        Generate a new RSS feed or update an existing one with the topic as an episode.
+        Generate a new RSS feed or update an existing one with the article as an episode.
 
         Args:
-            topic: The topic to convert to an episode
+            article: The article to convert to an episode
+            topic: The topic this article belongs to (for metadata)
             mp3_url: URL to the MP3 file
             file_size: Size of the MP3 file in bytes
             existing_rss: Existing RSS XML content (if any)
@@ -174,7 +187,7 @@ class PodcastEpisodeRSSConverter(Converter):
         """
         # Generate the episode item
         episode_item = PodcastEpisodeRSSConverter._generate_episode_element(
-            topic, mp3_url, file_size
+            article, topic, mp3_url, file_size
         )
 
         if existing_rss:
@@ -191,11 +204,11 @@ class PodcastEpisodeRSSConverter(Converter):
                     error("PODCAST", "Invalid RSS", "No channel element found")
                     # Create a new RSS instead
                     return PodcastEpisodeRSSConverter._create_new_rss(
-                        topic, episode_item
+                        article, topic, episode_item
                     )
 
                 # Find if this episode already exists (by guid)
-                guid_value = topic.id
+                guid_value = article.id
                 existing_items = channel.findall("item")
 
                 for item in existing_items:
@@ -224,13 +237,13 @@ class PodcastEpisodeRSSConverter(Converter):
             except Exception as e:
                 error("PODCAST", "RSS update failed", str(e))
                 # Fall back to creating a new RSS
-                return PodcastEpisodeRSSConverter._create_new_rss(topic, episode_item)
+                return PodcastEpisodeRSSConverter._create_new_rss(article, topic, episode_item)
         else:
             # Create a new RSS feed
-            return PodcastEpisodeRSSConverter._create_new_rss(topic, episode_item)
+            return PodcastEpisodeRSSConverter._create_new_rss(article, topic, episode_item)
 
     @staticmethod
-    def _create_new_rss(topic: Topic, episode_item) -> str:
+    def _create_new_rss(article: Article, topic, episode_item) -> str:
         """Create a new podcast RSS feed with the topic's project info and the episode."""
         # Create the root element
         rss = Element("rss")
@@ -241,42 +254,17 @@ class PodcastEpisodeRSSConverter(Converter):
         # Create the channel element
         channel = SubElement(rss, "channel")
 
-        # Get podcast info from project or use defaults
-        project = getattr(topic, "project", None)
-
         # Add required channel elements
-        SubElement(channel, "title").text = (
-            getattr(project, "title", "Podcast") if project else "Podcast"
-        )
-        SubElement(channel, "link").text = (
-            getattr(project, "website", "https://example.com")
-            if project
-            else "https://example.com"
-        )
-        SubElement(channel, "description").text = (
-            getattr(project, "description", "Podcast description")
-            if project
-            else "Podcast description"
-        )
-        SubElement(channel, "language").text = (
-            getattr(project, "language", "en-us") if project else "en-us"
-        )
+        SubElement(channel, "title").text = topic.name
+        SubElement(channel, "link").text = "https://example.com/podcast"
+        SubElement(channel, "language").text = "en-us"
+        SubElement(channel, "itunes:explicit").text = "false"
+        SubElement(channel, "description").text = topic.description
         SubElement(channel, "lastBuildDate").text = datetime.datetime.now().strftime(
             "%a, %d %b %Y %H:%M:%S GMT"
         )
 
-        # Add iTunes specific elements
-        SubElement(channel, "itunes:author").text = (
-            getattr(project, "author", "Unknown") if project else "Unknown"
-        )
-        SubElement(channel, "itunes:summary").text = (
-            getattr(project, "description", "Podcast description")
-            if project
-            else "Podcast description"
-        )
-        SubElement(channel, "itunes:explicit").text = "false"
-
-        # Add the episode
+        # Add the episode to the channel
         channel.append(episode_item)
 
         # Convert to string with pretty formatting
@@ -286,51 +274,52 @@ class PodcastEpisodeRSSConverter(Converter):
         return pretty_xml
 
     @staticmethod
-    def _generate_episode_element(topic: Topic, mp3_url: str | None, file_size: int):
+    def _generate_episode_element(article: Article, topic, mp3_url: str | None, file_size: int):
         """
-        Generate an XML element for a podcast episode from a topic.
+        Generate an RSS item element for a podcast episode.
 
         Args:
-            topic: The topic to convert to episode
+            article: The article to convert to an episode
+            topic: The topic this article belongs to (for metadata)
             mp3_url: URL to the MP3 file
             file_size: Size of the MP3 file in bytes
 
         Returns:
-            XML Element for the podcast episode
+            Element representing the podcast episode
         """
         # Create the item element
         item = Element("item")
 
-        # Add required episode elements
-        SubElement(item, "title").text = topic.name
-        SubElement(item, "description").text = topic.description
+        # Add required item elements
+        SubElement(item, "title").text = article.title
+        SubElement(item, "guid").text = article.id
+        SubElement(item, "guid").set("isPermaLink", "false")
+        
+        # Add publication date
+        pub_date = SubElement(item, "pubDate")
+        pub_date.text = article.created_at.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
-        # Publication date (RSS format)
-        pub_date = getattr(topic, "published_at", datetime.datetime.now())
-        SubElement(item, "pubDate").text = pub_date.strftime(
-            "%a, %d %b %Y %H:%M:%S GMT"
-        )
+        # Get content from the latest representation or fall back to article.content
+        if article.representations:
+            content = article.representations[-1].content
+            debug("PODCAST", "Using previous representation", f"Type: {article.representations[-1].type}")
+        else:
+            content = article.content
+            debug("PODCAST", "No previous representations", "Using original article content")
 
-        # Use the provided MP3 URL or fallback to a placeholder
-        if not mp3_url:
-            warning("PODCAST", "No MP3 URL", f"Topic: {topic.name}, ID: {topic.id}")
-            mp3_url = f"https://example.com/{topic.id}.mp3"  # Placeholder
+        # Add description
+        description = SubElement(item, "description")
+        description.text = content[:200] + "..." if len(content) > 200 else content
 
-        # Add the MP3 enclosure
-        enclosure = SubElement(item, "enclosure")
-        enclosure.set("url", mp3_url)
-        enclosure.set("type", "audio/mpeg")
-        enclosure.set("length", str(file_size))
+        # Add content:encoded for full content
+        content_encoded = SubElement(item, "content:encoded")
+        content_encoded.text = f"<![CDATA[{content}]]>"
 
-        # Add a GUID - use topic ID to ensure consistency
-        guid = SubElement(item, "guid")
-        guid.text = topic.id
-        guid.set("isPermaLink", "false")
-
-        # iTunes specific elements
-        SubElement(item, "itunes:duration").text = getattr(
-            topic, "duration", "00:00:00"
-        )
-        SubElement(item, "itunes:explicit").text = "false"
+        # Add enclosure for the MP3 file if URL is provided
+        if mp3_url:
+            enclosure = SubElement(item, "enclosure")
+            enclosure.set("url", mp3_url)
+            enclosure.set("type", "audio/mpeg")
+            enclosure.set("length", str(file_size))
 
         return item

@@ -2,10 +2,10 @@ import threading
 import time
 from queue import Queue
 
+from api.db.article_db import get_article
 from api.db.cache_manager import get_all_connectors
 from api.db.topic_db import get_topic
 from api.models.feed_item import FeedItem
-
 # Import the LangGraph-based implementation
 from curator.graph_workflow import process_feed_item as graph_process_feed_item
 from news.converter import CONVERTERS
@@ -55,23 +55,35 @@ def handle_topic_publishing(sender):
 
     # Process feeds
     topic = sender
+    
+    # Get the article from the topic
+    article_id = topic.article
+    if not article_id:
+        warning("TOPIC", "No article found", f"Topic: {topic.name}")
+        return
+        
+    article = get_article(article_id)
+    if not article:
+        warning("TOPIC", "No article found", f"Topic: {topic.name}")
+        return
+
     for publish_url in topic.publish_urls:
         # split publish_url into piped elements
         commands = [cmd.strip() for cmd in publish_url.split("|")]
-
-        debug("CONVERT", "Default conversion", "content")
+        
+        # Start with default Content converter
         commands.insert(0, "convert://content")
 
         for cmd in commands:
             if cmd.startswith("convert://"):
                 conversion_type = cmd.split("://", 1)[1].strip()
-                info("CONVERT", conversion_type, f"Topic: {topic.name}")
+                info("CONVERT", conversion_type, f"Article: {article.title}")
                 for converter in CONVERTERS:
-                    converter.handle_convert_requested(topic, conversion_type)
+                    converter.handle_convert_requested(article, conversion_type)
             else:
-                info("PUBLISH", cmd, f"Topic: {topic.name}")
+                info("PUBLISH", cmd, f"Article: {article.title}")
                 for publisher in PUBLISHERS:
-                    publisher.handle_publish_requested(topic, cmd)
+                    publisher.handle_publish_requested(article, cmd)
 
 
 def process_queue():
@@ -89,12 +101,13 @@ def process_queue():
                 else:
                     # Process through curator chain
                     debug("FEED", "Processing content", feed_item.url)
-                    process_feed_item(topic_id, content, feed_item)
-
-                    # Trigger publishing after processing
-                    topic = get_topic(topic_id)
-                    if topic:
-                        handle_topic_publishing(topic)
+                    result = process_feed_item(topic_id, content, feed_item)
+                                        
+                    if result.get("refined_article"):
+                        # Trigger publishing after processing
+                        topic = get_topic(topic_id)
+                        if topic:
+                            handle_topic_publishing(topic)
             else:
                 # Small sleep to prevent CPU spinning
                 time.sleep(0.1)
@@ -145,7 +158,7 @@ def process_feed_item(
             "Processing failed",
             f"Step: {result.get('error_step')}, Error: {result.get('error_message')}",
         )
-
+    return result
 
 def process_feed_url(topic_id: str, feed_url: str):
     """

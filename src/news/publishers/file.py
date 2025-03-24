@@ -3,7 +3,7 @@
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-from api.models.topic import Topic
+from api.models.article import Article
 from utils.logging import debug, error, info
 
 from .publisher_interface import Publisher
@@ -51,20 +51,25 @@ class FilePublisher(Publisher):
                 f.write(content)
 
     @staticmethod
-    def publish_content(url: str, topic: Topic) -> bool:
+    def publish_content(url: str, article: Article) -> bool:
         try:
-            info("FILE", "Publishing content", f"URL: {url}, Topic: {topic.name}")
+            info("FILE", "Publishing content", f"URL: {url}, Article: {article.title}")
             file_path = parse_file_url(url)
 
-            # Get the most recent representation
-            rep = topic.representations[-1]
+            # Use the most recent representation if available, otherwise use article content
+            if article.representations:
+                rep = article.representations[-1]
+                content = rep.content
+                is_binary = rep.metadata.get("binary", False)
+                info("FILE", "Using representation", f"Type: {rep.type}")
+            else:
+                content = article.content
+                is_binary = False
+                info("FILE", "Using original article content", f"Article: {article.title}")
 
-            # Use metadata to determine format and binary mode
-            is_binary = rep.metadata.get("binary", False)
-
-            FilePublisher.write_content(file_path, rep.content, is_binary)
+            FilePublisher.write_content(file_path, content, is_binary)
             info(
-                "FILE", "Published successfully", f"Type: {rep.type}, Path: {file_path}"
+                "FILE", "Published successfully", f"Path: {file_path}"
             )
 
             return True

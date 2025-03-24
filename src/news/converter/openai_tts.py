@@ -9,7 +9,7 @@ from typing import List
 from openai import OpenAI
 from pydub import AudioSegment
 
-from api.models.topic import Topic
+from api.models.article import Article
 from utils.logging import debug, error, info
 
 from .converter_interface import Converter
@@ -73,10 +73,17 @@ class OpenAITTS(Converter):
         return content_type == "openai-tts"
 
     @classmethod
-    def convert_representation(cls, content_type: str, topic: Topic) -> bool:
+    def convert_representation(cls, content_type: str, article: Article) -> bool:
         try:
-            info("TTS", "Starting conversion", f"Topic: {topic.name}")
-            content = topic.representations[-1].content
+            info("TTS", "Starting conversion", f"Article: {article.title}")
+            
+            # Use the most recent representation's content, or fall back to article content
+            if article.representations:
+                content = article.representations[-1].content
+                info("TTS", "Using previous representation", f"Type: {article.representations[-1].type}")
+            else:
+                content = article.content
+                info("TTS", "No previous representations", "Using original article content")
 
             # Split content into manageable chunks
             sentences = cls.split_into_sentences(content)
@@ -102,13 +109,13 @@ class OpenAITTS(Converter):
             info(
                 "TTS",
                 "Conversion complete",
-                f"Topic: {topic.name}, Duration: {total_duration:.1f}s",
+                f"Article: {article.title}, Duration: {total_duration:.1f}s",
             )
-            topic.add_representation(
+            article.add_representation(
                 content_type, audio_bytes.hex(), {"format": "mp3", "binary": True}
             )
             return True
 
         except Exception as e:
-            error("TTS", "Conversion failed", f"Topic: {topic.name}, Error: {str(e)}")
+            error("TTS", "Conversion failed", f"Article: {article.title}, Error: {str(e)}")
             return False

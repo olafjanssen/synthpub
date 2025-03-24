@@ -2,9 +2,8 @@
 Content converter that simply uses the article content as is.
 """
 
-from api.db.article_db import get_article
-from api.models.topic import Topic
-from utils.logging import error
+from api.models.article import Article
+from utils.logging import error, info
 
 from ..converter.converter_interface import Converter
 
@@ -15,12 +14,16 @@ class Content(Converter):
         return content_type == "content"
 
     @staticmethod
-    def convert_representation(content_type: str, topic: Topic) -> bool:
+    def convert_representation(content_type: str, article: Article) -> bool:
         try:
-            # Get the specific article
-            article = get_article(topic.article)
-
-            topic.add_representation(content_type, article.content)
+            # This converter specifically uses the original article content directly
+            # regardless of previous representations
+            info(
+                "CONTENT",
+                "Using original content",
+                f"Article: {article.title}"
+            )
+            article.add_representation(content_type, article.content)
             return True
 
         except Exception as e:

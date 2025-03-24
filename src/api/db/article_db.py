@@ -13,16 +13,11 @@ import yaml
 
 from ..models.article import Article
 from ..models.feed_item import FeedItem
+from ..models.topic import Representation
 from . import topic_db
-from .common import (
-    add_to_entity_cache,
-    create_slug,
-    ensure_path_exists,
-    find_entity_by_id,
-    get_article_path,
-    get_hierarchical_path,
-    remove_from_entity_cache,
-)
+from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
+                     find_entity_by_id, get_article_path,
+                     get_hierarchical_path, remove_from_entity_cache)
 
 
 def get_article_location(
@@ -53,6 +48,10 @@ def get_article_location(
 
 def article_to_files(article: Article, article_path: Path) -> None:
     """Save article as metadata.yaml and article.md files."""
+    # Ensure representations directory exists
+    representations_dir = article_path / "representations"
+    ensure_path_exists(representations_dir)
+
     # Write metadata file
     metadata = {
         "id": article.id,
@@ -66,8 +65,29 @@ def article_to_files(article: Article, article_path: Path) -> None:
         "source_feed": (
             article.source_feed.model_dump() if article.source_feed else None
         ),
+        "representations": [],
     }
 
+    # Process representations
+    for i, rep in enumerate(article.representations):
+        # Add representation metadata to the metadata file
+        # Replace any illegal characters in the type for filename
+        safe_type = rep.type.lower().replace('/', '_').replace('\\', '_')
+        rep_metadata = {
+            "type": rep.type,
+            "created_at": rep.created_at.isoformat(),
+            "metadata": rep.metadata,
+            "filename": f"{safe_type}.{i}.txt",
+        }
+        metadata["representations"].append(rep_metadata)
+
+        # Write representation content to separate file
+        rep_file = representations_dir / rep_metadata["filename"]
+        with open(rep_file, "w", encoding="utf-8") as f:
+            f.write(rep.content)
+            f.flush()
+
+    # Write metadata to file
     metadata_file = article_path / "metadata.yaml"
     with open(metadata_file, "w", encoding="utf-8") as f:
         yaml.dump(metadata, f, sort_keys=False)
@@ -104,7 +124,32 @@ def files_to_article(metadata_path: Path) -> Article:
             feed_data["accessed_at"] = datetime.fromisoformat(feed_data["accessed_at"])
         metadata["source_feed"] = FeedItem(**feed_data)
 
-    return Article(content=content, **metadata)
+    # Load representations
+    representations = []
+    if "representations" in metadata:
+        representations_dir = metadata_path.parent / "representations"
+        for rep_meta in metadata["representations"]:
+            rep_filename = rep_meta["filename"]
+            rep_path = representations_dir / rep_filename
+            if rep_path.exists():
+                with open(rep_path, "r", encoding="utf-8") as f:
+                    rep_content = f.read()
+                rep = Representation(
+                    type=rep_meta["type"],
+                    content=rep_content,
+                    created_at=datetime.fromisoformat(rep_meta["created_at"]),
+                    metadata=rep_meta["metadata"],
+                )
+                representations.append(rep)
+
+    # Remove representations from metadata dict so we don't pass it to Article constructor
+    if "representations" in metadata:
+        del metadata["representations"]
+
+    # Create and return article
+    article = Article(content=content, **metadata)
+    article.representations = representations
+    return article
 
 
 def save_article(article: Article) -> None:
