@@ -10,4 +10,3 @@ PUBLISHERS = [
     GitLabPublisher,
     FTPPublisher,
 ]
-

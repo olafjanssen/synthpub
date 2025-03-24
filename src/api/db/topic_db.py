@@ -14,9 +14,15 @@ import yaml
 from ..models.project import Project
 from ..models.topic import FeedItem, Topic
 from . import article_db, project_db
-from .common import (add_to_entity_cache, create_slug, ensure_path_exists,
-                     ensure_unique_slug, find_entity_by_id,
-                     get_hierarchical_path, remove_from_entity_cache)
+from .common import (
+    add_to_entity_cache,
+    create_slug,
+    ensure_path_exists,
+    ensure_unique_slug,
+    find_entity_by_id,
+    get_hierarchical_path,
+    remove_from_entity_cache,
+)
 
 # In-memory cache for topics
 _topic_cache: Dict[str, Topic] = {}

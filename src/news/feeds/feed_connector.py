@@ -37,7 +37,6 @@ class FeedConnector(Protocol):
         """
         ...
 
-
     @classmethod
     def handle_feed_update(cls, topic_id: str, feed_url: str):
         """
@@ -77,12 +76,24 @@ class FeedConnector(Protocol):
 
             # Process each item
             for item in items:
-                feed_item = FeedItem.create(item.get('url'), item.get('content', ''), item.get('needs_further_processing', False))
-                processing_queue.put((topic_id, 
-                                      item.get('content') if not feed_item.needs_further_processing else None,
-                                      feed_item))
+                feed_item = FeedItem.create(
+                    item.get("url"),
+                    item.get("content", ""),
+                    item.get("needs_further_processing", False),
+                )
+                processing_queue.put(
+                    (
+                        topic_id,
+                        (
+                            item.get("content")
+                            if not feed_item.needs_further_processing
+                            else None
+                        ),
+                        feed_item,
+                    )
+                )
                 # process_feed_item(topic_id, item.get("url"))
-                #cls._process_feed_item(item, topic_id)
+                # cls._process_feed_item(item, topic_id)
 
         except Exception as e:
             error("FEED", "Processing error", f"URL: {feed_url}, Error: {str(e)}")

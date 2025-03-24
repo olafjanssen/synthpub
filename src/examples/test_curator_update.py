@@ -38,12 +38,12 @@ def main():
     try:
 
         project = Project(
-            id='r4b-test-project',
+            id="r4b-test-project",
             title="Radio 4 Brainport News for Expats",
             description="Continuously updated news items for international residents in the Eindhoven region, formatted for radio broadcasts.",
             topic_ids=[],
             thumbnail_url=None,
-            slug='r4b-test-project',
+            slug="r4b-test-project",
             created_at=datetime.now(timezone.utc),
         )
         save_project(project)
@@ -53,7 +53,9 @@ def main():
             name="Cultural Events",
             description="Information about upcoming cultural events, performances, exhibitions, and art installations in the region.",
             feed_urls=["feed://eindhovennews.com/feed"],
-            publish_urls=["file:///Users/olafjanssen/Documents/Radio4Brainport/cultural-events.md"],
+            publish_urls=[
+                "file:///Users/olafjanssen/Documents/Radio4Brainport/cultural-events.md"
+            ],
         )
         info("TEST", "Created test topic", topic.name)
 
@@ -63,7 +65,7 @@ def main():
 
         start_update_processor()
         queue_topic_update(topic.id)
-        
+
         # Hold script ending until key is pressed
         input("Press Enter to end script...")
 
