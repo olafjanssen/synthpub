@@ -44,7 +44,7 @@ You are converting a knowledge article into a brief, engaging radio news segment
    - Avoid dramatic language unless truly warranted
 
 4. TEXT-TO-SPEECH OPTIMIZATION
-   - Avoid headers, markers, strange symbols that will not translate well into speech
+   - Avoid headers, mark-up symbols such as **bold** or _italic_ markers, strange symbols.
    - Use phonetic spellings for uncommon names or technical terms (e.g., "ASML (pronounced A-S-M-L)")
    - Include natural pauses with commas where appropriate
    - Spell out numbers, abbreviations, and acronyms that might be misread by TTS systems

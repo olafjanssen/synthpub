@@ -9,15 +9,9 @@ DESCRIPTION: {topic_description}
 
 Create a stub for an authoritative, neutral article, defining the core concept precisely. Do not create a whole article structure.
 
-## OUTPUT REQUIREMENTS
-
-1. Title: Create a precise, informative title (not just the topic name)
-2. Introduction: 2-3 sentences defining the topic and its significance
-3. Format: Standard Markdown
-
 ## CONSTRAINTS
 
-- Maximum length: 300 words
+- Maximum length: 100 words
 - No invented facts or statistics
 - No speculative content
 - Focus on structure, not detailed content
