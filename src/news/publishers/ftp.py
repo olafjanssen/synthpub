@@ -174,7 +174,7 @@ class FTPPublisher(Publisher):
                     ftplib.error_proto,
                     ftplib.error_reply,
                     ftplib.error_temp,
-                ) as e:
+                ):
                     # Create directories if they don't exist
                     info("FTP", "Creating directories", directory)
                     current_dir = "/"

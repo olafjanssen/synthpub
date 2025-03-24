@@ -155,9 +155,6 @@ def update_project(project_id: str, updated_data: dict) -> Optional[Project]:
     if not project:
         return None
 
-    # Get the current slug before updates
-    old_slug = project.slug or create_slug(project.title)
-
     # Update project fields
     for key, value in updated_data.items():
         if hasattr(project, key):
