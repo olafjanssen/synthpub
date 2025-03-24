@@ -14,9 +14,8 @@ from api.db.prompt_db import get_prompt
 from api.db.topic_db import save_topic
 from api.models.article import Article
 from api.models.topic import Topic
-
 # Import the global version graph instance from the curator package
-from curator import version_graph
+from curator.steps import version_graph
 from services.llm_service import get_llm
 from utils.logging import debug, error, info
 
