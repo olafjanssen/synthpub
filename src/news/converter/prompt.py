@@ -93,7 +93,7 @@ Use a clear, concise style appropriate for the content.
                 f"Output length: {len(converted_content)}",
             )
 
-            article.add_representation(content_type, converted_content)
+            article.add_representation(content_type, converted_content, {"extension": "txt"})
             info("PROMPT", "Conversion complete", f"Article: {article.title}")
 
             return True

@@ -127,7 +127,7 @@ class PodcastEpisodeRSSConverter(Converter):
         )
 
         # Store the RSS XML in the article's representation
-        article.add_representation(type_str, rss_xml)
+        article.add_representation(type_str, rss_xml, {"extension": "xml"})
 
         info("PODCAST", "RSS updated", f"Article: {article.title}, ID: {article.id}")
         return True

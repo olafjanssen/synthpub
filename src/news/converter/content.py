@@ -23,7 +23,7 @@ class Content(Converter):
                 "Using original content",
                 f"Article: {article.title}"
             )
-            article.add_representation(content_type, article.content)
+            article.add_representation(content_type, article.content, {"extension": "md"})
             return True
 
         except Exception as e:

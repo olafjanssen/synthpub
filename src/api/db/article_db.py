@@ -73,19 +73,40 @@ def article_to_files(article: Article, article_path: Path) -> None:
         # Add representation metadata to the metadata file
         # Replace any illegal characters in the type for filename
         safe_type = rep.type.lower().replace('/', '_').replace('\\', '_')
+        
+        # Get file extension from metadata or default to txt
+        extension = rep.metadata.get("extension", "txt") if rep.metadata else "txt"
+        
         rep_metadata = {
             "type": rep.type,
             "created_at": rep.created_at.isoformat(),
             "metadata": rep.metadata,
-            "filename": f"{safe_type}.{i}.txt",
+            "filename": f"{safe_type}.{i}.{extension}",
         }
         metadata["representations"].append(rep_metadata)
 
         # Write representation content to separate file
         rep_file = representations_dir / rep_metadata["filename"]
-        with open(rep_file, "w", encoding="utf-8") as f:
-            f.write(rep.content)
-            f.flush()
+        
+        # Check if content is binary (bytes or hex string with binary flag)
+        is_binary = isinstance(rep.content, bytes) or (
+            rep.metadata and rep.metadata.get("binary") is True
+        )
+        
+        if is_binary:
+            # Handle binary content
+            with open(rep_file, "wb") as f:
+                if isinstance(rep.content, bytes):
+                    f.write(rep.content)
+                else:
+                    # Convert hex string to bytes
+                    f.write(bytes.fromhex(rep.content))
+                f.flush()
+        else:
+            # Handle text content
+            with open(rep_file, "w", encoding="utf-8") as f:
+                f.write(rep.content)
+                f.flush()
 
     # Write metadata to file
     metadata_file = article_path / "metadata.yaml"
@@ -132,8 +153,18 @@ def files_to_article(metadata_path: Path) -> Article:
             rep_filename = rep_meta["filename"]
             rep_path = representations_dir / rep_filename
             if rep_path.exists():
-                with open(rep_path, "r", encoding="utf-8") as f:
-                    rep_content = f.read()
+                # Check if this is a binary representation type
+                is_binary = rep_meta.get("metadata", {}).get("binary", False)
+                
+                if is_binary:
+                    # Read as binary
+                    with open(rep_path, "rb") as f:
+                        rep_content = f.read().hex()
+                else:
+                    # Read as text
+                    with open(rep_path, "r", encoding="utf-8") as f:
+                        rep_content = f.read()
+                
                 rep = Representation(
                     type=rep_meta["type"],
                     content=rep_content,

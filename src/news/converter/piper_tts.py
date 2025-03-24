@@ -301,7 +301,7 @@ class PiperTTS(Converter):
                 f"Article: {article.title}, Duration: {total_duration:.1f}s",
             )
             article.add_representation(
-                content_type, audio_bytes.hex(), {"format": "mp3", "binary": True}
+                content_type, audio_bytes.hex(), {"format": "mp3", "binary": True, "extension": "mp3"}
             )
             return True
             
