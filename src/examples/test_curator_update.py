@@ -13,10 +13,8 @@ import yaml
 
 from api.db.project_db import add_topic_to_project, save_project
 from api.db.topic_db import save_topic
-from api.models.feed_item import FeedItem
 from api.models.project import Project
 from api.models.topic import Topic
-from curator.graph_workflow import create_curator_graph
 from curator.topic_updater import queue_topic_update, start_update_processor
 from utils.logging import debug, error, info
 

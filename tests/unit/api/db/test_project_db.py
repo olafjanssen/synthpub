@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-import yaml
 
 from src.api.db.project_db import (
     _get_project_directories,

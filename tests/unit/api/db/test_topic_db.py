@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
-import yaml
 
 from src.api.db.topic_db import (
     _ensure_cache,
@@ -21,7 +20,6 @@ from src.api.db.topic_db import (
     save_topic,
     update_topic,
 )
-from src.api.models.feed_item import FeedItem
 from src.api.models.topic import Topic
 
 

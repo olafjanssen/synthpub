@@ -1,6 +1,7 @@
 from pathlib import Path
 from unittest.mock import patch
 
+
 def test_load_all_prompts_from_disk():
     """Test loading all prompts from disk."""
     prompt_files = [

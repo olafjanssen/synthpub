@@ -6,13 +6,10 @@ from shutil import move
 from typing import List, Optional
 
 import yaml
-from fastapi.encoders import jsonable_encoder
 
 from ...models.article import Article
 from ...models.feed_item import FeedItem
-from ...utils.id_generator import generate_id
 from ..common import get_db_path
-from .storage import get_articles_path, load_yaml, save_yaml
 
 
 def DB_PATH():
