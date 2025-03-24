@@ -56,7 +56,6 @@ def get_llm(task: str):
 
     # Initialize the chat model using the generalized method
     return init_chat_model(
-        provider=provider,
         model=model_name,
         api_key=api_key,
         max_tokens=max_tokens,
