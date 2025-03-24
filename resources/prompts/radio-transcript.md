@@ -43,7 +43,14 @@ You are converting a knowledge article into a brief, engaging radio news segment
    - Present information, not opinions
    - Avoid dramatic language unless truly warranted
 
-## ARTICLE TO CONVERT:
+4. TEXT-TO-SPEECH OPTIMIZATION
+   - Avoid headers, markers, strange symbols that will not translate well into speech
+   - Use phonetic spellings for uncommon names or technical terms (e.g., "ASML (pronounced A-S-M-L)")
+   - Include natural pauses with commas where appropriate
+   - Spell out numbers, abbreviations, and acronyms that might be misread by TTS systems
+   - Avoid special characters like &, %, #, etc. - write them out instead
+
+## ARTICLE TO CONVERT
 
 {content}
 
