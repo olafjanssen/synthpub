@@ -2,7 +2,6 @@
 Database operations for projects using hierarchical folder structure.
 """
 
-import os
 import shutil
 import uuid
 from datetime import datetime, timezone

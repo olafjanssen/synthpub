@@ -6,7 +6,6 @@ from typing_extensions import runtime_checkable
 
 from api.db import article_db
 from api.models import Article
-from api.signals import convert_requested
 from utils.logging import debug, error
 
 

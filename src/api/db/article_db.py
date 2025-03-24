@@ -2,7 +2,6 @@
 Database operations for articles using hierarchical folder structure with markdown files.
 """
 
-import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +16,6 @@ from ..models.topic import Representation
 from . import topic_db
 from .common import (
     add_to_entity_cache,
-    create_slug,
     ensure_path_exists,
     find_entity_by_id,
     get_article_path,

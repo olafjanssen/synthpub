@@ -2,16 +2,14 @@
 Database operations for topics using hierarchical folder structure.
 """
 
-import os
 import shutil
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, cast
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 
-from ..models.project import Project
 from ..models.topic import FeedItem, Topic
 from . import article_db, project_db
 from .common import (

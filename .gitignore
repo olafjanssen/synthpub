@@ -165,7 +165,7 @@ cython_debug/
 #.idea/
 
 # Local databases
-db*/
+/db*/
 settings.yaml
 
 # Keys and credentials
