@@ -178,3 +178,20 @@ settings.yaml
 creds/
 
 .DS_Store
+.vscode/
+
+# macOS
+.DS_Store
+
+# Build and distribution
+dist/
+build/
+
+# Virtual environments 
+venv*/
+
+# Cache directories
+.pytest_cache/
+.mypy_cache/
+__pycache__/
+.coverage

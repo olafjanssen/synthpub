@@ -1,10 +1,41 @@
-/** @global {Object} bootstrap */
-/** @global {Object} bootstrap.Modal */
+/*global bootstrap */
 
 const API_URL = '/api';
 
 document.addEventListener("DOMContentLoaded", function() {
     loadProjects();
+    
+    // Connect create project button
+    const createProjectBtn = document.getElementById('createProjectBtn');
+    if (createProjectBtn) {
+        createProjectBtn.addEventListener('click', function() {
+            const form = document.getElementById('createProjectForm');
+            if (form.checkValidity()) {
+                createProject();
+            } else {
+                form.reportValidity();
+            }
+        });
+    }
+
+    // Connect update project button
+    const updateProjectBtn = document.getElementById('updateProjectBtn');
+    if (updateProjectBtn) {
+        updateProjectBtn.addEventListener('click', function() {
+            const form = document.getElementById('editProjectForm');
+            if (form.checkValidity()) {
+                updateProject();
+            } else {
+                form.reportValidity();
+            }
+        });
+    }
+
+    // Connect delete project button
+    const deleteProjectBtn = document.getElementById('deleteProjectBtn');
+    if (deleteProjectBtn) {
+        deleteProjectBtn.addEventListener('click', deleteProject);
+    }
 });
 
 function loadProjects() {
@@ -54,7 +85,7 @@ function createProject() {
         })
     })
     .then(response => response.json())
-    .then(project => {
+    .then(() => {
         loadProjects();
         document.getElementById("createProjectForm").reset();
         const modal = bootstrap.Modal.getInstance(document.getElementById("createProjectModal"));
@@ -222,8 +253,3 @@ function showError(message) {
     alert(message); // Simple error display for now
 }
 
-function viewTopics(projectId) {
-    // Implement the logic to view topics for the given projectId
-    console.log(`Viewing topics for project ID: ${projectId}`);
-    // You can redirect to a topics page or open a modal with topics
-} 

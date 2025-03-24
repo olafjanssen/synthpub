@@ -1,4 +1,5 @@
 """Common database utilities."""
+
 import os
 from pathlib import Path
 
@@ -10,7 +11,7 @@ def get_base_db_path() -> Path:
     settings = load_settings()
     return Path(settings.get("db_path") or os.getenv("DB_PATH", "../db"))
 
+
 def get_db_path(subfolder: str) -> Path:
     """Get database path for a specific subfolder."""
     return get_base_db_path() / subfolder
-

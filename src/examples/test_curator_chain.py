@@ -4,6 +4,7 @@ Example script to test the curator chain with a test topic.
 This script creates a test Topic and runs it through the curator chain
 to verify that the chain works correctly.
 """
+
 import os
 import sys
 from datetime import datetime, timezone
@@ -18,7 +19,7 @@ from utils.logging import debug, error, info
 
 # Load environment variables from settings.yaml
 if os.path.exists("settings.yaml"):
-    with open("settings.yaml", 'r') as f:
+    with open("settings.yaml", "r") as f:
         settings = yaml.safe_load(f)
         env_vars = settings.get("env_vars", {})
         debug("CONFIG", "Environment variables", f"Found {len(env_vars)} variables")
@@ -28,6 +29,7 @@ else:
     error("CONFIG", "Settings file not found", "settings.yaml")
     sys.exit(1)
 
+
 def main():
     """Run the test script."""
     try:
@@ -36,15 +38,15 @@ def main():
             name="Climate Change",
             description="Information about climate change, its effects, and mitigation strategies.",
             feed_urls=["https://example.com/climate-feed"],
-            publish_urls=["https://example.com/publish"]
+            publish_urls=["https://example.com/publish"],
         )
         info("TEST", "Created test topic", topic.name)
-                    
+
         # Create test feed item and content
         feed_item = FeedItem(
             url="https://example.com/climate-article",
             content_hash="abc123",
-            accessed_at=datetime.now(timezone.utc)
+            accessed_at=datetime.now(timezone.utc),
         )
         feed_content = """
         Recent research has shown that climate change is affecting ecosystems faster than previously thought.
@@ -57,7 +59,7 @@ def main():
         feed_item2 = FeedItem(
             url="https://example.com/climate-article2",
             content_hash="abc124",
-            accessed_at=datetime.now(timezone.utc)
+            accessed_at=datetime.now(timezone.utc),
         )
         feed_content2 = """
         Recent research has shown that climate change is affecting ecosystems faster than previously thought.
@@ -83,24 +85,25 @@ def main():
 
         # Run the chain with our test data
         info("TEST", "Running content processing", "Starting process")
-        result = graph.invoke({
-            "topic_id": topic.id,
-            "feed_content": feed_content,
-            "feed_item": feed_item
-        })
-        
+        result = graph.invoke(
+            {"topic_id": topic.id, "feed_content": feed_content, "feed_item": feed_item}
+        )
+
         # Display results
         info("TEST", "Chain completed", f"Result: {result.get('result', False)}")
 
-        result = graph.invoke({
-            "topic_id": topic.id,
-            "feed_content": feed_content2,
-            "feed_item": feed_item2
-        })
-                
+        result = graph.invoke(
+            {
+                "topic_id": topic.id,
+                "feed_content": feed_content2,
+                "feed_item": feed_item2,
+            }
+        )
+
     except Exception as e:
         error("TEST", "Error running test", str(e))
         raise
 
+
 if __name__ == "__main__":
-    main() 
+    main()
