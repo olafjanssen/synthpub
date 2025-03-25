@@ -45,7 +45,7 @@ def request_topic_publish(topic):
 @router.post(
     "/projects/{project_id}/topics",
     response_model=Topic,
-    summary="Create Topic",
+    summary="Create Topic for a Project",
     description="Creates a new topic and optionally triggers content generation",
     response_description="The newly created topic with its unique ID",
     responses={500: {"description": "Internal server error"}},
@@ -73,10 +73,10 @@ async def create_topic_for_project(
             thumbnail_url=thumbnail_url,
         )
 
+        add_topic_to_project(project_id, topic_id)
+
         save_topic(topic_data)
         info("TOPIC", "Created", topic.name)
-
-        add_topic_to_project(project_id, topic_id)
 
         if topic.feed_urls:
             background_tasks.add_task(request_topic_update, topic_id)
