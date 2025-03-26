@@ -1,6 +1,6 @@
-# Knowledge Synthesis: Article Integration Protocol
+# Knowledge Synthesis: Essential Insight Distillation
 
-OBJECTIVE: Create a cohesive, authoritative synthesis incorporating verified new information.
+OBJECTIVE: Create a focused, insightful synthesis that emphasizes key principles and discards peripheral information.
 
 CONTEXT:
 Topic: {topic_title}
@@ -26,31 +26,43 @@ CONTRADICTING INFORMATION:
 {contradicting_information}
 
 
-## INTEGRATION METHODOLOGY
+## INTEGRATION PRINCIPLES
 
-1. STRUCTURAL PRESERVATION
-   - Maintain the existing organizational framework unless substantively deficient
-   - Preserve section hierarchy and logical flow
-   - Retain successful elements of the original narrative approach
+1. RUTHLESS PRIORITIZATION
+   - Focus exclusively on insights that meaningfully advance understanding
+   - Discard peripheral details even if factually accurate
+   - Maintain strict adherence to topic scope - remove tangential information
 
-2. CONTENT INTEGRATION PROTOCOL
-   - Weave new information into appropriate existing sections
-   - When contradictions exist, preference newer information with greater precision
-   - Incorporate supporting information to strengthen existing claims
-   - Add new sections only when substantial new dimensions are introduced
+2. SUBSTANCE OVER COMPLETENESS
+   - Elevate key principles and core insights above comprehensive coverage
+   - Include only the most impactful examples, not exhaustive listings
+   - Value clarity and depth on critical points over breadth of coverage
 
-3. STYLISTIC HARMONIZATION
-   - Maintain consistent encyclopedic tone throughout
-   - Preserve citation patterns and attribution style
-   - Ensure consistent terminology usage across original and new material
-   - Balance detail density across all sections
+3. COGNITIVE ACCESSIBILITY
+   - Structure content to emphasize relationships between key concepts
+   - Use clear, direct language that prioritizes understanding over jargon
+   - Create meaningful transitions that reveal conceptual connections
 
-4. QUALITY CONTROL
-   - Eliminate redundancies created during integration
-   - Ensure logical transitions between original and new content
-   - Maintain appropriate scope (300-500 words)
-   - Verify all statements remain properly contextualized
+4. LENGTH DISCIPLINE
+   - Maintain a consistent length of 300-500 words maximum
+   - When adding new information, remove less essential existing content
+   - Avoid the temptation to include something merely because it exists
+
+5. INFORMATION HIERARCHY
+   - Position most important insights prominently at beginning of sections
+   - Create clear conceptual levels: principles > applications > details
+   - Ensure each paragraph has a single clear purpose that advances understanding
+
 
 ## DELIVERY REQUIREMENTS
 
-Produce a complete, refined article that reads as a unified, authoritative knowledge synthesis without seams between original and new content. The final product should appear as if written from a single, well-informed perspective.
+Produce a refined article that:
+
+1. Feels more insightful, not longer
+2. Prioritizes key principles over peripheral details
+3. Contains only the most relevant information to the topic
+4. Reads as a unified perspective with a clear point of view
+5. Is engaging and accessible, not dry or academic
+6. Does not exceed 500 words under any circumstances
+
+Remember: The hallmark of understanding is the ability to separate signal from noise. Your task is to intensify the signal while eliminating the noise.
