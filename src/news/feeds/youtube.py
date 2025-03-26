@@ -200,7 +200,6 @@ class YouTubeConnector(FeedConnector):
         info("YOUTUBE", "Fetching content", url)
         try:
             parsed = urlparse(url)
-            path_parts = [p for p in parsed.path.split("/") if p]
 
             # Handle different URL types
             if "playlist" in parsed.path:

@@ -25,7 +25,7 @@ from ftplib import FTP
 from typing import Tuple
 from urllib.parse import urlparse
 
-from api.models.topic import Topic
+from api.models.article import Article
 from utils.logging import debug, error, info, warning
 
 from .publisher_interface import Publisher
@@ -108,7 +108,7 @@ class FTPPublisher(Publisher):
         return url.startswith("ftp://")
 
     @staticmethod
-    def publish_content(url: str, topic: Topic) -> bool:
+    def publish_content(url: str, article: Article) -> bool:
         """
         Publish content to an FTP server.
 
@@ -117,7 +117,7 @@ class FTPPublisher(Publisher):
 
         Args:
             url: The FTP URL to publish to
-            topic: The topic containing the content to publish
+            article: The article containing the content to publish
 
         Returns:
             bool: True if publishing succeeded
@@ -128,24 +128,34 @@ class FTPPublisher(Publisher):
                 "Security Warning",
                 "Using insecure FTP protocol. Consider using SFTP/SCP instead.",
             )
-            info("FTP", "Publishing content", f"URL: {url}, Topic: {topic.name}")
+            info("FTP", "Publishing content", f"URL: {url}, Article: {article.title}")
             host, directory, filename = parse_ftp_url(url)
             username, password = get_ftp_credentials()
 
-            # Get the most recent representation
-            rep = topic.representations[-1]
+            # Use the most recent representation if available, otherwise use article content
+            if article.representations:
+                rep = article.representations[-1]
+                content = rep.content
+                is_binary = rep.metadata.get("binary", False)
+                info("FTP", "Using representation", f"Type: {rep.type}")
+            else:
+                content = article.content
+                is_binary = False
+                info(
+                    "FTP", "Using original article content", f"Article: {article.title}"
+                )
 
             # Create a file-like object in memory
-            if rep.metadata.get("binary", False):
+            if is_binary:
                 # Convert hex string back to bytes
-                binary_data = bytes.fromhex(rep.content)
+                binary_data = bytes.fromhex(content)
                 file_obj = io.BytesIO(binary_data)
                 debug(
                     "FTP", "Prepared binary content", f"Size: {len(binary_data)} bytes"
                 )
             else:
-                file_obj = io.BytesIO(rep.content.encode("utf-8"))
-                debug("FTP", "Prepared text content", f"Size: {len(rep.content)} chars")
+                file_obj = io.BytesIO(content.encode("utf-8"))
+                debug("FTP", "Prepared text content", f"Size: {len(content)} chars")
 
             # Connect to FTP server
             debug("FTP", "Connecting", f"Host: {host}")
@@ -164,7 +174,7 @@ class FTPPublisher(Publisher):
                     ftplib.error_proto,
                     ftplib.error_reply,
                     ftplib.error_temp,
-                ) as e:
+                ):
                     # Create directories if they don't exist
                     info("FTP", "Creating directories", directory)
                     current_dir = "/"
@@ -190,7 +200,7 @@ class FTPPublisher(Publisher):
                 info(
                     "FTP",
                     "Published successfully",
-                    f"Type: {rep.type}, Path: {directory}/{filename}",
+                    f"Path: {directory}/{filename}",
                 )
 
             return True

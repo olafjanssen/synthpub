@@ -16,7 +16,7 @@ import requests
 from piper.voice import PiperVoice
 from pydub import AudioSegment
 
-from api.models.topic import Topic
+from api.models.article import Article
 from utils.logging import debug, error, info, warning
 
 from .converter_interface import Converter
@@ -251,29 +251,30 @@ class PiperTTS(Converter):
         return content_type.startswith("piper-tts")
 
     @classmethod
-    def convert_representation(cls, content_type: str, topic: Topic) -> bool:
+    def convert_representation(cls, content_type: str, article: Article) -> bool:
         try:
-            info("PIPER_TTS", "Starting conversion", f"Topic: {topic.name}")
-            content = topic.representations[-1].content
+            info("PIPER_TTS", "Starting conversion", f"Article: {article.title}")
 
-            # Get voice from URL or use default
-            voice_key = "en_US-lessac-medium"
-            speaker_id = None
-
-            # Parse type string for voice_key and optional speaker_id
+            # Parse voice key from content type if specified, or use default
+            voice_key = "en_US-lessac-medium"  # Default voice
             if "/" in content_type:
-                parts = content_type.split("/", 1)[1].split(":")
-                voice_key = parts[0]
+                _, voice_key = content_type.split("/", 1)
 
-                # Extract speaker_id if provided
-                if len(parts) > 1 and parts[1].isdigit():
-                    speaker_id = int(parts[1])
-
-            info(
-                "PIPER_TTS",
-                "Using voice",
-                f"Voice: {voice_key}, Speaker ID: {speaker_id}",
-            )
+            # Use the most recent representation's content, or fall back to article content
+            if article.representations:
+                content = article.representations[-1].content
+                info(
+                    "PIPER_TTS",
+                    "Using previous representation",
+                    f"Type: {article.representations[-1].type}",
+                )
+            else:
+                content = article.content
+                info(
+                    "PIPER_TTS",
+                    "No previous representations",
+                    "Using original article content",
+                )
 
             # Split content into manageable chunks
             sentences = cls.split_into_sentences(content)
@@ -283,8 +284,19 @@ class PiperTTS(Converter):
             audio_segments = []
             for i, sentence in enumerate(sentences):
                 debug("PIPER_TTS", "Processing chunk", f"{i+1}/{len(sentences)}")
-                audio_segment = cls.generate_audio(sentence, voice_key, speaker_id)
-                audio_segments.append(audio_segment)
+                try:
+                    audio_segment = cls.generate_audio(sentence, voice_key)
+                    audio_segments.append(audio_segment)
+                except Exception as chunk_error:
+                    error(
+                        "PIPER_TTS",
+                        "Chunk processing failed",
+                        f"Chunk {i+1}: {str(chunk_error)}",
+                    )
+                    # Continue with other chunks
+
+            if not audio_segments:
+                raise ValueError("No audio was generated from any chunks")
 
             # Concatenate all audio segments
             combined_audio = sum(audio_segments)
@@ -299,18 +311,12 @@ class PiperTTS(Converter):
             info(
                 "PIPER_TTS",
                 "Conversion complete",
-                f"Topic: {topic.name}, Duration: {total_duration:.1f}s",
+                f"Article: {article.title}, Duration: {total_duration:.1f}s",
             )
-            topic.add_representation(
+            article.add_representation(
                 content_type,
                 audio_bytes.hex(),
-                {
-                    "format": "mp3",
-                    "binary": True,
-                    "voice": voice_key,
-                    "speaker_id": speaker_id,
-                    "duration_seconds": total_duration,
-                },
+                {"format": "mp3", "binary": True, "extension": "mp3"},
             )
             return True
 
@@ -318,6 +324,6 @@ class PiperTTS(Converter):
             error(
                 "PIPER_TTS",
                 "Conversion failed",
-                f"Topic: {topic.name}, Error: {str(e)}",
+                f"Article: {article.title}, Error: {str(e)}",
             )
             return False

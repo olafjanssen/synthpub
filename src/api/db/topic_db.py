@@ -2,16 +2,14 @@
 Database operations for topics using hierarchical folder structure.
 """
 
-import os
 import shutil
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, cast
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 
-from ..models.project import Project
 from ..models.topic import FeedItem, Topic
 from . import article_db, project_db
 from .common import (
@@ -67,7 +65,7 @@ def _load_all_topics_from_disk() -> List[Topic]:
                     # Set slug from directory name if not already set
                     if not topic_data.get("slug"):
                         topic_data["slug"] = topic_dir.name
-                        
+
                     topics.append(Topic(**topic_data))
 
     return topics
@@ -140,8 +138,10 @@ def save_topic(topic: Topic) -> None:
     project = project_result  # Now project has the type Project, not Optional[Project]
 
     # Create safe project slug - always use a string
-    safe_project_slug: str = project.slug if project.slug else create_slug(project.title)
-    
+    safe_project_slug: str = (
+        project.slug if project.slug else create_slug(project.title)
+    )
+
     # Use existing topic slug if available, otherwise create a new one
     if topic.slug:
         topic_slug = topic.slug
@@ -213,7 +213,7 @@ def get_topic(topic_id: str) -> Optional[Topic]:
                 # Set slug from directory name if not already set
                 if not data.get("slug"):
                     data["slug"] = topic_path.name
-                    
+
                 topic = Topic(**data)
                 _topic_cache[topic_id] = topic
                 return topic
@@ -248,7 +248,7 @@ def get_topic_by_slug(project_slug: str, topic_slug: str) -> Optional[Topic]:
         # Set slug from path if not already set
         if not data.get("slug"):
             data["slug"] = topic_slug
-            
+
         topic = Topic(**data)
         _topic_cache[topic.id] = topic
         return topic
@@ -269,19 +269,19 @@ def load_topics() -> Dict[str, Topic]:
 def create_topic(name: str, description: str, project_id: str) -> Topic:
     """Create a new topic and add to cache."""
     topic_id = str(uuid.uuid4())
-    
+
     # Get project to determine where topic should be stored
     project = project_db.get_project(project_id)
     if not project:
         raise ValueError(f"Project with ID {project_id} not found")
-    
+
     # Create safe project slug - ensure it's a string
     project_slug: str = project.slug if project.slug else create_slug(project.title)
-    
+
     # Get project path for generating unique topic slug
     project_path = get_hierarchical_path(project_slug)
     topic_slug = ensure_unique_slug(name, "topic", project_path)
-    
+
     topic = Topic(id=topic_id, name=name, description=description, slug=topic_slug)
 
     # Add this topic to the project
@@ -346,7 +346,6 @@ def update_topic(topic_id: str, updated_data: dict) -> Optional[Topic]:
     for key, value in updated_data.items():
         if hasattr(topic, key):
             setattr(topic, key, value)
-
 
     # Just save in place
     save_topic(topic)

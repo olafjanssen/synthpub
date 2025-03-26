@@ -241,7 +241,7 @@ async function createTopic() {
         .filter(url => url.trim() !== '');
 
     try {
-        const response = await fetch(`${API_URL}/topics/`, {
+        const response = await fetch(`${API_URL}/projects/${projectId}/topics`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -260,15 +260,6 @@ async function createTopic() {
         }
         
         const topic = await response.json();
-        
-        // Add topic to project
-        const projectResponse = await fetch(`${API_URL}/projects/${projectId}/topics/${topic.id}`, {
-            method: 'POST'
-        });
-
-        if (!projectResponse.ok) {
-            throw new Error(`Failed to add topic to project: ${projectResponse.status}`);
-        }
         
         // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('createTopicModal'));

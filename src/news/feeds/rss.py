@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 import feedparser
 
-from utils.logging import debug, error
+from utils.logging import error
 
 from .feed_connector import FeedConnector
 

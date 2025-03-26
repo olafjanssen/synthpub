@@ -6,7 +6,7 @@ from typing_extensions import runtime_checkable
 
 from api.db.cache_manager import add_to_cache, get_from_cache
 from api.models.feed_item import FeedItem
-from curator.topic_updater import process_feed_item, processing_queue
+from curator.topic_updater import processing_queue
 from utils.logging import debug, error, info
 
 

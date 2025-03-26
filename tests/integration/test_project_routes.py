@@ -158,7 +158,7 @@ def setup_mocks(monkeypatch, mock_project_db):
         "src.api.db.common.get_hierarchical_path",
         "src.api.db.common.ensure_path_exists",
         "src.api.db.common.find_entity_by_id",
-        "src.api.db.project_db.rmtree",
+        "src.api.db.project_db.shutil.rmtree",
         "src.api.db.project_db.get_hierarchical_path",
         "src.api.db.project_db.ensure_path_exists",
         "src.api.db.project_db.add_to_entity_cache",
