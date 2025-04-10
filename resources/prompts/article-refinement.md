@@ -1,19 +1,18 @@
 # Knowledge Synthesis: Essential Insight Distillation
 
-OBJECTIVE: Create a focused, insightful synthesis that emphasizes key principles and discards peripheral information.
+OBJECTIVE: Create a focused, insightful synthesis of an existing article taking into account new information coming in that emphasizes key principles / recent news and discards peripheral or outdated information.
 
 CONTEXT:
 Topic: {topic_title}
 Description: {topic_description}
 
-## STRUCTURE TO ADHERE TO
-
-{structure_prompt}
-
 ## EXISTING ARTICLE
+
+---------------------------------------------------
 
 {article}
 
+---------------------------------------------------
 
 ## VERIFIED INFORMATION
 
@@ -53,6 +52,7 @@ CONTRADICTING INFORMATION:
    - Avoid the temptation to include something merely because it exists
 
 5. INFORMATION HIERARCHY
+   - **Important: Stick to the existing structure and fit the information in that structure, do not add any extra sections!**
    - Position most important insights prominently at beginning of sections
    - Create clear conceptual levels: principles > applications > details
    - Ensure each paragraph has a single clear purpose that advances understanding
