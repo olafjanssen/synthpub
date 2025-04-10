@@ -4,19 +4,11 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 
-from api.db.topic_db import (
-    get_topic,
-    load_topics,
-    mark_topic_deleted,
-    save_topic,
-    update_topic,
-)
+from api.db.topic_db import (get_topic, load_topics, mark_topic_deleted,
+                             save_topic, update_topic)
 from api.models.topic import Topic, TopicCreate, TopicUpdate
-from curator.topic_updater import (
-    handle_topic_publishing,
-    process_feed_item,
-    queue_topic_update,
-)
+from curator.topic_updater import (handle_topic_publishing, process_feed_item,
+                                   queue_topic_update)
 from services.pexels_service import get_random_thumbnail
 from utils.logging import debug, error, info
 
@@ -61,6 +53,11 @@ async def create_topic_for_project(
         if not thumbnail_url or thumbnail_url.lower() in ["auto", "none", ""]:
             thumbnail_data = get_random_thumbnail(f"{topic.name} {topic.description}")
             thumbnail_url = thumbnail_data.get("thumbnail_url")
+            
+        # Handle empty prompt_id
+        prompt_id = topic.prompt_id
+        if prompt_id == "":
+            prompt_id = None
 
         topic_data = Topic(
             id=topic_id,
@@ -71,6 +68,7 @@ async def create_topic_for_project(
             article=None,
             processed_feeds=[],
             thumbnail_url=thumbnail_url,
+            prompt_id=prompt_id,
         )
 
         add_topic_to_project(project_id, topic_id)
@@ -209,6 +207,11 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
                     f"{topic.name} {topic.description}"
                 )
                 update_data["thumbnail_url"] = thumbnail_data.get("thumbnail_url")
+                
+        # Special handling for prompt_id
+        if "prompt_id" in update_data and update_data["prompt_id"] == "":
+            # Convert empty string to None to use default prompt
+            update_data["prompt_id"] = None
 
         # Update topic
         for key, value in update_data.items():

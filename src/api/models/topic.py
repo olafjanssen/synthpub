@@ -26,6 +26,10 @@ class TopicBase(BaseModel):
         default=None,
         description="URL-friendly version of the name for use in paths",
     )
+    prompt_id: Optional[str] = Field(
+        default=None,
+        description="ID of a custom prompt to use for article generation instead of the default",
+    )
 
 
 class TopicCreate(TopicBase):
@@ -52,6 +56,10 @@ class TopicUpdate(BaseModel):
     slug: Optional[str] = Field(
         default=None,
         description="Updated URL-friendly version of the name",
+    )
+    prompt_id: Optional[str] = Field(
+        default=None,
+        description="Updated ID of a custom prompt for article generation",
     )
 
 

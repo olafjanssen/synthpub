@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", function() {
         loadTopics(projectId);
     }
     
+    // Load available prompts for the dropdowns
+    loadPrompts();
+    
     // Connect create topic button
     const createTopicBtn = document.getElementById('createTopicBtn');
     if (createTopicBtn) {
@@ -220,6 +223,53 @@ function removeFeedInput(button) {
     button.closest('.input-group').remove();
 }
 
+// Function to load prompts from API and populate dropdowns
+async function loadPrompts() {
+    try {
+        const response = await fetch(`${API_URL}/prompts`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const prompts = await response.json();
+        
+        // Sort prompts alphabetically by name
+        prompts.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // Populate create form dropdown
+        const createDropdown = document.getElementById('promptSelect');
+        // Populate edit form dropdown
+        const editDropdown = document.getElementById('editPromptSelect');
+        
+        // Clear any existing options except the default
+        while (createDropdown.options.length > 1) {
+            createDropdown.remove(1);
+        }
+        
+        while (editDropdown.options.length > 1) {
+            editDropdown.remove(1);
+        }
+        
+        // Add options for each prompt
+        prompts.forEach(prompt => {
+            // Add to create form dropdown
+            const createOption = document.createElement('option');
+            createOption.value = prompt.id;
+            createOption.textContent = prompt.name;
+            createDropdown.appendChild(createOption);
+            
+            // Add to edit form dropdown
+            const editOption = document.createElement('option');
+            editOption.value = prompt.id;
+            editOption.textContent = prompt.name;
+            editDropdown.appendChild(editOption);
+        });
+    } catch (error) {
+        console.error('Error loading prompts:', error);
+        showError('Failed to load prompts. Default prompt will be used.');
+    }
+}
+
 async function createTopic() {
     // Get the project ID from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -233,6 +283,7 @@ async function createTopic() {
     const name = document.getElementById('topicName').value;
     const description = document.getElementById('topicDescription').value;
     const thumbnailUrl = document.getElementById('thumbnailUrl').value.trim();
+    const promptId = document.getElementById('promptSelect').value;
     const feedUrls = Array.from(document.querySelectorAll('.feed-url'))
         .map(input => input.value)
         .filter(url => url.trim() !== '');
@@ -251,7 +302,8 @@ async function createTopic() {
                 description, 
                 feed_urls: feedUrls, 
                 publish_urls: publishUrls,
-                thumbnail_url: thumbnailUrl // Send empty string if field is empty
+                thumbnail_url: thumbnailUrl,
+                prompt_id: promptId || null
             })
         });
         
@@ -335,6 +387,21 @@ function editTopic(topicId) {
             document.getElementById('editTopicName').value = topic.name;
             document.getElementById('editTopicDescription').value = topic.description;
             document.getElementById('editThumbnailUrl').value = topic.thumbnail_url || '';
+            
+            // Set the custom prompt dropdown
+            const promptDropdown = document.getElementById('editPromptSelect');
+            if (topic.prompt_id) {
+                // Find and select the matching option
+                for (let i = 0; i < promptDropdown.options.length; i++) {
+                    if (promptDropdown.options[i].value === topic.prompt_id) {
+                        promptDropdown.selectedIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                // Select the default option
+                promptDropdown.selectedIndex = 0;
+            }
 
             // Clear existing feed URLs
             const editFeedUrlsContainer = document.getElementById('editFeedUrlsContainer');
@@ -467,6 +534,7 @@ async function updateTopic() {
     const name = document.getElementById('editTopicName').value;
     const description = document.getElementById('editTopicDescription').value;
     const thumbnailUrl = document.getElementById('editThumbnailUrl').value.trim();
+    const promptId = document.getElementById('editPromptSelect').value;
     const feedInputs = document.querySelectorAll('#editFeedUrlsContainer .feed-url');
     const publishInputs = document.querySelectorAll('#editPublishUrlsContainer .edit-publish-url');
     const urlParams = new URLSearchParams(window.location.search);
@@ -491,7 +559,8 @@ async function updateTopic() {
                 description, 
                 feed_urls, 
                 publish_urls,
-                thumbnail_url: thumbnailUrl // Send empty string if field is empty
+                thumbnail_url: thumbnailUrl,
+                prompt_id: promptId || null
             })
         });
 

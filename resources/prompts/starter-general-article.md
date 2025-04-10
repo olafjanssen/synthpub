@@ -17,4 +17,4 @@ Create a stub for an authoritative, neutral article, defining the core concept p
 - Focus on structure, not detailed content
 - Neutral, encyclopedic tone
 
-This stub will be iteratively expanded with verified information from multiple sources.
+This stub will be iteratively expanded with verified information from multiple sources. 

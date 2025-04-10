@@ -6,6 +6,10 @@ CONTEXT:
 Topic: {topic_title}
 Description: {topic_description}
 
+## STRUCTURE TO ADHERE TO
+
+{structure_prompt}
+
 ## EXISTING ARTICLE
 
 {article}

@@ -18,6 +18,7 @@ from .routes.article_routes import router as article_router
 from .routes.health import router as health_router
 from .routes.log_routes import router as log_router
 from .routes.project_routes import router as project_router
+from .routes.prompt_routes import router as prompt_router
 from .routes.settings import router as settings_router
 from .routes.topic_routes import router as topic_router
 
@@ -41,7 +42,8 @@ async def lifespan(app: FastAPI):
 
     # Initialize the news scheduler
     try:
-        from news.news_scheduler import start_scheduler_thread, stop_scheduler_thread
+        from news.news_scheduler import (start_scheduler_thread,
+                                         stop_scheduler_thread)
 
         start_scheduler_thread()
         debug("SYSTEM", "News scheduler started")
@@ -102,6 +104,7 @@ api_router.include_router(health_router, tags=["health"])
 api_router.include_router(project_router, tags=["projects"])
 api_router.include_router(settings_router, tags=["settings"])
 api_router.include_router(log_router, tags=["logs"], prefix="/logs")
+api_router.include_router(prompt_router, tags=["prompts"])
 
 # Include the API router in the main app
 app.include_router(api_router)

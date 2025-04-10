@@ -14,7 +14,6 @@ from api.db.prompt_db import get_prompt
 from api.db.topic_db import save_topic
 from api.models.article import Article
 from api.models.topic import Topic
-
 # Import the global version graph instance from the curator package
 from curator.steps import version_graph
 from services.llm_service import get_llm
@@ -111,9 +110,20 @@ def generate_article(topic: Topic) -> Article:
     llm = get_llm("article_generation")
 
     # Retrieve the prompt template from the database
-    prompt_data = get_prompt("article-generation")
+    # Use custom prompt if specified, otherwise use the default
+    prompt_id_to_use = topic.prompt_id if topic.prompt_id else "starter-general-article"
+    prompt_data = get_prompt(prompt_id_to_use)
     if not prompt_data:
-        raise ValueError("Article generation prompt not found in the database")
+        if topic.prompt_id:
+            # Custom prompt not found, log a warning and fall back to default
+            info("GENERATOR", "Custom prompt not found", f"Falling back to default prompt. Custom prompt ID: {topic.prompt_id}")
+            prompt_data = get_prompt("starter-general-article")
+            if not prompt_data:
+                raise ValueError("Article generation prompt not found in the database")
+        else:
+            raise ValueError("Article generation prompt not found in the database")
+
+    info("GENERATOR", "Using prompt", f"Prompt: {prompt_data.template}")
 
     # Create and format the prompt
     prompt = PromptTemplate.from_template(prompt_data.template)

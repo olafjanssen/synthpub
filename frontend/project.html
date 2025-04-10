@@ -111,6 +111,14 @@
                             <small class="form-text text-muted">Leave empty to use auto-generated thumbnail</small>
                         </div>
                         <div class="mb-3">
+                            <label for="promptSelect" class="form-label">Article Generation Prompt</label>
+                            <select class="form-select" id="promptSelect">
+                                <option value="">Default prompt</option>
+                                <!-- Prompt options will be loaded dynamically -->
+                            </select>
+                            <small class="form-text text-muted">Optional. Leave as default to use standard article generation</small>
+                        </div>
+                        <div class="mb-3">
                             <label for="feedUrls" class="form-label">Feed URLs</label>
                             <div id="feedUrlsContainer">
                                 <div class="input-group mb-2">
@@ -167,6 +175,14 @@
                             <label for="editThumbnailUrl" class="form-label">Thumbnail URL</label>
                             <input type="url" class="form-control" id="editThumbnailUrl" placeholder="https://example.com/image.jpg">
                             <small class="form-text text-muted">Leave empty to use auto-generated thumbnail</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPromptSelect" class="form-label">Article Generation Prompt</label>
+                            <select class="form-select" id="editPromptSelect">
+                                <option value="">Default prompt</option>
+                                <!-- Prompt options will be loaded dynamically -->
+                            </select>
+                            <small class="form-text text-muted">Optional. Leave as default to use standard article generation</small>
                         </div>
                         <div class="mb-3">
                             <label for="editFeedUrls" class="form-label">Feed URLs</label>
