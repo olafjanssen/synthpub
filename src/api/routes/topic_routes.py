@@ -3,10 +3,12 @@
 from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
 
-from api.db.topic_db import (get_topic, load_topics, mark_topic_deleted,
+from api.db.topic_db import (get_topic, get_topic_location, get_topic_path, load_topics, mark_topic_deleted,
                              save_topic, update_topic)
 from api.models.topic import Topic, TopicCreate, TopicUpdate
+from curator.graph_workflow import create_curator_graph
 from curator.topic_updater import (handle_topic_publishing, process_feed_item,
                                    queue_topic_update)
 from services.pexels_service import get_random_thumbnail
@@ -251,3 +253,62 @@ async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
     except Exception as e:
         error("TOPIC", "Publishing error", str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@router.get(
+    "/topics/{topic_id}/workflow",
+    summary="Get Workflow Visualization",
+    description="Generates and returns a visualization of the curator workflow for a topic",
+    responses={
+        404: {"description": "Topic not found"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def get_workflow_visualization(topic_id: str, format: str = "png"):
+    """
+    Generate and return a visualization of the curator workflow for a topic.
+    
+    Args:
+        topic_id: The ID of the topic
+        format: The format of the visualization (png or md)
+    
+    Returns:
+        The visualization file
+    """
+    try:
+        # Get the topic location
+        project_slug, topic_slug = get_topic_location(topic_id)
+        if not project_slug or not topic_slug:
+            raise HTTPException(status_code=404, detail="Topic not found")
+
+        # Get the topic path
+        topic_path = get_topic_path(project_slug, topic_slug)
+        if not topic_path:
+            raise HTTPException(status_code=404, detail="Topic not found")
+
+        # Create the graph
+        graph = create_curator_graph()
+        
+        # Generate the visualization
+        if format == "png":
+            # Generate and save the PNG visualization
+            png_data = graph.get_graph().draw_mermaid_png()
+            png_file = topic_path / "workflow.png"
+            with open(png_file, "wb") as f:
+                f.write(png_data)
+            return FileResponse(png_file, media_type="image/png")
+        elif format == "md":
+            # Generate and save the Mermaid diagram
+            mermaid_diagram = graph.get_graph().draw_mermaid()
+            md_file = topic_path / "workflow.md"
+            with open(md_file, "w", encoding="utf-8") as f:
+                f.write("```mermaid\n")
+                f.write(mermaid_diagram)
+                f.write("\n```")
+            return FileResponse(md_file, media_type="text/markdown")
+        else:
+            raise HTTPException(status_code=400, detail="Invalid format. Use 'png' or 'md'")
+
+    except Exception as e:
+        error("TOPIC", "Failed to generate workflow visualization", str(e))
+        raise HTTPException(status_code=500, detail=str(e))

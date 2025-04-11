@@ -270,6 +270,20 @@ async function loadPrompts() {
     }
 }
 
+async function generateWorkflowVisualization(topicId) {
+    try {
+        const response = await fetch(`${API_URL}/topics/${topicId}/workflow?format=png`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // The visualization is automatically saved to the topic's directory
+        // We don't need to do anything with the response
+    } catch (error) {
+        console.error('Error generating workflow visualization:', error);
+        // Don't show error to user as this is a background task
+    }
+}
+
 async function createTopic() {
     // Get the project ID from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -312,6 +326,9 @@ async function createTopic() {
         }
         
         const topic = await response.json();
+        
+        // Generate workflow visualization
+        await generateWorkflowVisualization(topic.id);
         
         // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('createTopicModal'));
@@ -567,6 +584,9 @@ async function updateTopic() {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        // Generate workflow visualization
+        await generateWorkflowVisualization(topicId);
 
         // Close modal and refresh topics list
         const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
