@@ -161,7 +161,7 @@ class FTPPublisher(Publisher):
             debug("FTP", "Connecting", f"Host: {host}")
             with FTP(host) as ftp:
                 ftp.set_debuglevel(2)
-                ftp.set_pasv(False)
+                ftp.set_pasv(True)
                 ftp.login(username, password)
                 debug("FTP", "Logged in", f"Username: {username}")
 
