@@ -115,6 +115,9 @@ def get_archive_path(
         Path object with the appropriate hierarchy in the archive folder
     """
     base_path = get_db_path("archive")
+    
+    # Ensure the base archive directory exists
+    base_path.mkdir(exist_ok=True, parents=True)
 
     if project_slug:
         base_path = base_path / project_slug

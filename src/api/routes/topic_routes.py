@@ -365,6 +365,7 @@ async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
             raise HTTPException(status_code=404, detail="Project not found for topic")
             
         # Archive the topic instead of creating a new archive version
+        info("TOPIC", "Archiving", f"Topic ID: {topic_id}")
         archived = archive_topic(topic_id)
         if not archived:
             error("TOPIC", "Archive failed", f"Topic ID: {topic_id}")
@@ -405,5 +406,11 @@ async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
         return new_topic
         
     except Exception as e:
-        error("TOPIC", "Restart error", str(e))
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        try:
+            error_message = str(e)
+            error("TOPIC", "Restart error", error_message)
+            raise HTTPException(status_code=500, detail=f"Internal server error: {error_message}")
+        except Exception as formatting_error:
+            # If error formatting fails, use a simple error response
+            print(f"Error during exception handling: {formatting_error}")
+            raise HTTPException(status_code=500, detail="Internal server error")
