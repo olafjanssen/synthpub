@@ -48,7 +48,7 @@ CONTRADICTING INFORMATION:
 
 4. LENGTH DISCIPLINE
    - Maintain a consistent length of 300-500 words maximum
-   - When adding new information, remove less essential existing content
+   - When adding new information, **remove less essential existing content**
    - Avoid the temptation to include something merely because it exists
 
 5. INFORMATION HIERARCHY
