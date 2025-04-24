@@ -33,7 +33,8 @@ def get_llm(task: str):
 
     provider = task_settings.get("provider", "openai")
     model_name = task_settings.get("model_name", "gpt-4")
-    max_tokens = task_settings.get("max_tokens", 800)
+    max_tokens = task_settings.get("max_tokens", 4000)
+    temperature = task_settings.get("temperature", 0.2)
 
     # Create rate limiter
     rate_limiter = InMemoryRateLimiter(
@@ -60,5 +61,5 @@ def get_llm(task: str):
         api_key=api_key,
         max_tokens=max_tokens,
         rate_limiter=rate_limiter,
-        temperature=0,
+        temperature=temperature,
     )

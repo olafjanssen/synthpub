@@ -77,7 +77,6 @@ llm:
 
 db_path: ../db
 ```
-
 ## Prompt Templates
 
 SynthPub uses customizable prompt templates stored as Markdown files in the `resources/prompts` directory. These templates are used for various LLM operations:
@@ -168,3 +167,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 This project is developed using Cursor AI for code generation, documentation, and development assistance. While human developers review and validate the code, a significant portion of the implementation, documentation, and architectural decisions are generated or assisted by AI tools. 
 
 The project represents a true AI-human collaboration where AI tools are not just assistants but active participants in the development process. While human developers maintain final control and make critical decisions, the majority of the codebase and documentation is AI-generated and then refined through human review and modification.
+
