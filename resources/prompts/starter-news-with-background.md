@@ -12,14 +12,14 @@ Create a structured **stub** for a living article designed to serve as the evolv
 The structure should include:
 
 ### Latest News Summary
-A brief, always-current summary of the 2 or maximum 3 most recent and relevant developments.
+A brief, always-current summary of most recent news addition. Older news should be sent to the next section, in minimal form.
 
 * 1–3 short paragraphs (max 100 words)
 * Prioritize clarity and factual immediacy
 * Includes: What happened, when, where, and why it matters
 
 ### Context and Background
-A growing, non-repetitive collection of contextual information and relevant background knowledge.
+A growing, non-repetitive collection of contextual information and relevant background knowledge. Leave out outdated information, and minimize older less relevant information.
 
 ## CONSTRAINTS
 
