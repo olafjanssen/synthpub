@@ -21,6 +21,8 @@ WARNING: FTP is an insecure protocol that transmits data and credentials in plai
 import ftplib
 import io
 import os
+import re
+from datetime import datetime
 from ftplib import FTP
 from typing import Tuple
 from urllib.parse import urlparse
@@ -95,6 +97,48 @@ def parse_ftp_url(url: str) -> Tuple[str, str, str]:
     return parsed.netloc, directory, filename
 
 
+def process_filename_template(filename: str) -> str:
+    """
+    Process a filename template by replacing placeholders with dynamic values.
+    
+    Currently supported placeholders:
+    - {date} - Current date in YYYY-MM-DD format
+    - {time} - Current time in HHMMSS format
+    - {datetime} - Current date and time in YYYYMMDD_HHMMSS format
+    - {year} - Current year (YYYY)
+    - {month} - Current month (MM)
+    - {day} - Current day (DD)
+    
+    Args:
+        filename: The filename template with potential placeholders
+        
+    Returns:
+        Processed filename with placeholders replaced by actual values
+    """
+    if not re.search(r'{.*?}', filename):
+        return filename
+    
+    now = datetime.now()
+    
+    # Define template replacements
+    replacements = {
+        '{date}': now.strftime('%Y-%m-%d'),
+        '{time}': now.strftime('%H%M%S'),
+        '{datetime}': now.strftime('%Y%m%d_%H%M%S'),
+        '{year}': now.strftime('%Y'),
+        '{month}': now.strftime('%m'),
+        '{day}': now.strftime('%d')
+    }
+    
+    # Apply template replacements
+    processed_filename = filename
+    for token, value in replacements.items():
+        processed_filename = processed_filename.replace(token, value)
+    
+    debug("FTP", "Filename template processed", f"Original: {filename}, Processed: {processed_filename}")
+    return processed_filename
+
+
 class FTPPublisher(Publisher):
     """Publisher for uploading content to FTP servers.
 
@@ -130,6 +174,10 @@ class FTPPublisher(Publisher):
             )
             info("FTP", "Publishing content", f"URL: {url}, Article: {article.title}")
             host, directory, filename = parse_ftp_url(url)
+            
+            # Process filename templates (e.g., replace {date} with current date)
+            filename = process_filename_template(filename)
+            
             username, password = get_ftp_credentials()
 
             # Use the most recent representation if available, otherwise use article content
