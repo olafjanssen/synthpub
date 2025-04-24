@@ -7,6 +7,7 @@ from api.models.article import Article
 from utils.logging import debug, error, info
 
 from .publisher_interface import Publisher
+from .utils import process_filename_template
 
 
 def parse_file_url(url: str) -> Path:
@@ -55,6 +56,19 @@ class FilePublisher(Publisher):
         try:
             info("FILE", "Publishing content", f"URL: {url}, Article: {article.title}")
             file_path = parse_file_url(url)
+            
+            # Process filename templates in the path
+            # Extract the filename part for template processing
+            filename = file_path.name
+            directory = file_path.parent
+            
+            # Process the template
+            processed_filename = process_filename_template(filename, "FILE")
+            
+            # Update the path with the processed filename
+            if processed_filename != filename:
+                file_path = directory / processed_filename
+                debug("FILE", "Path after template processing", str(file_path))
 
             # Use the most recent representation if available, otherwise use article content
             if article.representations:

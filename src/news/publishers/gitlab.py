@@ -9,6 +9,7 @@ from api.models.article import Article
 from utils.logging import debug, error, info
 
 from .publisher_interface import Publisher
+from .utils import process_filename_template
 
 
 def get_api_key():
@@ -23,7 +24,7 @@ def get_api_key():
     return api_key
 
 
-def parse_gitlab_url(url: str) -> tuple[str, str, str]:
+def parse_gitlab_url(url: str) -> tuple[str, str, str, str]:
     """
     Parse a gitlab:// URL and return project components.
     Example URL: gitlab://gitlab_host/project_id/branch/path/to/file.md
@@ -73,6 +74,20 @@ class GitLabPublisher(Publisher):
                 "GITLAB", "Publishing content", f"URL: {url}, Article: {article.title}"
             )
             host, project_id, branch, file_path = parse_gitlab_url(url)
+            
+            # Process filename templates in the path
+            # Extract directory and filename components
+            file_parts = file_path.split("/")
+            directory = "/".join(file_parts[:-1])
+            filename = file_parts[-1]
+            
+            # Process the template
+            processed_filename = process_filename_template(filename, "GITLAB")
+            
+            # Update the path with the processed filename
+            if processed_filename != filename:
+                file_path = f"{directory}/{processed_filename}" if directory else processed_filename
+                debug("GITLAB", "Path after template processing", file_path)
 
             # Get the API base URL
             api_base = GitLabPublisher.API_BASE(host)
