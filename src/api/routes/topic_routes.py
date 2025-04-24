@@ -12,7 +12,7 @@ from curator.graph_workflow import create_curator_graph
 from curator.topic_updater import (handle_topic_publishing, process_feed_item,
                                    queue_topic_update)
 from services.pexels_service import get_random_thumbnail
-from utils.logging import debug, error, info
+from utils.logging import debug, error, info, warning
 
 from ..db.project_db import add_topic_to_project
 
@@ -270,7 +270,7 @@ async def get_workflow_visualization(topic_id: str, format: str = "png"):
     
     Args:
         topic_id: The ID of the topic
-        format: The format of the visualization (png or md)
+        format: The format of the visualization (png, txt, or md)
     
     Returns:
         The visualization file
@@ -289,25 +289,39 @@ async def get_workflow_visualization(topic_id: str, format: str = "png"):
         # Create the graph
         graph = create_curator_graph()
         
-        # Generate the visualization
-        if format == "png":
-            # Generate and save the PNG visualization
-            png_data = graph.get_graph().draw_mermaid_png()
-            png_file = topic_path / "workflow.png"
-            with open(png_file, "wb") as f:
-                f.write(png_data)
-            return FileResponse(png_file, media_type="image/png")
+        # Always generate and save the Mermaid diagram as markdown
+        mermaid_diagram = graph.get_graph().draw_mermaid()
+        md_file = topic_path / "workflow.md"
+        with open(md_file, "w", encoding="utf-8") as f:
+            f.write("```mermaid\n")
+            f.write(mermaid_diagram)
+            f.write("\n```")
+        
+        # Generate ASCII art visualization instead of PNG
+        txt_file = topic_path / "workflow.txt"
+        try:
+            # Generate ASCII art visualization
+            ascii_diagram = graph.get_graph().draw_ascii()
+            with open(txt_file, "w", encoding="utf-8") as f:
+                f.write(ascii_diagram)
+            info("TOPIC", "ASCII workflow visualization generated successfully", topic_id)
+        except Exception as e:
+            warning("TOPIC", "ASCII visualization failed", str(e))
+        
+        # Return the appropriate file based on format requested
+        if format == "png" or format == "txt":
+            if txt_file.exists():
+                return FileResponse(txt_file, media_type="text/plain", 
+                                   headers={"Content-Disposition": f"attachment; filename=workflow.txt"})
+            else:
+                # Fallback to markdown if ASCII generation failed
+                info("TOPIC", "Falling back to markdown format", topic_id)
+                return FileResponse(md_file, media_type="text/markdown", 
+                                   headers={"Content-Disposition": "attachment; filename=workflow.md"})
         elif format == "md":
-            # Generate and save the Mermaid diagram
-            mermaid_diagram = graph.get_graph().draw_mermaid()
-            md_file = topic_path / "workflow.md"
-            with open(md_file, "w", encoding="utf-8") as f:
-                f.write("```mermaid\n")
-                f.write(mermaid_diagram)
-                f.write("\n```")
             return FileResponse(md_file, media_type="text/markdown")
         else:
-            raise HTTPException(status_code=400, detail="Invalid format. Use 'png' or 'md'")
+            raise HTTPException(status_code=400, detail="Invalid format. Use 'png', 'txt', or 'md'")
 
     except Exception as e:
         error("TOPIC", "Failed to generate workflow visualization", str(e))

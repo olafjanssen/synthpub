@@ -272,7 +272,8 @@ async function loadPrompts() {
 
 async function generateWorkflowVisualization(topicId) {
     try {
-        const response = await fetch(`${API_URL}/topics/${topicId}/workflow?format=png`);
+        // Request TXT format - backend will handle fallback to markdown if needed
+        const response = await fetch(`${API_URL}/topics/${topicId}/workflow?format=txt`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
