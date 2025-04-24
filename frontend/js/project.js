@@ -490,6 +490,26 @@ function editTopic(topicId) {
             addPublishButton.onclick = () => addEditPublishInput();
             addPublishButton.textContent = 'Add Publish URL';
             editPublishUrlsContainer.appendChild(addPublishButton);
+            
+            // Add the Restart button to the modal footer
+            const modalFooter = document.querySelector('#editTopicModal .modal-footer');
+            
+            // Remove any existing restart button first (to avoid duplicates)
+            const existingButton = modalFooter.querySelector('.restart-topic-btn');
+            if (existingButton) {
+                existingButton.remove();
+            }
+            
+            // Add the restart button
+            const restartButton = document.createElement('button');
+            restartButton.type = 'button';
+            restartButton.className = 'btn btn-warning restart-topic-btn';
+            restartButton.textContent = 'Restart Topic';
+            restartButton.onclick = () => restartTopic(topicId);
+            
+            // Insert it next to the remove button
+            const removeButton = modalFooter.querySelector('.remove-article');
+            removeButton.insertAdjacentElement('afterend', restartButton);
         })
         .catch(error => {
             console.error('Error fetching topic:', error);
@@ -690,5 +710,51 @@ async function publishArticle(topicId) {
         const button = document.querySelector(`[data-topic-id="${topicId}"].publish-article`);
         button.disabled = false;
         button.innerHTML = '<i class="bi bi-cloud-upload"></i>';
+    }
+}
+
+// Add this function to handle topic restarting
+async function restartTopic(topicId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get("project_id");
+    
+    try {
+        // Show confirmation dialog
+        if (!confirm("Are you sure you want to restart this topic? The current topic will be archived and a new one created with the same configuration.")) {
+            return;
+        }
+        
+        // Restart the topic
+        const response = await fetch(`${API_URL}/topics/${topicId}/restart`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const newTopic = await response.json();
+        
+        // Generate workflow visualization for the new topic
+        await generateWorkflowVisualization(newTopic.id);
+        
+        // Close modal if open
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Refresh topics list
+        await loadTopics(projectId);
+        
+        // Show success message
+        alert(`Topic restarted successfully. The original topic has been archived.`);
+        
+    } catch (error) {
+        console.error('Error restarting topic:', error);
+        showError('Failed to restart topic. Please try again later.');
     }
 } 

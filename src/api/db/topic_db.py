@@ -20,6 +20,7 @@ from .common import (
     find_entity_by_id,
     get_hierarchical_path,
     remove_from_entity_cache,
+    get_archive_path,
 )
 
 # In-memory cache for topics
@@ -364,3 +365,46 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
         except Exception as e:
             print(f"Error parsing feed item: {e}")
     return feed_items
+
+
+def archive_topic(topic_id: str) -> bool:
+    """
+    Archives a topic by moving it from the vault folder to the archive folder.
+    
+    Args:
+        topic_id: The ID of the topic to archive
+        
+    Returns:
+        True if successful, False otherwise
+    """
+    # Get the topic location
+    project_slug, topic_slug = get_topic_location(topic_id)
+    if not project_slug or not topic_slug:
+        return False
+    
+    # Get the source path (in vault)
+    source_path = get_hierarchical_path(project_slug, topic_slug)
+    if not source_path.exists():
+        return False
+    
+    # Get the destination path (in archive)
+    dest_path = get_archive_path(project_slug, topic_slug)
+    
+    # Ensure the destination directory exists
+    ensure_path_exists(dest_path.parent)
+    
+    try:
+        # Move the topic directory from vault to archive
+        shutil.move(str(source_path), str(dest_path))
+        
+        # Update entity cache
+        remove_from_entity_cache(topic_id)
+        add_to_entity_cache(topic_id, dest_path, "topic")
+        
+        # Remove from in-memory cache
+        if topic_id in _topic_cache:
+            del _topic_cache[topic_id]
+            
+        return True
+    except Exception:
+        return False

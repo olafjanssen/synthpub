@@ -6,7 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
 
 from api.db.topic_db import (get_topic, get_topic_location, get_topic_path, load_topics, mark_topic_deleted,
-                             save_topic, update_topic)
+                             save_topic, update_topic, archive_topic)
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from curator.graph_workflow import create_curator_graph
 from curator.topic_updater import (handle_topic_publishing, process_feed_item,
@@ -14,7 +14,7 @@ from curator.topic_updater import (handle_topic_publishing, process_feed_item,
 from services.pexels_service import get_random_thumbnail
 from utils.logging import debug, error, info, warning
 
-from ..db.project_db import add_topic_to_project
+from ..db.project_db import add_topic_to_project, get_project_for_topic
 
 router = APIRouter()
 
@@ -326,3 +326,84 @@ async def get_workflow_visualization(topic_id: str, format: str = "png"):
     except Exception as e:
         error("TOPIC", "Failed to generate workflow visualization", str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post(
+    "/topics/{topic_id}/restart",
+    response_model=Topic,
+    summary="Restart Topic",
+    description="Archives the current topic and creates a new one with the same configuration",
+    response_description="The newly created topic with its unique ID",
+    responses={
+        404: {"description": "Topic not found"},
+        500: {"description": "Internal server error"},
+    },
+)
+async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
+    """
+    Restart a topic by:
+    1. Archiving the current topic by moving it to the archive folder
+    2. Creating a fresh topic with the same configuration
+    
+    Args:
+        topic_id: The ID of the topic to restart
+        
+    Returns:
+        The newly created topic
+    """
+    try:
+        # Get the existing topic
+        original_topic = get_topic(topic_id)
+        if not original_topic:
+            error("TOPIC", "Not found", f"ID: {topic_id}")
+            raise HTTPException(status_code=404, detail="Topic not found")
+        
+        # Find which project this topic belongs to
+        project_id = get_project_for_topic(topic_id)
+        if not project_id:
+            error("TOPIC", "Project not found", f"Topic ID: {topic_id}")
+            raise HTTPException(status_code=404, detail="Project not found for topic")
+            
+        # Archive the topic instead of creating a new archive version
+        archived = archive_topic(topic_id)
+        if not archived:
+            error("TOPIC", "Archive failed", f"Topic ID: {topic_id}")
+            raise HTTPException(status_code=500, detail="Failed to archive topic")
+        
+        info("TOPIC", "Archived", f"Topic ID: {topic_id}")
+        
+        # Create a fresh topic with the same initial configuration
+        new_topic_id = str(uuid4())
+        new_topic = Topic(
+            id=new_topic_id,
+            name=original_topic.name,
+            description=original_topic.description,
+            feed_urls=original_topic.feed_urls,
+            publish_urls=original_topic.publish_urls,
+            article=None,
+            processed_feeds=[],
+            thumbnail_url=original_topic.thumbnail_url,
+            prompt_id=original_topic.prompt_id,
+        )
+        
+        # Add the new topic to the project
+        add_topic_to_project(project_id, new_topic_id)
+        
+        # Save the new topic
+        save_topic(new_topic)
+        info("TOPIC", "Restarted", f"Original: {topic_id}, New: {new_topic_id}")
+        
+        # Remove the old topic from the project
+        mark_topic_deleted(topic_id)
+
+        # Start content generation for the new topic
+        if new_topic.feed_urls:
+            background_tasks.add_task(request_topic_update, new_topic_id)
+        else:
+            background_tasks.add_task(request_article_generation, new_topic_id)
+            
+        return new_topic
+        
+    except Exception as e:
+        error("TOPIC", "Restart error", str(e))
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

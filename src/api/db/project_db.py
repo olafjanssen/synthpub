@@ -19,6 +19,7 @@ from .common import (
     find_entity_by_id,
     get_hierarchical_path,
     remove_from_entity_cache,
+    get_archive_path,
 )
 
 
@@ -95,12 +96,21 @@ def get_project_by_slug(slug: str) -> Optional[Project]:
 
 
 def _get_project_directories() -> List[Path]:
-    """Get all project directories."""
+    """Get all project directories from the vault folder."""
     vault_path = get_hierarchical_path()
     ensure_path_exists(vault_path)
 
     # Get all directories in the vault directory
     return [d for d in vault_path.iterdir() if d.is_dir()]
+
+
+def _get_archive_project_directories() -> List[Path]:
+    """Get all project directories from the archive folder."""
+    archive_path = get_archive_path()
+    ensure_path_exists(archive_path)
+
+    # Get all directories in the archive directory
+    return [d for d in archive_path.iterdir() if d.is_dir()]
 
 
 def list_projects() -> List[Project]:
@@ -224,3 +234,20 @@ def get_project_slug_map() -> Dict[str, str]:
     return {
         project.id: project.slug or create_slug(project.title) for project in projects
     }
+
+
+def get_project_for_topic(topic_id: str) -> Optional[str]:
+    """
+    Find which project a topic belongs to.
+    
+    Args:
+        topic_id: The ID of the topic
+        
+    Returns:
+        The project ID, or None if not found
+    """
+    projects = list_projects()
+    for project in projects:
+        if topic_id in project.topic_ids:
+            return project.id
+    return None

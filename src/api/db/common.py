@@ -98,6 +98,34 @@ def get_hierarchical_path(
     return base_path
 
 
+def get_archive_path(
+    project_slug: Optional[str] = None,
+    topic_slug: Optional[str] = None,
+    article_timestamp: Optional[str] = None,
+) -> Path:
+    """
+    Build a hierarchical path for the archive storage.
+
+    Args:
+        project_slug: The slug for the project directory
+        topic_slug: The slug for the topic directory
+        article_timestamp: The timestamp folder for the article
+
+    Returns:
+        Path object with the appropriate hierarchy in the archive folder
+    """
+    base_path = get_db_path("archive")
+
+    if project_slug:
+        base_path = base_path / project_slug
+        if topic_slug:
+            base_path = base_path / topic_slug
+            if article_timestamp:
+                base_path = base_path / article_timestamp
+
+    return base_path
+
+
 def ensure_path_exists(path: Path) -> None:
     """Create the directory path if it doesn't exist."""
     path.mkdir(parents=True, exist_ok=True)
@@ -144,30 +172,41 @@ def _initialize_entity_cache():
     if _cache_initialized:
         return
 
-    vault_path = get_hierarchical_path()
-
-    # Use recursive glob to find all metadata.yaml files
-    for metadata_file in vault_path.glob("**/metadata.yaml"):
-        try:
-            with open(metadata_file, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-                if data and "id" in data:
-                    entity_id = data["id"]
-                    parent_dir = metadata_file.parent
-
-                    # Determine entity type based on directory structure
-                    if parent_dir.parent.parent == vault_path:
-                        # Structure is: vault/project/topic/metadata.yaml
-                        _entity_id_cache[entity_id] = (parent_dir, "topic")
-                    elif parent_dir.parent == vault_path:
-                        # Structure is: vault/project/metadata.yaml
-                        _entity_id_cache[entity_id] = (parent_dir, "project")
-                    else:
-                        # Structure is: vault/project/topic/timestamp/metadata.yaml
-                        _entity_id_cache[entity_id] = (parent_dir, "article")
-        except (yaml.YAMLError, IOError):
-            # Skip files with errors
+    # Check both vault and archive paths
+    paths_to_check = [
+        get_hierarchical_path(),  # vault
+        get_archive_path(),       # archive
+    ]
+    
+    for base_path in paths_to_check:
+        if not base_path.exists():
             continue
+        
+        # Use recursive glob to find all metadata.yaml files
+        for metadata_file in base_path.glob("**/metadata.yaml"):
+            try:
+                with open(metadata_file, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                    if data and "id" in data:
+                        entity_id = data["id"]
+                        parent_dir = metadata_file.parent
+
+                        # Determine entity type based on directory structure
+                        if parent_dir.parent.parent == base_path:
+                            # Structure is: vault/project/topic/metadata.yaml
+                            # Or: archive/project/topic/metadata.yaml
+                            _entity_id_cache[entity_id] = (parent_dir, "topic")
+                        elif parent_dir.parent == base_path:
+                            # Structure is: vault/project/metadata.yaml
+                            # Or: archive/project/metadata.yaml
+                            _entity_id_cache[entity_id] = (parent_dir, "project")
+                        else:
+                            # Structure is: vault/project/topic/timestamp/metadata.yaml
+                            # Or: archive/project/topic/timestamp/metadata.yaml
+                            _entity_id_cache[entity_id] = (parent_dir, "article")
+            except (yaml.YAMLError, IOError):
+                # Skip files with errors
+                continue
 
     _cache_initialized = True
 
@@ -223,30 +262,41 @@ def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
         return _entity_id_cache[entity_id]
 
     # If not in cache, scan files again (could be a new entity)
-    vault_path = get_hierarchical_path()
-
-    for metadata_file in vault_path.glob("**/metadata.yaml"):
-        try:
-            with open(metadata_file, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-                if data and "id" in data and data["id"] == entity_id:
-                    # Determine entity type based on directory structure
-                    parent_dir = metadata_file.parent
-
-                    if parent_dir.parent.parent == vault_path:
-                        # Structure is: vault/project/topic/metadata.yaml
-                        _entity_id_cache[entity_id] = (parent_dir, "topic")
-                        return parent_dir, "topic"
-                    elif parent_dir.parent == vault_path:
-                        # Structure is: vault/project/metadata.yaml
-                        _entity_id_cache[entity_id] = (parent_dir, "project")
-                        return parent_dir, "project"
-                    else:
-                        # Structure is: vault/project/topic/timestamp/metadata.yaml
-                        _entity_id_cache[entity_id] = (parent_dir, "article")
-                        return parent_dir, "article"
-        except (yaml.YAMLError, IOError):
-            # Skip files with errors
+    # Check both vault and archive paths
+    paths_to_check = [
+        get_hierarchical_path(),  # vault
+        get_archive_path(),       # archive
+    ]
+    
+    for base_path in paths_to_check:
+        if not base_path.exists():
             continue
+            
+        for metadata_file in base_path.glob("**/metadata.yaml"):
+            try:
+                with open(metadata_file, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                    if data and "id" in data and data["id"] == entity_id:
+                        # Determine entity type based on directory structure
+                        parent_dir = metadata_file.parent
 
+                        if parent_dir.parent.parent == base_path:
+                            # Structure is: vault/project/topic/metadata.yaml
+                            # Or: archive/project/topic/metadata.yaml
+                            _entity_id_cache[entity_id] = (parent_dir, "topic")
+                            return parent_dir, "topic"
+                        elif parent_dir.parent == base_path:
+                            # Structure is: vault/project/metadata.yaml
+                            # Or: archive/project/metadata.yaml
+                            _entity_id_cache[entity_id] = (parent_dir, "project")
+                            return parent_dir, "project"
+                        else:
+                            # Structure is: vault/project/topic/timestamp/metadata.yaml
+                            # Or: archive/project/topic/timestamp/metadata.yaml
+                            _entity_id_cache[entity_id] = (parent_dir, "article")
+                            return parent_dir, "article"
+            except (yaml.YAMLError, IOError):
+                # Skip files with errors
+                continue
+                
     return None, None
