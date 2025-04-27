@@ -96,6 +96,22 @@ def parse_ftp_url(url: str) -> Tuple[str, str, str]:
     return parsed.netloc, directory, filename
 
 
+def file_exists_on_ftp(ftp: FTP, filename: str) -> bool:
+    """
+    Check if a file exists on the FTP server.
+
+    Args:
+        ftp: Active FTP connection
+        filename: Name of the file to check
+
+    Returns:
+        bool: True if file exists, False otherwise
+    """
+    file_list = []
+    ftp.retrlines('NLST', file_list.append)
+    return filename in file_list
+
+
 class FTPPublisher(Publisher):
     """Publisher for uploading content to FTP servers.
 
@@ -196,6 +212,19 @@ class FTPPublisher(Publisher):
                                 ftp.mkd(part)
                                 ftp.cwd(part)
                             current_dir = os.path.join(current_dir, part)
+
+                # Delete existing file if it exists
+                if file_exists_on_ftp(ftp, filename):
+                    debug("FTP", "Deleting existing file", filename)
+                    try:
+                        ftp.delete(filename)
+                        info("FTP", "Deleted existing file", filename)
+                    except (ftplib.error_perm, ftplib.error_proto, ftplib.error_reply) as e:
+                        warning(
+                            "FTP",
+                            "Failed to delete existing file",
+                            f"File: {filename}, Error: {str(e)}",
+                        )
 
                 # Store the file
                 debug("FTP", "Uploading file", filename)
