@@ -131,16 +131,28 @@
                             </button>
                         </div>
                         <div class="mb-3">
-                            <label for="publishUrls" class="form-label">Publish URLs</label>
+                            <label for="publishUrls" class="form-label">Publishing Chains</label>
                             <div id="publishUrlsContainer">
-                                <div class="input-group mb-2">
-                                    <input type="url" class="form-control publish-url" placeholder="https://example.com/publish">
-                                    <button type="button" class="btn btn-outline-danger remove-publish">×</button>
+                                <div class="chain-container mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label mb-0">Chain Items</label>
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-chain">Remove Chain</button>
+                                    </div>
+                                    <div class="chain-items-container">
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control chain-item" placeholder="Chain item">
+                                            <button type="button" class="btn btn-outline-danger remove-chain-item">×</button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm add-chain-item">
+                                        Add Chain Item
+                                    </button>
                                 </div>
                             </div>
                             <button type="button" class="btn btn-outline-secondary btn-sm" id="addPublishBtn">
-                                Add Publish URL
+                                Add Publishing Chain
                             </button>
+                            <small class="form-text text-muted">Create chains of publishing steps separated by | in the backend</small>
                         </div>
                     </form>
                 </div>
@@ -189,7 +201,7 @@
                             <div id="editFeedUrlsContainer"></div>
                         </div>
                         <div class="mb-3">
-                            <label for="editPublishUrls" class="form-label">Publish URLs</label>
+                            <label for="editPublishUrls" class="form-label">Publishing Chains</label>
                             <div id="editPublishUrlsContainer"></div>
                         </div>
                     </form>

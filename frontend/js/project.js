@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Connect publish URL buttons
     const addPublishBtn = document.getElementById('addPublishBtn');
     if (addPublishBtn) {
-        addPublishBtn.addEventListener('click', addPublishInput);
+        addPublishBtn.addEventListener('click', addPublishingChain);
     }
 
     // Connect remove feed buttons
@@ -57,10 +57,24 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // Connect remove publish buttons
+    // Connect remove chain buttons
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-publish')) {
-            removePublishInput(event.target);
+        if (event.target.classList.contains('remove-chain')) {
+            removePublishingChain(event.target);
+        }
+    });
+
+    // Connect add chain item buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('add-chain-item')) {
+            addChainItem(event.target);
+        }
+    });
+
+    // Connect remove chain item buttons
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-chain-item')) {
+            removeChainItem(event.target);
         }
     });
 
@@ -191,7 +205,7 @@ function setupTopicButtons(topicElement, topic) {
     
     if (!topic.publish_urls || topic.publish_urls.length === 0) {
         publishButton.disabled = true;
-        publishButton.title = 'No publish URLs configured';
+        publishButton.title = 'No publishing chains configured';
     }
 }
 
@@ -302,9 +316,16 @@ async function createTopic() {
     const feedUrls = Array.from(document.querySelectorAll('.feed-url'))
         .map(input => input.value)
         .filter(url => url.trim() !== '');
-    const publishUrls = Array.from(document.querySelectorAll('.publish-url'))
-        .map(input => input.value)
-        .filter(url => url.trim() !== '');
+    
+    // Get publishing chains
+    const publishUrls = Array.from(document.querySelectorAll('.chain-container'))
+        .map(container => {
+            const chainItems = Array.from(container.querySelectorAll('.chain-item'))
+                .map(input => input.value.trim())
+                .filter(item => item !== '');
+            return chainItems.join(' | ');
+        })
+        .filter(chain => chain !== '');
 
     try {
         const response = await fetch(`${API_URL}/projects/${projectId}/topics`, {
@@ -459,37 +480,75 @@ function editTopic(topicId) {
             // Clear existing publish URLs
             const editPublishUrlsContainer = document.getElementById('editPublishUrlsContainer');
             editPublishUrlsContainer.textContent = '';
+            
+            // Add publishing chains
             (topic.publish_urls || []).forEach(url => {
-                const inputGroup = document.createElement('div');
-                inputGroup.className = 'input-group mb-2';
+                const chainContainer = document.createElement('div');
+                chainContainer.className = 'chain-container mb-3';
                 
-                // Create input element for the publish URL
-                const input = document.createElement('input');
-                input.type = 'url';
-                input.className = 'form-control edit-publish-url';
-                input.value = url;
+                // Create chain header
+                const header = document.createElement('div');
+                header.className = 'd-flex justify-content-between align-items-center mb-2';
                 
-                // Create remove button
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'btn btn-outline-danger remove-publish';
-                button.textContent = '×';
-                button.onclick = function() { removePublishInput(this); };
+                const label = document.createElement('label');
+                label.className = 'form-label mb-0';
+                label.textContent = 'Chain Items';
                 
-                // Append elements to input group
-                inputGroup.appendChild(input);
-                inputGroup.appendChild(button);
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-outline-danger btn-sm remove-chain';
+                removeBtn.textContent = 'Remove Chain';
                 
-                editPublishUrlsContainer.appendChild(inputGroup);
+                header.appendChild(label);
+                header.appendChild(removeBtn);
+                
+                // Create items container
+                const itemsContainer = document.createElement('div');
+                itemsContainer.className = 'chain-items-container';
+                
+                // Split the URL by pipe and create items
+                const chainItems = url.split('|').map(item => item.trim());
+                
+                chainItems.forEach(item => {
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'input-group mb-2';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'form-control chain-item';
+                    input.value = item;
+                    
+                    const itemRemoveBtn = document.createElement('button');
+                    itemRemoveBtn.type = 'button';
+                    itemRemoveBtn.className = 'btn btn-outline-danger remove-chain-item';
+                    itemRemoveBtn.textContent = '×';
+                    
+                    inputGroup.appendChild(input);
+                    inputGroup.appendChild(itemRemoveBtn);
+                    itemsContainer.appendChild(inputGroup);
+                });
+                
+                // Add button to add chain items
+                const addItemBtn = document.createElement('button');
+                addItemBtn.type = 'button';
+                addItemBtn.className = 'btn btn-outline-secondary btn-sm add-chain-item';
+                addItemBtn.textContent = 'Add Chain Item';
+                
+                // Assemble chain container
+                chainContainer.appendChild(header);
+                chainContainer.appendChild(itemsContainer);
+                chainContainer.appendChild(addItemBtn);
+                
+                editPublishUrlsContainer.appendChild(chainContainer);
             });
 
-            // Add "Add Publish URL" button
-            const addPublishButton = document.createElement('button');
-            addPublishButton.type = 'button';
-            addPublishButton.className = 'btn btn-outline-secondary btn-sm';
-            addPublishButton.onclick = () => addEditPublishInput();
-            addPublishButton.textContent = 'Add Publish URL';
-            editPublishUrlsContainer.appendChild(addPublishButton);
+            // Add "Add Publishing Chain" button
+            const addChainButton = document.createElement('button');
+            addChainButton.type = 'button';
+            addChainButton.className = 'btn btn-outline-secondary btn-sm';
+            addChainButton.textContent = 'Add Publishing Chain';
+            addChainButton.onclick = () => addEditPublishingChain();
+            editPublishUrlsContainer.appendChild(addChainButton);
             
             // Add the Restart button to the modal footer
             const modalFooter = document.querySelector('#editTopicModal .modal-footer');
@@ -542,29 +601,15 @@ function addEditFeedInput() {
     container.insertBefore(inputGroup, container.lastChild);
 }
 
-function addEditPublishInput() {
+function addEditPublishingChain() {
     const container = document.getElementById('editPublishUrlsContainer');
-    const inputGroup = document.createElement('div');
-    inputGroup.className = 'input-group mb-2';
-    
-    // Create input element
-    const input = document.createElement('input');
-    input.type = 'url';
-    input.className = 'form-control edit-publish-url';
-    input.placeholder = 'https://example.com/publish';
-    
-    // Create button element
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'btn btn-outline-danger remove-publish';
-    button.textContent = '×';
-    button.onclick = function() { removePublishInput(this); };
-    
-    // Append elements to the container
-    inputGroup.appendChild(input);
-    inputGroup.appendChild(button);
-    
-    container.insertBefore(inputGroup, container.lastChild);
+    const chainContainer = createChainContainer();
+    container.insertBefore(chainContainer, container.lastChild);
+}
+
+function addEditPublishInput() {
+    // Replace with addEditPublishingChain functionality
+    addEditPublishingChain();
 }
 
 async function updateTopic() {
@@ -574,7 +619,6 @@ async function updateTopic() {
     const thumbnailUrl = document.getElementById('editThumbnailUrl').value.trim();
     const promptId = document.getElementById('editPromptSelect').value;
     const feedInputs = document.querySelectorAll('#editFeedUrlsContainer .feed-url');
-    const publishInputs = document.querySelectorAll('#editPublishUrlsContainer .edit-publish-url');
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get("project_id");
 
@@ -582,9 +626,15 @@ async function updateTopic() {
         .map(input => input.value.trim())
         .filter(url => url !== '');
 
-    const publish_urls = Array.from(publishInputs)
-        .map(input => input.value.trim())
-        .filter(url => url !== '');
+    // Get publishing chains
+    const publish_urls = Array.from(document.querySelectorAll('#editPublishUrlsContainer .chain-container'))
+        .map(container => {
+            const chainItems = Array.from(container.querySelectorAll('.chain-item'))
+                .map(input => input.value.trim())
+                .filter(item => item !== '');
+            return chainItems.join(' | ');
+        })
+        .filter(chain => chain !== '');
 
     try {
         const response = await fetch(`${API_URL}/topics/${topicId}`, {
@@ -646,33 +696,118 @@ function showError(message) {
     alert(message);
 }
 
-function addPublishInput() {
+function addPublishingChain() {
     const container = document.getElementById('publishUrlsContainer');
-    const div = document.createElement('div');
-    div.className = 'input-group mb-2';
+    const chainContainer = createChainContainer();
+    container.appendChild(chainContainer);
+}
+
+function createChainContainer() {
+    const chainContainer = document.createElement('div');
+    chainContainer.className = 'chain-container mb-3';
     
-    // Create input element
+    // Create chain header with label and remove button
+    const header = document.createElement('div');
+    header.className = 'd-flex justify-content-between align-items-center mb-2';
+    
+    const label = document.createElement('label');
+    label.className = 'form-label mb-0';
+    label.textContent = 'Chain Items';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-outline-danger btn-sm remove-chain';
+    removeBtn.textContent = 'Remove Chain';
+    
+    header.appendChild(label);
+    header.appendChild(removeBtn);
+    
+    // Create items container
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'chain-items-container';
+    
+    // Add initial chain item
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    
     const input = document.createElement('input');
-    input.type = 'url';
-    input.className = 'form-control publish-url';
-    input.placeholder = 'https://example.com/publish';
+    input.type = 'text';
+    input.className = 'form-control chain-item';
+    input.placeholder = 'Chain item';
     
-    // Create button element
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'btn btn-outline-danger remove-publish';
+    button.className = 'btn btn-outline-danger remove-chain-item';
     button.textContent = '×';
-    button.onclick = function() { removePublishInput(this); };
     
-    // Append elements to the container
-    div.appendChild(input);
-    div.appendChild(button);
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(button);
+    itemsContainer.appendChild(inputGroup);
     
-    container.appendChild(div);
+    // Add "Add Chain Item" button
+    const addItemBtn = document.createElement('button');
+    addItemBtn.type = 'button';
+    addItemBtn.className = 'btn btn-outline-secondary btn-sm add-chain-item';
+    addItemBtn.textContent = 'Add Chain Item';
+    
+    // Assemble chain container
+    chainContainer.appendChild(header);
+    chainContainer.appendChild(itemsContainer);
+    chainContainer.appendChild(addItemBtn);
+    
+    return chainContainer;
+}
+
+function removePublishingChain(button) {
+    button.closest('.chain-container').remove();
+}
+
+function addChainItem(button) {
+    const container = button.previousElementSibling;
+    
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control chain-item';
+    input.placeholder = 'Chain item';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-outline-danger remove-chain-item';
+    removeBtn.textContent = '×';
+    
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(removeBtn);
+    
+    container.appendChild(inputGroup);
+}
+
+function removeChainItem(button) {
+    const inputGroup = button.closest('.input-group');
+    const container = inputGroup.closest('.chain-items-container');
+    
+    // Only remove if there's more than one item
+    if (container.querySelectorAll('.input-group').length > 1) {
+        inputGroup.remove();
+    }
+}
+
+function addPublishInput() {
+    // Replace with addPublishingChain functionality
+    addPublishingChain();
 }
 
 function removePublishInput(button) {
-    button.closest('.input-group').remove();
+    // This function is kept for backward compatibility
+    // If it's a chain container button, use removePublishingChain
+    if (button.classList.contains('remove-chain')) {
+        removePublishingChain(button);
+    } else {
+        // Otherwise, it's an old-style remove button
+        button.closest('.input-group').remove();
+    }
 }
 
 async function publishArticle(topicId) {
