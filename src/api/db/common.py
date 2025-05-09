@@ -115,7 +115,7 @@ def get_archive_path(
         Path object with the appropriate hierarchy in the archive folder
     """
     base_path = get_db_path("archive")
-    
+
     # Ensure the base archive directory exists
     base_path.mkdir(exist_ok=True, parents=True)
 
@@ -178,13 +178,13 @@ def _initialize_entity_cache():
     # Check both vault and archive paths
     paths_to_check = [
         get_hierarchical_path(),  # vault
-        get_archive_path(),       # archive
+        get_archive_path(),  # archive
     ]
-    
+
     for base_path in paths_to_check:
         if not base_path.exists():
             continue
-        
+
         # Use recursive glob to find all metadata.yaml files
         for metadata_file in base_path.glob("**/metadata.yaml"):
             try:
@@ -268,13 +268,13 @@ def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
     # Check both vault and archive paths
     paths_to_check = [
         get_hierarchical_path(),  # vault
-        get_archive_path(),       # archive
+        get_archive_path(),  # archive
     ]
-    
+
     for base_path in paths_to_check:
         if not base_path.exists():
             continue
-            
+
         for metadata_file in base_path.glob("**/metadata.yaml"):
             try:
                 with open(metadata_file, "r", encoding="utf-8") as f:
@@ -301,5 +301,5 @@ def find_entity_by_id(entity_id: str) -> Tuple[Optional[Path], Optional[str]]:
             except (yaml.YAMLError, IOError):
                 # Skip files with errors
                 continue
-                
+
     return None, None

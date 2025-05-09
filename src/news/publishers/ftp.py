@@ -108,7 +108,7 @@ def file_exists_on_ftp(ftp: FTP, filename: str) -> bool:
         bool: True if file exists, False otherwise
     """
     file_list = []
-    ftp.retrlines('NLST', file_list.append)
+    ftp.retrlines("NLST", file_list.append)
     return filename in file_list
 
 
@@ -147,10 +147,10 @@ class FTPPublisher(Publisher):
             )
             info("FTP", "Publishing content", f"URL: {url}, Article: {article.title}")
             host, directory, filename = parse_ftp_url(url)
-            
+
             # Process filename templates (e.g., replace {date} with current date)
             filename = process_filename_template(filename, "FTP")
-            
+
             username, password = get_ftp_credentials()
 
             # Use the most recent representation if available, otherwise use article content
@@ -219,7 +219,11 @@ class FTPPublisher(Publisher):
                     try:
                         ftp.delete(filename)
                         info("FTP", "Deleted existing file", filename)
-                    except (ftplib.error_perm, ftplib.error_proto, ftplib.error_reply) as e:
+                    except (
+                        ftplib.error_perm,
+                        ftplib.error_proto,
+                        ftplib.error_reply,
+                    ) as e:
                         warning(
                             "FTP",
                             "Failed to delete existing file",

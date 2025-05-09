@@ -56,15 +56,15 @@ class FilePublisher(Publisher):
         try:
             info("FILE", "Publishing content", f"URL: {url}, Article: {article.title}")
             file_path = parse_file_url(url)
-            
+
             # Process filename templates in the path
             # Extract the filename part for template processing
             filename = file_path.name
             directory = file_path.parent
-            
+
             # Process the template
             processed_filename = process_filename_template(filename, "FILE")
-            
+
             # Update the path with the processed filename
             if processed_filename != filename:
                 file_path = directory / processed_filename

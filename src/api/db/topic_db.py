@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple
 
 import yaml
 
-from utils.logging import info, error
+from utils.logging import error, info
 
 from ..models.topic import FeedItem, Topic
 from . import article_db, project_db
@@ -20,10 +20,10 @@ from .common import (
     ensure_path_exists,
     ensure_unique_slug,
     find_entity_by_id,
-    get_hierarchical_path,
-    remove_from_entity_cache,
     get_archive_path,
     get_db_path,
+    get_hierarchical_path,
+    remove_from_entity_cache,
 )
 
 # In-memory cache for topics
@@ -373,10 +373,10 @@ def load_feed_items(items_data: List[dict]) -> List[FeedItem]:
 def archive_topic(topic_id: str) -> bool:
     """
     Archives a topic by moving it from the vault folder to the archive folder.
-    
+
     Args:
         topic_id: The ID of the topic to archive
-        
+
     Returns:
         True if successful, False otherwise
     """
@@ -384,54 +384,66 @@ def archive_topic(topic_id: str) -> bool:
         # Get the topic location
         info("TOPIC", "Archiving", f"Getting topic location for: {topic_id}")
         project_slug, topic_slug = get_topic_location(topic_id)
-        info("TOPIC", "Archiving", f"Project slug: {project_slug}, Topic slug: {topic_slug}")
+        info(
+            "TOPIC",
+            "Archiving",
+            f"Project slug: {project_slug}, Topic slug: {topic_slug}",
+        )
         if not project_slug or not topic_slug:
             error("TOPIC", "Archive failed", "Topic location not found")
             return False
-        
+
         # Make sure vault exists
         vault_base = get_db_path("vault")
         ensure_path_exists(vault_base)
-        
+
         # Make sure archive exists
         archive_base = get_db_path("archive")
         ensure_path_exists(archive_base)
-        
+
         # Get the source path (in vault)
         source_path = get_hierarchical_path(project_slug, topic_slug)
         info("TOPIC", "Archiving", f"Source path: {source_path}")
         if not source_path.exists():
             error("TOPIC", "Archive failed", "Source path does not exist")
             return False
-        
+
         # Get the destination path (in archive)
         dest_path = get_archive_path(project_slug, topic_slug)
         info("TOPIC", "Archiving", f"Destination path: {dest_path}")
 
         # Ensure the destination directory exists
-        info("TOPIC", "Archiving", f"Ensuring destination path exists: {dest_path.parent}")
+        info(
+            "TOPIC",
+            "Archiving",
+            f"Ensuring destination path exists: {dest_path.parent}",
+        )
         ensure_path_exists(dest_path.parent)
-        
+
         # Check if destination already exists and remove it if needed
         if dest_path.exists():
             info("TOPIC", "Archiving", f"Removing existing destination: {dest_path}")
             shutil.rmtree(dest_path)
-        
+
         # Move the topic directory from vault to archive
-        info("TOPIC", "Archiving", f"Moving topic directory: {source_path} to {dest_path}")
+        info(
+            "TOPIC",
+            "Archiving",
+            f"Moving topic directory: {source_path} to {dest_path}",
+        )
         shutil.move(str(source_path), str(dest_path))
-        
+
         # Update entity cache
         info("TOPIC", "Archiving", f"Removing from entity cache: {topic_id}")
         remove_from_entity_cache(topic_id)
         info("TOPIC", "Archiving", f"Adding to entity cache: {topic_id}, {dest_path}")
         add_to_entity_cache(topic_id, dest_path, "topic")
-        
+
         # Remove from in-memory cache
         info("TOPIC", "Archiving", f"Removing from in-memory cache: {topic_id}")
         if topic_id in _topic_cache:
             del _topic_cache[topic_id]
-            
+
         return True
     except Exception as e:
         # Use safer error logging that doesn't rely on string formatting

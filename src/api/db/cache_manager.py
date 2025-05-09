@@ -161,7 +161,7 @@ def _remove_expired_files():
 
 def _cleanup_cache():
     """Clean up the cache by removing expired files and maintaining size limits."""
-    global _cache_size_bytes, _cache_metadata
+    global _cache_size_bytes
 
     _cache_size_bytes = 0
     _cache_metadata.clear()
@@ -295,7 +295,7 @@ def remove_from_cache(url: str):
     Args:
         url: The URL to remove from cache
     """
-    global _cache_metadata, _cache_size_bytes
+    global _cache_size_bytes
 
     if url in _cache_metadata:
         # Get metadata before removing

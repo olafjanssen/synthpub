@@ -17,9 +17,9 @@ from .common import (
     ensure_path_exists,
     ensure_unique_slug,
     find_entity_by_id,
+    get_archive_path,
     get_hierarchical_path,
     remove_from_entity_cache,
-    get_archive_path,
 )
 
 
@@ -239,10 +239,10 @@ def get_project_slug_map() -> Dict[str, str]:
 def get_project_for_topic(topic_id: str) -> Optional[str]:
     """
     Find which project a topic belongs to.
-    
+
     Args:
         topic_id: The ID of the topic
-        
+
     Returns:
         The project ID, or None if not found
     """

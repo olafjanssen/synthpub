@@ -5,12 +5,23 @@ from uuid import uuid4
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
 
-from api.db.topic_db import (get_topic, get_topic_location, get_topic_path, load_topics, mark_topic_deleted,
-                             save_topic, update_topic, archive_topic)
+from api.db.topic_db import (
+    archive_topic,
+    get_topic,
+    get_topic_location,
+    get_topic_path,
+    load_topics,
+    mark_topic_deleted,
+    save_topic,
+    update_topic,
+)
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from curator.graph_workflow import create_curator_graph
-from curator.topic_updater import (handle_topic_publishing, process_feed_item,
-                                   queue_topic_update)
+from curator.topic_updater import (
+    handle_topic_publishing,
+    process_feed_item,
+    queue_topic_update,
+)
 from services.pexels_service import get_random_thumbnail
 from utils.logging import debug, error, info, warning
 
@@ -55,7 +66,7 @@ async def create_topic_for_project(
         if not thumbnail_url or thumbnail_url.lower() in ["auto", "none", ""]:
             thumbnail_data = get_random_thumbnail(f"{topic.name} {topic.description}")
             thumbnail_url = thumbnail_data.get("thumbnail_url")
-            
+
         # Handle empty prompt_id
         prompt_id = topic.prompt_id
         if prompt_id == "":
@@ -209,7 +220,7 @@ async def update_topic_route(topic_id: str, topic_update: TopicUpdate):
                     f"{topic.name} {topic.description}"
                 )
                 update_data["thumbnail_url"] = thumbnail_data.get("thumbnail_url")
-                
+
         # Special handling for prompt_id
         if "prompt_id" in update_data and update_data["prompt_id"] == "":
             # Convert empty string to None to use default prompt
@@ -267,11 +278,11 @@ async def publish_topic_route(topic_id: str, background_tasks: BackgroundTasks):
 async def get_workflow_visualization(topic_id: str, format: str = "png"):
     """
     Generate and return a visualization of the curator workflow for a topic.
-    
+
     Args:
         topic_id: The ID of the topic
         format: The format of the visualization (png, txt, or md)
-    
+
     Returns:
         The visualization file
     """
@@ -288,7 +299,7 @@ async def get_workflow_visualization(topic_id: str, format: str = "png"):
 
         # Create the graph
         graph = create_curator_graph()
-        
+
         # Always generate and save the Mermaid diagram as markdown
         mermaid_diagram = graph.get_graph().draw_mermaid()
         md_file = topic_path / "workflow.md"
@@ -296,7 +307,7 @@ async def get_workflow_visualization(topic_id: str, format: str = "png"):
             f.write("```mermaid\n")
             f.write(mermaid_diagram)
             f.write("\n```")
-        
+
         # Generate ASCII art visualization instead of PNG
         txt_file = topic_path / "workflow.txt"
         try:
@@ -304,24 +315,36 @@ async def get_workflow_visualization(topic_id: str, format: str = "png"):
             ascii_diagram = graph.get_graph().draw_ascii()
             with open(txt_file, "w", encoding="utf-8") as f:
                 f.write(ascii_diagram)
-            info("TOPIC", "ASCII workflow visualization generated successfully", topic_id)
+            info(
+                "TOPIC", "ASCII workflow visualization generated successfully", topic_id
+            )
         except Exception as e:
             warning("TOPIC", "ASCII visualization failed", str(e))
-        
+
         # Return the appropriate file based on format requested
         if format == "png" or format == "txt":
             if txt_file.exists():
-                return FileResponse(txt_file, media_type="text/plain", 
-                                   headers={"Content-Disposition": f"attachment; filename=workflow.txt"})
+                return FileResponse(
+                    txt_file,
+                    media_type="text/plain",
+                    headers={
+                        "Content-Disposition": f"attachment; filename=workflow.txt"
+                    },
+                )
             else:
                 # Fallback to markdown if ASCII generation failed
                 info("TOPIC", "Falling back to markdown format", topic_id)
-                return FileResponse(md_file, media_type="text/markdown", 
-                                   headers={"Content-Disposition": "attachment; filename=workflow.md"})
+                return FileResponse(
+                    md_file,
+                    media_type="text/markdown",
+                    headers={"Content-Disposition": "attachment; filename=workflow.md"},
+                )
         elif format == "md":
             return FileResponse(md_file, media_type="text/markdown")
         else:
-            raise HTTPException(status_code=400, detail="Invalid format. Use 'png', 'txt', or 'md'")
+            raise HTTPException(
+                status_code=400, detail="Invalid format. Use 'png', 'txt', or 'md'"
+            )
 
     except Exception as e:
         error("TOPIC", "Failed to generate workflow visualization", str(e))
@@ -344,10 +367,10 @@ async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
     Restart a topic by:
     1. Archiving the current topic by moving it to the archive folder
     2. Creating a fresh topic with the same configuration
-    
+
     Args:
         topic_id: The ID of the topic to restart
-        
+
     Returns:
         The newly created topic
     """
@@ -357,22 +380,22 @@ async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
         if not original_topic:
             error("TOPIC", "Not found", f"ID: {topic_id}")
             raise HTTPException(status_code=404, detail="Topic not found")
-        
+
         # Find which project this topic belongs to
         project_id = get_project_for_topic(topic_id)
         if not project_id:
             error("TOPIC", "Project not found", f"Topic ID: {topic_id}")
             raise HTTPException(status_code=404, detail="Project not found for topic")
-            
+
         # Archive the topic instead of creating a new archive version
         info("TOPIC", "Archiving", f"Topic ID: {topic_id}")
         archived = archive_topic(topic_id)
         if not archived:
             error("TOPIC", "Archive failed", f"Topic ID: {topic_id}")
             raise HTTPException(status_code=500, detail="Failed to archive topic")
-        
+
         info("TOPIC", "Archived", f"Topic ID: {topic_id}")
-        
+
         # Create a fresh topic with the same initial configuration
         new_topic_id = str(uuid4())
         new_topic = Topic(
@@ -386,14 +409,14 @@ async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
             thumbnail_url=original_topic.thumbnail_url,
             prompt_id=original_topic.prompt_id,
         )
-        
+
         # Add the new topic to the project
         add_topic_to_project(project_id, new_topic_id)
-        
+
         # Save the new topic
         save_topic(new_topic)
         info("TOPIC", "Restarted", f"Original: {topic_id}, New: {new_topic_id}")
-        
+
         # Remove the old topic from the project
         mark_topic_deleted(topic_id)
 
@@ -402,14 +425,16 @@ async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
             background_tasks.add_task(request_topic_update, new_topic_id)
         else:
             background_tasks.add_task(request_article_generation, new_topic_id)
-            
+
         return new_topic
-        
+
     except Exception as e:
         try:
             error_message = str(e)
             error("TOPIC", "Restart error", error_message)
-            raise HTTPException(status_code=500, detail=f"Internal server error: {error_message}")
+            raise HTTPException(
+                status_code=500, detail=f"Internal server error: {error_message}"
+            )
         except Exception as formatting_error:
             # If error formatting fails, use a simple error response
             print(f"Error during exception handling: {formatting_error}")

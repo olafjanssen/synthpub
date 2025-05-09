@@ -39,4 +39,4 @@ async def get_prompt_route(prompt_id: str):
         error("PROMPT", "Not found", f"ID: {prompt_id}")
         raise HTTPException(status_code=404, detail="Prompt not found")
     debug("PROMPT", "Retrieved", f"ID: {prompt_id}")
-    return prompt 
+    return prompt

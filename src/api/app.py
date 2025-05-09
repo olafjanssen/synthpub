@@ -42,8 +42,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize the news scheduler
     try:
-        from news.news_scheduler import (start_scheduler_thread,
-                                         stop_scheduler_thread)
+        from news.news_scheduler import start_scheduler_thread, stop_scheduler_thread
 
         start_scheduler_thread()
         debug("SYSTEM", "News scheduler started")
