@@ -35,6 +35,7 @@ def get_llm(task: str):
     model_name = task_settings.get("model_name", "gpt-4")
     max_tokens = task_settings.get("max_tokens", 4000)
     temperature = task_settings.get("temperature", 0.2)
+    random_seed = task_settings.get("random_seed", 424242)
 
     # Create rate limiter
     rate_limiter = InMemoryRateLimiter(
@@ -55,11 +56,18 @@ def get_llm(task: str):
         if not api_key:
             raise ValueError(f"{api_key_env} not found in environment variables")
 
+    # Initialize model parameters
+    model_params = {
+        "model": model_name,
+        "api_key": api_key,
+        "max_tokens": max_tokens,
+        "rate_limiter": rate_limiter,
+        "temperature": temperature,
+    }
+
+    # Add random_seed if provided and provider supports it
+    if random_seed is not None and provider in ["mistralai"]:
+        model_params["random_seed"] = random_seed
+
     # Initialize the chat model using the generalized method
-    return init_chat_model(
-        model=model_name,
-        api_key=api_key,
-        max_tokens=max_tokens,
-        rate_limiter=rate_limiter,
-        temperature=temperature,
-    )
+    return init_chat_model(**model_params)
