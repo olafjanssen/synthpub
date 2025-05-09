@@ -3,6 +3,24 @@
 const API_URL = '/api';
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Ensure Bootstrap icons are loaded
+    const iconLink = document.querySelector('link[href*="bootstrap-icons"]');
+    if (iconLink) {
+        iconLink.addEventListener('load', function() {
+            console.log('Bootstrap icons loaded successfully');
+        });
+    } else {
+        // If not already in the document, add Bootstrap icons
+        const bootstrapIcons = document.createElement('link');
+        bootstrapIcons.rel = 'stylesheet';
+        bootstrapIcons.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css';
+        document.head.appendChild(bootstrapIcons);
+        
+        bootstrapIcons.addEventListener('load', function() {
+            console.log('Bootstrap icons loaded successfully');
+        });
+    }
+    
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get("project_id");
     if (projectId) {
@@ -52,31 +70,39 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Connect remove feed buttons
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-feed')) {
-            removeFeedInput(event.target);
+        const button = event.target.closest('.remove-feed');
+        if (button) {
+            removeFeedInput(button);
         }
     });
 
     // Connect remove chain buttons
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-chain')) {
-            removePublishingChain(event.target);
+        const button = event.target.closest('.remove-chain');
+        if (button) {
+            removePublishingChain(button);
         }
     });
 
     // Connect add chain item buttons
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('add-chain-item')) {
-            addChainItem(event.target);
+        const button = event.target.closest('.add-chain-item');
+        if (button) {
+            addChainItem(button);
         }
     });
 
     // Connect remove chain item buttons
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-chain-item')) {
-            removeChainItem(event.target);
+        const button = event.target.closest('.remove-chain-item');
+        if (button) {
+            removeChainItem(button);
         }
     });
+
+    // Note: Insert chain item buttons have their event listeners attached directly 
+    // to each button when they are created in the updateChainVisualCues function
+    // This ensures they work reliably with dynamically created elements
 
     // Handle edit button clicks in topic list
     document.getElementById('topics-list').addEventListener('click', (event) => {
@@ -91,6 +117,56 @@ document.addEventListener("DOMContentLoaded", function() {
         const topicId = document.getElementById('editTopicId').value;
         removeTopic(topicId);
     });
+
+    // Add styles for chain links
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        .chain-link {
+            color: #0d6efd;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 0.2rem 0;
+        }
+        
+        .chain-items-container {
+            position: relative;
+            border-left: 3px solid #e9ecef;
+            padding-left: 15px;
+            margin-left: 10px;
+        }
+        
+        .chain-connector {
+            border-left: 2px dashed #0d6efd;
+            position: absolute;
+            height: calc(100% - 10px);
+            left: 20px;
+            top: 5px;
+            z-index: -1;
+        }
+        
+        .insert-chain-item {
+            margin-left: 8px;
+        }
+        
+        .chain-container {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+
+    // Add info tooltip to create modal
+    const publishUrlsContainer = document.getElementById('publishUrlsContainer');
+    if (publishUrlsContainer) {
+        const publishLabel = publishUrlsContainer.previousElementSibling;
+        if (publishLabel && publishLabel.tagName === 'LABEL') {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'alert alert-info py-2 mb-3 mt-1';
+            infoDiv.innerHTML = '<small><i class="bi bi-info-circle"></i> Publishing chains pass content through multiple steps. Each step processes the output of the previous step.</small>';
+            publishLabel.after(infoDiv);
+        }
+    }
 });
 
 // Split loadTopics into smaller functions to reduce complexity
@@ -481,6 +557,12 @@ function editTopic(topicId) {
             const editPublishUrlsContainer = document.getElementById('editPublishUrlsContainer');
             editPublishUrlsContainer.textContent = '';
             
+            // Add information tooltip about chains
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'alert alert-info py-2 mb-3';
+            infoDiv.innerHTML = '<small><i class="bi bi-info-circle"></i> Publishing chains pass content through multiple steps. Add steps below or insert steps between existing ones.</small>';
+            editPublishUrlsContainer.appendChild(infoDiv);
+            
             // Add publishing chains
             (topic.publish_urls || []).forEach(url => {
                 const chainContainer = document.createElement('div');
@@ -532,7 +614,8 @@ function editTopic(topicId) {
                 const addItemBtn = document.createElement('button');
                 addItemBtn.type = 'button';
                 addItemBtn.className = 'btn btn-outline-secondary btn-sm add-chain-item';
-                addItemBtn.textContent = 'Add Chain Item';
+                addItemBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add Step at End';
+                addItemBtn.title = 'Add a new step at the end of the chain';
                 
                 // Assemble chain container
                 chainContainer.appendChild(header);
@@ -540,6 +623,9 @@ function editTopic(topicId) {
                 chainContainer.appendChild(addItemBtn);
                 
                 editPublishUrlsContainer.appendChild(chainContainer);
+                
+                // Initialize visual chain links
+                updateChainVisualCues(itemsContainer);
             });
 
             // Add "Add Publishing Chain" button
@@ -748,12 +834,16 @@ function createChainContainer() {
     const addItemBtn = document.createElement('button');
     addItemBtn.type = 'button';
     addItemBtn.className = 'btn btn-outline-secondary btn-sm add-chain-item';
-    addItemBtn.textContent = 'Add Chain Item';
+    addItemBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add Step at End';
+    addItemBtn.title = 'Add a new step at the end of the chain';
     
     // Assemble chain container
     chainContainer.appendChild(header);
     chainContainer.appendChild(itemsContainer);
     chainContainer.appendChild(addItemBtn);
+    
+    // Initialize visual chain links
+    updateChainVisualCues(itemsContainer);
     
     return chainContainer;
 }
@@ -782,6 +872,21 @@ function addChainItem(button) {
     inputGroup.appendChild(removeBtn);
     
     container.appendChild(inputGroup);
+    
+    // Update visual chain links
+    updateChainVisualCues(container);
+    
+    // Focus the new input field and add a highlight effect
+    input.focus();
+    
+    // Add a temporary highlight effect
+    inputGroup.style.transition = 'background-color 1s';
+    inputGroup.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+    
+    // Remove the highlight after a moment
+    setTimeout(() => {
+        inputGroup.style.backgroundColor = '';
+    }, 1500);
 }
 
 function removeChainItem(button) {
@@ -791,6 +896,8 @@ function removeChainItem(button) {
     // Only remove if there's more than one item
     if (container.querySelectorAll('.input-group').length > 1) {
         inputGroup.remove();
+        // Update visual chain links after removal
+        updateChainVisualCues(container);
     }
 }
 
@@ -892,4 +999,114 @@ async function restartTopic(topicId) {
         console.error('Error restarting topic:', error);
         showError('Failed to restart topic. Please try again later.');
     }
-} 
+}
+
+// Function to insert a chain item between existing ones
+function insertChainItem(button) {
+    console.log('Insert chain item button clicked:', button);
+    
+    // Find the link container (the div containing the insert button and arrow)
+    const linkContainer = button.closest('div[class*="justify-content"]');
+    if (!linkContainer) {
+        console.error('Could not find link container');
+        return;
+    }
+    
+    // Find the chain items container
+    const container = linkContainer.closest('.chain-items-container');
+    if (!container) {
+        console.error('Could not find chain items container');
+        return;
+    }
+    
+    // Create new input group
+    const newInputGroup = document.createElement('div');
+    newInputGroup.className = 'input-group mb-2';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control chain-item';
+    input.placeholder = 'Chain item';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-outline-danger remove-chain-item';
+    removeBtn.textContent = '×';
+    
+    newInputGroup.appendChild(input);
+    newInputGroup.appendChild(removeBtn);
+    
+    // Insert new input group after the link container
+    linkContainer.after(newInputGroup);
+    
+    // Update visual chain links
+    updateChainVisualCues(container);
+    
+    // Focus the new input field
+    input.focus();
+    
+    // Add a temporary highlight effect
+    newInputGroup.style.transition = 'background-color 1s';
+    newInputGroup.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+    
+    // Remove the highlight after a moment
+    setTimeout(() => {
+        newInputGroup.style.backgroundColor = '';
+    }, 1500);
+}
+
+// Function to update visual cues that indicate chain connections
+function updateChainVisualCues(container) {
+    console.log('Updating chain visual cues for container:', container);
+    
+    // Remove any existing visual cues
+    container.querySelectorAll('.chain-link').forEach(link => link.remove());
+    container.querySelectorAll('.insert-chain-item').forEach(btn => btn.remove());
+    container.querySelectorAll('.chain-connector').forEach(conn => conn.remove());
+    container.querySelectorAll('.link-container').forEach(lc => lc.remove());
+    
+    const chainItems = container.querySelectorAll('.input-group');
+    console.log('Found chain items:', chainItems.length);
+    
+    // Add a vertical connector line that spans all items if there's more than one
+    if (chainItems.length > 1) {
+        const connector = document.createElement('div');
+        connector.className = 'chain-connector';
+        container.appendChild(connector);
+    }
+    
+    chainItems.forEach((item, index) => {
+        // Skip the last item - it doesn't need a downward arrow
+        if (index < chainItems.length - 1) {
+            console.log('Adding link after item', index);
+            
+            // Add chain link visual cue
+            const linkDiv = document.createElement('div');
+            linkDiv.className = 'chain-link text-center';
+            linkDiv.innerHTML = '<i class="bi bi-arrow-down-circle-fill"></i>';
+            
+            // Add insert button with data attribute to help debugging
+            const insertBtn = document.createElement('button');
+            insertBtn.type = 'button';
+            insertBtn.className = 'btn btn-outline-primary btn-sm insert-chain-item';
+            insertBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Insert Step Here';
+            insertBtn.title = 'Insert a new step between chain items';
+            insertBtn.setAttribute('data-position', index);
+            
+            // Add click handler directly to the button
+            insertBtn.addEventListener('click', function() {
+                console.log('Insert button clicked directly');
+                insertChainItem(this);
+            });
+            
+            // Create container for link and insert button
+            const linkContainer = document.createElement('div');
+            linkContainer.className = 'd-flex justify-content-start align-items-center gap-2 mb-2 ps-3 link-container';
+            linkContainer.appendChild(linkDiv);
+            linkContainer.appendChild(insertBtn);
+            
+            // Insert after the current item
+            item.after(linkContainer);
+        }
+    });
+}
