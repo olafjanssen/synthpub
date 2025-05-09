@@ -68,6 +68,10 @@ def handle_topic_publishing(sender):
         warning("TOPIC", "No article found", f"Topic: {topic.name}")
         return
 
+    # Clear existing representations before starting the publishing process
+    article.representations = []
+    debug("TOPIC", "Cleared representations", f"Article: {article.title}")
+
     for publish_url in topic.publish_urls:
         # split publish_url into piped elements
         commands = [cmd.strip() for cmd in publish_url.split("|")]
