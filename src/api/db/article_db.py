@@ -1,28 +1,62 @@
-"""Database operations for articles using markdown files with YAML front matter."""
+"""
+Database operations for articles using hierarchical folder structure with markdown files.
+"""
 
 import uuid
-from datetime import UTC, datetime
-from shutil import move
-from typing import List, Optional
+from datetime import datetime, timezone
+from pathlib import Path
+from shutil import rmtree
+from typing import List, Optional, Tuple
 
 import yaml
 
 from ..models.article import Article
 from ..models.feed_item import FeedItem
-from .common import get_db_path
+from ..models.topic import Representation
+from . import topic_db
+from .common import (
+    add_to_entity_cache,
+    ensure_path_exists,
+    find_entity_by_id,
+    get_article_path,
+    get_hierarchical_path,
+    remove_from_entity_cache,
+)
 
 
-def DB_PATH():
-    return get_db_path("articles")
+def get_article_location(
+    article_id: str,
+) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """
+    Find where an article is stored in the hierarchical structure.
+
+    Returns:
+        Tuple of (project_slug, topic_slug, timestamp) or (None, None, None) if not found
+    """
+    # Use find_entity_by_id to locate the article
+    article_path, entity_type = find_entity_by_id(article_id)
+
+    if not article_path or entity_type != "article":
+        return None, None, None
+
+    # Extract path components
+    # Structure is: vault/project/topic/timestamp
+    timestamp = article_path.name
+    topic_path = article_path.parent
+    topic_slug = topic_path.name
+    project_path = topic_path.parent
+    project_slug = project_path.name
+
+    return project_slug, topic_slug, timestamp
 
 
-def ensure_db_exists():
-    """Create the articles directory if it doesn't exist."""
-    DB_PATH().mkdir(parents=True, exist_ok=True)
+def article_to_files(article: Article, article_path: Path) -> None:
+    """Save article as metadata.yaml and article.md files."""
+    # Ensure representations directory exists
+    representations_dir = article_path / "representations"
+    ensure_path_exists(representations_dir)
 
-
-def article_to_markdown(article: Article) -> str:
-    """Convert article to markdown with YAML front matter."""
+    # Write metadata file
     metadata = {
         "id": article.id,
         "title": article.title,
@@ -35,21 +69,72 @@ def article_to_markdown(article: Article) -> str:
         "source_feed": (
             article.source_feed.model_dump() if article.source_feed else None
         ),
+        "representations": [],
     }
-    return f"""---
-{yaml.dump(metadata, sort_keys=False)}---
 
-{article.content}
-"""
+    # Process representations
+    for i, rep in enumerate(article.representations):
+        # Add representation metadata to the metadata file
+        # Replace any illegal characters in the type for filename
+        safe_type = rep.type.lower().replace("/", "_").replace("\\", "_")
+
+        # Get file extension from metadata or default to txt
+        extension = rep.metadata.get("extension", "txt") if rep.metadata else "txt"
+
+        rep_metadata = {
+            "type": rep.type,
+            "created_at": rep.created_at.isoformat(),
+            "metadata": rep.metadata,
+            "filename": f"{safe_type}.{i}.{extension}",
+        }
+        metadata["representations"].append(rep_metadata)
+
+        # Write representation content to separate file
+        rep_file = representations_dir / rep_metadata["filename"]
+
+        # Check if content is binary (bytes or hex string with binary flag)
+        is_binary = isinstance(rep.content, bytes) or (
+            rep.metadata and rep.metadata.get("binary") is True
+        )
+
+        if is_binary:
+            # Handle binary content
+            with open(rep_file, "wb") as f:
+                if isinstance(rep.content, bytes):
+                    f.write(rep.content)
+                else:
+                    # Convert hex string to bytes
+                    f.write(bytes.fromhex(rep.content))
+                f.flush()
+        else:
+            # Handle text content
+            with open(rep_file, "w", encoding="utf-8") as f:
+                f.write(rep.content)
+                f.flush()
+
+    # Write metadata to file
+    metadata_file = article_path / "metadata.yaml"
+    with open(metadata_file, "w", encoding="utf-8") as f:
+        yaml.dump(metadata, f, sort_keys=False)
+        f.flush()
+
+    # Write content file
+    content_file = article_path / "article.md"
+    with open(content_file, "w", encoding="utf-8") as f:
+        f.write(article.content)
+        f.flush()
 
 
-def markdown_to_article(content: str) -> Article:
-    """Parse markdown with YAML front matter into Article object."""
-    # Split front matter and content
-    _, front_matter, content = content.split("---", 2)
+def files_to_article(metadata_path: Path) -> Article:
+    """Load article from metadata.yaml and article.md files."""
+    # Read metadata
+    with open(metadata_path, "r", encoding="utf-8") as f:
+        metadata = yaml.safe_load(f)
 
-    # Parse YAML front matter
-    metadata = yaml.safe_load(front_matter)
+    # Read content
+    content_path = metadata_path.parent / "article.md"
+    with open(content_path, "r", encoding="utf-8") as f:
+        content = f.read()
 
     # Convert ISO strings back to datetime
     metadata["created_at"] = datetime.fromisoformat(metadata["created_at"])
@@ -64,43 +149,124 @@ def markdown_to_article(content: str) -> Article:
             feed_data["accessed_at"] = datetime.fromisoformat(feed_data["accessed_at"])
         metadata["source_feed"] = FeedItem(**feed_data)
 
-    return Article(content=content.strip(), **metadata)
+    # Load representations
+    representations = []
+    if "representations" in metadata:
+        representations_dir = metadata_path.parent / "representations"
+        for rep_meta in metadata["representations"]:
+            rep_filename = rep_meta["filename"]
+            rep_path = representations_dir / rep_filename
+            if rep_path.exists():
+                # Check if this is a binary representation type
+                is_binary = rep_meta.get("metadata", {}).get("binary", False)
+
+                if is_binary:
+                    # Read as binary
+                    with open(rep_path, "rb") as f:
+                        rep_content = f.read().hex()
+                else:
+                    # Read as text
+                    with open(rep_path, "r", encoding="utf-8") as f:
+                        rep_content = f.read()
+
+                rep = Representation(
+                    type=rep_meta["type"],
+                    content=rep_content,
+                    created_at=datetime.fromisoformat(rep_meta["created_at"]),
+                    metadata=rep_meta["metadata"],
+                )
+                representations.append(rep)
+
+    # Remove representations from metadata dict so we don't pass it to Article constructor
+    if "representations" in metadata:
+        del metadata["representations"]
+
+    # Create and return article
+    article = Article(content=content, **metadata)
+    article.representations = representations
+    return article
 
 
 def save_article(article: Article) -> None:
-    """Save article to markdown file."""
-    ensure_db_exists()
+    """Save article to files in hierarchical structure."""
+    # Get the topic
+    topic = topic_db.get_topic(article.topic_id)
+    if not topic:
+        raise ValueError(
+            f"Cannot save article for non-existent topic {article.topic_id}"
+        )
 
-    # Generate filename from id
-    filename = DB_PATH() / f"{article.id}.md"
+    # Find project/topic location
+    project_slug, topic_slug = topic_db.get_topic_location(article.topic_id)
+    if not project_slug or not topic_slug:
+        raise ValueError(f"Cannot find location for topic {article.topic_id}")
 
-    # Convert to markdown and save
-    markdown = article_to_markdown(article)
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(markdown)
+    # Get article directory path
+    timestamp = article.updated_at or article.created_at
+    article_path = get_article_path(project_slug, topic_slug, timestamp)
+
+    # Save article to files
+    article_to_files(article, article_path)
+
+    # Check if the files were created
+    metadata_file = article_path / "metadata.yaml"
+    content_file = article_path / "article.md"
+    if not metadata_file.exists() or not content_file.exists():
+        raise ValueError(f"Failed to save article to {article_path}")
+
+    # Update entity cache
+    add_to_entity_cache(article.id, article_path, "article")
+
+    # Update topic to reference this article if not already set
+    if not topic.article:
+        topic.article = article.id
+        topic_db.save_topic(topic)
 
 
 def get_article(article_id: str) -> Optional[Article]:
     """Retrieve article by id."""
-    filename = DB_PATH() / f"{article_id}.md"
+    # Use find_entity_by_id to locate the article
+    article_path, entity_type = find_entity_by_id(article_id)
 
-    if not filename.exists():
+    if not article_path or entity_type != "article":
         return None
 
-    with open(filename, "r", encoding="utf-8") as f:
-        content = f.read()
+    metadata_file = article_path / "metadata.yaml"
+    if not metadata_file.exists():
+        return None
 
-    return markdown_to_article(content)
+    return files_to_article(metadata_file)
+
+
+def get_article_by_slug(
+    project_slug: str, topic_slug: str, timestamp: str
+) -> Optional[Article]:
+    """Retrieve article by its path slugs and timestamp."""
+    article_path = get_hierarchical_path(project_slug, topic_slug, timestamp)
+    metadata_file = article_path / "metadata.yaml"
+
+    if not metadata_file.exists():
+        return None
+
+    return files_to_article(metadata_file)
 
 
 def list_articles() -> List[Article]:
     """List all articles."""
-    ensure_db_exists()
-
     articles = []
-    for file in DB_PATH().glob("*.md"):
-        with open(file, "r", encoding="utf-8") as f:
-            articles.append(markdown_to_article(f.read()))
+    vault_path = get_hierarchical_path()
+
+    # Find all article metadata files
+    for metadata_file in vault_path.glob("**/metadata.yaml"):
+        try:
+            # Check if this is an article by looking at directory structure
+            parent_dir = metadata_file.parent
+            if parent_dir.parent.parent.parent == vault_path:
+                # Structure is: vault/project/topic/timestamp/metadata.yaml
+                article = files_to_article(metadata_file)
+                articles.append(article)
+        except Exception as e:
+            print(f"Error loading article from {metadata_file}: {e}")
 
     return articles
 
@@ -120,8 +286,8 @@ def create_article(
         topic_id=topic_id,
         content=content,
         version=version,
-        created_at=created_at or datetime.now(UTC),  # Use provided date or current time
-        updated_at=updated_at,  # Use provided update date or None for new articles
+        created_at=created_at or datetime.now(timezone.utc),
+        updated_at=updated_at,
     )
 
     save_article(article)
@@ -155,7 +321,7 @@ def update_article(
         content=content,
         version=current_article.version + 1,
         created_at=current_article.created_at,
-        updated_at=datetime.now(UTC),
+        updated_at=datetime.now(timezone.utc),
         previous_version=current_article.id,
         next_version=None,  # This is the latest version
         source_feed=feed_item,  # Store the feed item that triggered this update
@@ -167,6 +333,13 @@ def update_article(
 
     # Save the new version
     save_article(new_article)
+
+    # Update the topic to point to the latest version
+    topic = topic_db.get_topic(current_article.topic_id)
+    if topic:
+        topic.article = new_article.id
+        topic_db.save_topic(topic)
+
     return new_article
 
 
@@ -180,13 +353,21 @@ def get_article_history(article_id: str) -> List[Article]:
 
     # First, go back to the earliest version
     while current and current.previous_version:
-        current = get_article(current.previous_version)
+        prev = get_article(current.previous_version)
+        if prev:
+            current = prev
+        else:
+            break
 
     # Now collect all versions going forward
     while current:
         articles.append(current)
         if current.next_version:
-            current = get_article(current.next_version)
+            next_article = get_article(current.next_version)
+            if next_article:
+                current = next_article
+            else:
+                break
         else:
             break
 
@@ -200,23 +381,35 @@ def get_latest_version(article_id: str) -> Optional[Article]:
         return None
 
     while current.next_version:
-        current = get_article(current.next_version)
+        next_article = get_article(current.next_version)
+        if next_article:
+            current = next_article
+        else:
+            break
 
     return current
 
 
 def mark_article_deleted(article_id: str) -> bool:
     """
-    Mark an article as deleted by prefixing its filename with '_'.
+    Mark an article as deleted by removing its directory.
     Returns True if successful, False if article not found.
     """
-    filename = DB_PATH() / f"{article_id}.md"
-    if not filename.exists():
+    article_path, entity_type = find_entity_by_id(article_id)
+
+    if not article_path or entity_type != "article":
         return False
 
-    # New filename with '_' prefix
-    new_filename = DB_PATH() / f"_{article_id}.md"
+    # Remove the directory
+    if article_path.exists():
+        rmtree(article_path)
 
-    # Move/rename the file
-    move(filename, new_filename)
+    # Remove from entity cache
+    remove_from_entity_cache(article_id)
+
+    # Also delete any old versions
+    article = get_article(article_id)
+    if article and article.previous_version:
+        mark_article_deleted(article.previous_version)
+
     return True

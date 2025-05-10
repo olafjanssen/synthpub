@@ -3,11 +3,32 @@
 const API_URL = '/api';
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Ensure Bootstrap icons are loaded
+    const iconLink = document.querySelector('link[href*="bootstrap-icons"]');
+    if (iconLink) {
+        iconLink.addEventListener('load', function() {
+            console.log('Bootstrap icons loaded successfully');
+        });
+    } else {
+        // If not already in the document, add Bootstrap icons
+        const bootstrapIcons = document.createElement('link');
+        bootstrapIcons.rel = 'stylesheet';
+        bootstrapIcons.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css';
+        document.head.appendChild(bootstrapIcons);
+        
+        bootstrapIcons.addEventListener('load', function() {
+            console.log('Bootstrap icons loaded successfully');
+        });
+    }
+    
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get("project_id");
     if (projectId) {
         loadTopics(projectId);
     }
+    
+    // Load available prompts for the dropdowns
+    loadPrompts();
     
     // Connect create topic button
     const createTopicBtn = document.getElementById('createTopicBtn');
@@ -44,22 +65,44 @@ document.addEventListener("DOMContentLoaded", function() {
     // Connect publish URL buttons
     const addPublishBtn = document.getElementById('addPublishBtn');
     if (addPublishBtn) {
-        addPublishBtn.addEventListener('click', addPublishInput);
+        addPublishBtn.addEventListener('click', addPublishingChain);
     }
 
     // Connect remove feed buttons
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-feed')) {
-            removeFeedInput(event.target);
+        const button = event.target.closest('.remove-feed');
+        if (button) {
+            removeFeedInput(button);
         }
     });
 
-    // Connect remove publish buttons
+    // Connect remove chain buttons
     document.addEventListener('click', function(event) {
-        if (event.target.classList.contains('remove-publish')) {
-            removePublishInput(event.target);
+        const button = event.target.closest('.remove-chain');
+        if (button) {
+            removePublishingChain(button);
         }
     });
+
+    // Connect add chain item buttons
+    document.addEventListener('click', function(event) {
+        const button = event.target.closest('.add-chain-item');
+        if (button) {
+            addChainItem(button);
+        }
+    });
+
+    // Connect remove chain item buttons
+    document.addEventListener('click', function(event) {
+        const button = event.target.closest('.remove-chain-item');
+        if (button) {
+            removeChainItem(button);
+        }
+    });
+
+    // Note: Insert chain item buttons have their event listeners attached directly 
+    // to each button when they are created in the updateChainVisualCues function
+    // This ensures they work reliably with dynamically created elements
 
     // Handle edit button clicks in topic list
     document.getElementById('topics-list').addEventListener('click', (event) => {
@@ -74,6 +117,56 @@ document.addEventListener("DOMContentLoaded", function() {
         const topicId = document.getElementById('editTopicId').value;
         removeTopic(topicId);
     });
+
+    // Add styles for chain links
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        .chain-link {
+            color: #0d6efd;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 0.2rem 0;
+        }
+        
+        .chain-items-container {
+            position: relative;
+            border-left: 3px solid #e9ecef;
+            padding-left: 15px;
+            margin-left: 10px;
+        }
+        
+        .chain-connector {
+            border-left: 2px dashed #0d6efd;
+            position: absolute;
+            height: calc(100% - 10px);
+            left: 20px;
+            top: 5px;
+            z-index: -1;
+        }
+        
+        .insert-chain-item {
+            margin-left: 8px;
+        }
+        
+        .chain-container {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+
+    // Add info tooltip to create modal
+    const publishUrlsContainer = document.getElementById('publishUrlsContainer');
+    if (publishUrlsContainer) {
+        const publishLabel = publishUrlsContainer.previousElementSibling;
+        if (publishLabel && publishLabel.tagName === 'LABEL') {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'alert alert-info py-2 mb-3 mt-1';
+            infoDiv.innerHTML = '<small><i class="bi bi-info-circle"></i> Publishing chains pass content through multiple steps. Each step processes the output of the previous step.</small>';
+            publishLabel.after(infoDiv);
+        }
+    }
 });
 
 // Split loadTopics into smaller functions to reduce complexity
@@ -188,7 +281,7 @@ function setupTopicButtons(topicElement, topic) {
     
     if (!topic.publish_urls || topic.publish_urls.length === 0) {
         publishButton.disabled = true;
-        publishButton.title = 'No publish URLs configured';
+        publishButton.title = 'No publishing chains configured';
     }
 }
 
@@ -220,6 +313,68 @@ function removeFeedInput(button) {
     button.closest('.input-group').remove();
 }
 
+// Function to load prompts from API and populate dropdowns
+async function loadPrompts() {
+    try {
+        const response = await fetch(`${API_URL}/prompts`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const prompts = await response.json();
+        
+        // Sort prompts alphabetically by name
+        prompts.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // Populate create form dropdown
+        const createDropdown = document.getElementById('promptSelect');
+        // Populate edit form dropdown
+        const editDropdown = document.getElementById('editPromptSelect');
+        
+        // Clear any existing options except the default
+        while (createDropdown.options.length > 1) {
+            createDropdown.remove(1);
+        }
+        
+        while (editDropdown.options.length > 1) {
+            editDropdown.remove(1);
+        }
+        
+        // Add options for each prompt
+        prompts.forEach(prompt => {
+            // Add to create form dropdown
+            const createOption = document.createElement('option');
+            createOption.value = prompt.id;
+            createOption.textContent = prompt.name;
+            createDropdown.appendChild(createOption);
+            
+            // Add to edit form dropdown
+            const editOption = document.createElement('option');
+            editOption.value = prompt.id;
+            editOption.textContent = prompt.name;
+            editDropdown.appendChild(editOption);
+        });
+    } catch (error) {
+        console.error('Error loading prompts:', error);
+        showError('Failed to load prompts. Default prompt will be used.');
+    }
+}
+
+async function generateWorkflowVisualization(topicId) {
+    try {
+        // Request TXT format - backend will handle fallback to markdown if needed
+        const response = await fetch(`${API_URL}/topics/${topicId}/workflow?format=txt`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // The visualization is automatically saved to the topic's directory
+        // We don't need to do anything with the response
+    } catch (error) {
+        console.error('Error generating workflow visualization:', error);
+        // Don't show error to user as this is a background task
+    }
+}
+
 async function createTopic() {
     // Get the project ID from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -233,15 +388,23 @@ async function createTopic() {
     const name = document.getElementById('topicName').value;
     const description = document.getElementById('topicDescription').value;
     const thumbnailUrl = document.getElementById('thumbnailUrl').value.trim();
+    const promptId = document.getElementById('promptSelect').value;
     const feedUrls = Array.from(document.querySelectorAll('.feed-url'))
         .map(input => input.value)
         .filter(url => url.trim() !== '');
-    const publishUrls = Array.from(document.querySelectorAll('.publish-url'))
-        .map(input => input.value)
-        .filter(url => url.trim() !== '');
+    
+    // Get publishing chains
+    const publishUrls = Array.from(document.querySelectorAll('.chain-container'))
+        .map(container => {
+            const chainItems = Array.from(container.querySelectorAll('.chain-item'))
+                .map(input => input.value.trim())
+                .filter(item => item !== '');
+            return chainItems.join(' | ');
+        })
+        .filter(chain => chain !== '');
 
     try {
-        const response = await fetch(`${API_URL}/topics/`, {
+        const response = await fetch(`${API_URL}/projects/${projectId}/topics`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -251,7 +414,8 @@ async function createTopic() {
                 description, 
                 feed_urls: feedUrls, 
                 publish_urls: publishUrls,
-                thumbnail_url: thumbnailUrl // Send empty string if field is empty
+                thumbnail_url: thumbnailUrl,
+                prompt_id: promptId || null
             })
         });
         
@@ -261,14 +425,8 @@ async function createTopic() {
         
         const topic = await response.json();
         
-        // Add topic to project
-        const projectResponse = await fetch(`${API_URL}/projects/${projectId}/topics/${topic.id}`, {
-            method: 'POST'
-        });
-
-        if (!projectResponse.ok) {
-            throw new Error(`Failed to add topic to project: ${projectResponse.status}`);
-        }
+        // Generate workflow visualization
+        await generateWorkflowVisualization(topic.id);
         
         // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('createTopicModal'));
@@ -344,6 +502,21 @@ function editTopic(topicId) {
             document.getElementById('editTopicName').value = topic.name;
             document.getElementById('editTopicDescription').value = topic.description;
             document.getElementById('editThumbnailUrl').value = topic.thumbnail_url || '';
+            
+            // Set the custom prompt dropdown
+            const promptDropdown = document.getElementById('editPromptSelect');
+            if (topic.prompt_id) {
+                // Find and select the matching option
+                for (let i = 0; i < promptDropdown.options.length; i++) {
+                    if (promptDropdown.options[i].value === topic.prompt_id) {
+                        promptDropdown.selectedIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                // Select the default option
+                promptDropdown.selectedIndex = 0;
+            }
 
             // Clear existing feed URLs
             const editFeedUrlsContainer = document.getElementById('editFeedUrlsContainer');
@@ -383,37 +556,105 @@ function editTopic(topicId) {
             // Clear existing publish URLs
             const editPublishUrlsContainer = document.getElementById('editPublishUrlsContainer');
             editPublishUrlsContainer.textContent = '';
+            
+            // Add information tooltip about chains
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'alert alert-info py-2 mb-3';
+            infoDiv.innerHTML = '<small><i class="bi bi-info-circle"></i> Publishing chains pass content through multiple steps. Add steps below or insert steps between existing ones.</small>';
+            editPublishUrlsContainer.appendChild(infoDiv);
+            
+            // Add publishing chains
             (topic.publish_urls || []).forEach(url => {
-                const inputGroup = document.createElement('div');
-                inputGroup.className = 'input-group mb-2';
+                const chainContainer = document.createElement('div');
+                chainContainer.className = 'chain-container mb-3';
                 
-                // Create input element for the publish URL
-                const input = document.createElement('input');
-                input.type = 'url';
-                input.className = 'form-control edit-publish-url';
-                input.value = url;
+                // Create chain header
+                const header = document.createElement('div');
+                header.className = 'd-flex justify-content-between align-items-center mb-2';
                 
-                // Create remove button
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'btn btn-outline-danger remove-publish';
-                button.textContent = '×';
-                button.onclick = function() { removePublishInput(this); };
+                const label = document.createElement('label');
+                label.className = 'form-label mb-0';
+                label.textContent = 'Chain Items';
                 
-                // Append elements to input group
-                inputGroup.appendChild(input);
-                inputGroup.appendChild(button);
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-outline-danger btn-sm remove-chain';
+                removeBtn.textContent = 'Remove Chain';
                 
-                editPublishUrlsContainer.appendChild(inputGroup);
+                header.appendChild(label);
+                header.appendChild(removeBtn);
+                
+                // Create items container
+                const itemsContainer = document.createElement('div');
+                itemsContainer.className = 'chain-items-container';
+                
+                // Split the URL by pipe and create items
+                const chainItems = url.split('|').map(item => item.trim());
+                
+                chainItems.forEach(item => {
+                    const inputGroup = document.createElement('div');
+                    inputGroup.className = 'input-group mb-2';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'form-control chain-item';
+                    input.value = item;
+                    
+                    const itemRemoveBtn = document.createElement('button');
+                    itemRemoveBtn.type = 'button';
+                    itemRemoveBtn.className = 'btn btn-outline-danger remove-chain-item';
+                    itemRemoveBtn.textContent = '×';
+                    
+                    inputGroup.appendChild(input);
+                    inputGroup.appendChild(itemRemoveBtn);
+                    itemsContainer.appendChild(inputGroup);
+                });
+                
+                // Add button to add chain items
+                const addItemBtn = document.createElement('button');
+                addItemBtn.type = 'button';
+                addItemBtn.className = 'btn btn-outline-secondary btn-sm add-chain-item';
+                addItemBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add Step at End';
+                addItemBtn.title = 'Add a new step at the end of the chain';
+                
+                // Assemble chain container
+                chainContainer.appendChild(header);
+                chainContainer.appendChild(itemsContainer);
+                chainContainer.appendChild(addItemBtn);
+                
+                editPublishUrlsContainer.appendChild(chainContainer);
+                
+                // Initialize visual chain links
+                updateChainVisualCues(itemsContainer);
             });
 
-            // Add "Add Publish URL" button
-            const addPublishButton = document.createElement('button');
-            addPublishButton.type = 'button';
-            addPublishButton.className = 'btn btn-outline-secondary btn-sm';
-            addPublishButton.onclick = () => addEditPublishInput();
-            addPublishButton.textContent = 'Add Publish URL';
-            editPublishUrlsContainer.appendChild(addPublishButton);
+            // Add "Add Publishing Chain" button
+            const addChainButton = document.createElement('button');
+            addChainButton.type = 'button';
+            addChainButton.className = 'btn btn-outline-secondary btn-sm';
+            addChainButton.textContent = 'Add Publishing Chain';
+            addChainButton.onclick = () => addEditPublishingChain();
+            editPublishUrlsContainer.appendChild(addChainButton);
+            
+            // Add the Restart button to the modal footer
+            const modalFooter = document.querySelector('#editTopicModal .modal-footer');
+            
+            // Remove any existing restart button first (to avoid duplicates)
+            const existingButton = modalFooter.querySelector('.restart-topic-btn');
+            if (existingButton) {
+                existingButton.remove();
+            }
+            
+            // Add the restart button
+            const restartButton = document.createElement('button');
+            restartButton.type = 'button';
+            restartButton.className = 'btn btn-warning restart-topic-btn';
+            restartButton.textContent = 'Restart Topic';
+            restartButton.onclick = () => restartTopic(topicId);
+            
+            // Insert it next to the remove button
+            const removeButton = modalFooter.querySelector('.remove-article');
+            removeButton.insertAdjacentElement('afterend', restartButton);
         })
         .catch(error => {
             console.error('Error fetching topic:', error);
@@ -446,29 +687,15 @@ function addEditFeedInput() {
     container.insertBefore(inputGroup, container.lastChild);
 }
 
-function addEditPublishInput() {
+function addEditPublishingChain() {
     const container = document.getElementById('editPublishUrlsContainer');
-    const inputGroup = document.createElement('div');
-    inputGroup.className = 'input-group mb-2';
-    
-    // Create input element
-    const input = document.createElement('input');
-    input.type = 'url';
-    input.className = 'form-control edit-publish-url';
-    input.placeholder = 'https://example.com/publish';
-    
-    // Create button element
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'btn btn-outline-danger remove-publish';
-    button.textContent = '×';
-    button.onclick = function() { removePublishInput(this); };
-    
-    // Append elements to the container
-    inputGroup.appendChild(input);
-    inputGroup.appendChild(button);
-    
-    container.insertBefore(inputGroup, container.lastChild);
+    const chainContainer = createChainContainer();
+    container.insertBefore(chainContainer, container.lastChild);
+}
+
+function addEditPublishInput() {
+    // Replace with addEditPublishingChain functionality
+    addEditPublishingChain();
 }
 
 async function updateTopic() {
@@ -476,8 +703,8 @@ async function updateTopic() {
     const name = document.getElementById('editTopicName').value;
     const description = document.getElementById('editTopicDescription').value;
     const thumbnailUrl = document.getElementById('editThumbnailUrl').value.trim();
+    const promptId = document.getElementById('editPromptSelect').value;
     const feedInputs = document.querySelectorAll('#editFeedUrlsContainer .feed-url');
-    const publishInputs = document.querySelectorAll('#editPublishUrlsContainer .edit-publish-url');
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get("project_id");
 
@@ -485,9 +712,15 @@ async function updateTopic() {
         .map(input => input.value.trim())
         .filter(url => url !== '');
 
-    const publish_urls = Array.from(publishInputs)
-        .map(input => input.value.trim())
-        .filter(url => url !== '');
+    // Get publishing chains
+    const publish_urls = Array.from(document.querySelectorAll('#editPublishUrlsContainer .chain-container'))
+        .map(container => {
+            const chainItems = Array.from(container.querySelectorAll('.chain-item'))
+                .map(input => input.value.trim())
+                .filter(item => item !== '');
+            return chainItems.join(' | ');
+        })
+        .filter(chain => chain !== '');
 
     try {
         const response = await fetch(`${API_URL}/topics/${topicId}`, {
@@ -500,13 +733,17 @@ async function updateTopic() {
                 description, 
                 feed_urls, 
                 publish_urls,
-                thumbnail_url: thumbnailUrl // Send empty string if field is empty
+                thumbnail_url: thumbnailUrl,
+                prompt_id: promptId || null
             })
         });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        // Generate workflow visualization
+        await generateWorkflowVisualization(topicId);
 
         // Close modal and refresh topics list
         const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
@@ -545,33 +782,139 @@ function showError(message) {
     alert(message);
 }
 
-function addPublishInput() {
+function addPublishingChain() {
     const container = document.getElementById('publishUrlsContainer');
-    const div = document.createElement('div');
-    div.className = 'input-group mb-2';
+    const chainContainer = createChainContainer();
+    container.appendChild(chainContainer);
+}
+
+function createChainContainer() {
+    const chainContainer = document.createElement('div');
+    chainContainer.className = 'chain-container mb-3';
     
-    // Create input element
+    // Create chain header with label and remove button
+    const header = document.createElement('div');
+    header.className = 'd-flex justify-content-between align-items-center mb-2';
+    
+    const label = document.createElement('label');
+    label.className = 'form-label mb-0';
+    label.textContent = 'Chain Items';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-outline-danger btn-sm remove-chain';
+    removeBtn.textContent = 'Remove Chain';
+    
+    header.appendChild(label);
+    header.appendChild(removeBtn);
+    
+    // Create items container
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'chain-items-container';
+    
+    // Add initial chain item
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    
     const input = document.createElement('input');
-    input.type = 'url';
-    input.className = 'form-control publish-url';
-    input.placeholder = 'https://example.com/publish';
+    input.type = 'text';
+    input.className = 'form-control chain-item';
+    input.placeholder = 'Chain item';
     
-    // Create button element
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'btn btn-outline-danger remove-publish';
+    button.className = 'btn btn-outline-danger remove-chain-item';
     button.textContent = '×';
-    button.onclick = function() { removePublishInput(this); };
     
-    // Append elements to the container
-    div.appendChild(input);
-    div.appendChild(button);
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(button);
+    itemsContainer.appendChild(inputGroup);
     
-    container.appendChild(div);
+    // Add "Add Chain Item" button
+    const addItemBtn = document.createElement('button');
+    addItemBtn.type = 'button';
+    addItemBtn.className = 'btn btn-outline-secondary btn-sm add-chain-item';
+    addItemBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add Step at End';
+    addItemBtn.title = 'Add a new step at the end of the chain';
+    
+    // Assemble chain container
+    chainContainer.appendChild(header);
+    chainContainer.appendChild(itemsContainer);
+    chainContainer.appendChild(addItemBtn);
+    
+    // Initialize visual chain links
+    updateChainVisualCues(itemsContainer);
+    
+    return chainContainer;
+}
+
+function removePublishingChain(button) {
+    button.closest('.chain-container').remove();
+}
+
+function addChainItem(button) {
+    const container = button.previousElementSibling;
+    
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control chain-item';
+    input.placeholder = 'Chain item';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-outline-danger remove-chain-item';
+    removeBtn.textContent = '×';
+    
+    inputGroup.appendChild(input);
+    inputGroup.appendChild(removeBtn);
+    
+    container.appendChild(inputGroup);
+    
+    // Update visual chain links
+    updateChainVisualCues(container);
+    
+    // Focus the new input field and add a highlight effect
+    input.focus();
+    
+    // Add a temporary highlight effect
+    inputGroup.style.transition = 'background-color 1s';
+    inputGroup.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+    
+    // Remove the highlight after a moment
+    setTimeout(() => {
+        inputGroup.style.backgroundColor = '';
+    }, 1500);
+}
+
+function removeChainItem(button) {
+    const inputGroup = button.closest('.input-group');
+    const container = inputGroup.closest('.chain-items-container');
+    
+    // Only remove if there's more than one item
+    if (container.querySelectorAll('.input-group').length > 1) {
+        inputGroup.remove();
+        // Update visual chain links after removal
+        updateChainVisualCues(container);
+    }
+}
+
+function addPublishInput() {
+    // Replace with addPublishingChain functionality
+    addPublishingChain();
 }
 
 function removePublishInput(button) {
-    button.closest('.input-group').remove();
+    // This function is kept for backward compatibility
+    // If it's a chain container button, use removePublishingChain
+    if (button.classList.contains('remove-chain')) {
+        removePublishingChain(button);
+    } else {
+        // Otherwise, it's an old-style remove button
+        button.closest('.input-group').remove();
+    }
 }
 
 async function publishArticle(topicId) {
@@ -610,4 +953,160 @@ async function publishArticle(topicId) {
         button.disabled = false;
         button.innerHTML = '<i class="bi bi-cloud-upload"></i>';
     }
-} 
+}
+
+// Add this function to handle topic restarting
+async function restartTopic(topicId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get("project_id");
+    
+    try {
+        // Show confirmation dialog
+        if (!confirm("Are you sure you want to restart this topic? The current topic will be archived and a new one created with the same configuration.")) {
+            return;
+        }
+        
+        // Restart the topic
+        const response = await fetch(`${API_URL}/topics/${topicId}/restart`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const newTopic = await response.json();
+        
+        // Generate workflow visualization for the new topic
+        await generateWorkflowVisualization(newTopic.id);
+        
+        // Close modal if open
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editTopicModal'));
+        if (modal) {
+            modal.hide();
+        }
+        
+        // Refresh topics list
+        await loadTopics(projectId);
+        
+        // Show success message
+        alert(`Topic restarted successfully. The original topic has been archived.`);
+        
+    } catch (error) {
+        console.error('Error restarting topic:', error);
+        showError('Failed to restart topic. Please try again later.');
+    }
+}
+
+// Function to insert a chain item between existing ones
+function insertChainItem(button) {
+    console.log('Insert chain item button clicked:', button);
+    
+    // Find the link container (the div containing the insert button and arrow)
+    const linkContainer = button.closest('div[class*="justify-content"]');
+    if (!linkContainer) {
+        console.error('Could not find link container');
+        return;
+    }
+    
+    // Find the chain items container
+    const container = linkContainer.closest('.chain-items-container');
+    if (!container) {
+        console.error('Could not find chain items container');
+        return;
+    }
+    
+    // Create new input group
+    const newInputGroup = document.createElement('div');
+    newInputGroup.className = 'input-group mb-2';
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control chain-item';
+    input.placeholder = 'Chain item';
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-outline-danger remove-chain-item';
+    removeBtn.textContent = '×';
+    
+    newInputGroup.appendChild(input);
+    newInputGroup.appendChild(removeBtn);
+    
+    // Insert new input group after the link container
+    linkContainer.after(newInputGroup);
+    
+    // Update visual chain links
+    updateChainVisualCues(container);
+    
+    // Focus the new input field
+    input.focus();
+    
+    // Add a temporary highlight effect
+    newInputGroup.style.transition = 'background-color 1s';
+    newInputGroup.style.backgroundColor = 'rgba(13, 110, 253, 0.1)';
+    
+    // Remove the highlight after a moment
+    setTimeout(() => {
+        newInputGroup.style.backgroundColor = '';
+    }, 1500);
+}
+
+// Function to update visual cues that indicate chain connections
+function updateChainVisualCues(container) {
+    console.log('Updating chain visual cues for container:', container);
+    
+    // Remove any existing visual cues
+    container.querySelectorAll('.chain-link').forEach(link => link.remove());
+    container.querySelectorAll('.insert-chain-item').forEach(btn => btn.remove());
+    container.querySelectorAll('.chain-connector').forEach(conn => conn.remove());
+    container.querySelectorAll('.link-container').forEach(lc => lc.remove());
+    
+    const chainItems = container.querySelectorAll('.input-group');
+    console.log('Found chain items:', chainItems.length);
+    
+    // Add a vertical connector line that spans all items if there's more than one
+    if (chainItems.length > 1) {
+        const connector = document.createElement('div');
+        connector.className = 'chain-connector';
+        container.appendChild(connector);
+    }
+    
+    chainItems.forEach((item, index) => {
+        // Skip the last item - it doesn't need a downward arrow
+        if (index < chainItems.length - 1) {
+            console.log('Adding link after item', index);
+            
+            // Add chain link visual cue
+            const linkDiv = document.createElement('div');
+            linkDiv.className = 'chain-link text-center';
+            linkDiv.innerHTML = '<i class="bi bi-arrow-down-circle-fill"></i>';
+            
+            // Add insert button with data attribute to help debugging
+            const insertBtn = document.createElement('button');
+            insertBtn.type = 'button';
+            insertBtn.className = 'btn btn-outline-primary btn-sm insert-chain-item';
+            insertBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Insert Step Here';
+            insertBtn.title = 'Insert a new step between chain items';
+            insertBtn.setAttribute('data-position', index);
+            
+            // Add click handler directly to the button
+            insertBtn.addEventListener('click', function() {
+                console.log('Insert button clicked directly');
+                insertChainItem(this);
+            });
+            
+            // Create container for link and insert button
+            const linkContainer = document.createElement('div');
+            linkContainer.className = 'd-flex justify-content-start align-items-center gap-2 mb-2 ps-3 link-container';
+            linkContainer.appendChild(linkDiv);
+            linkContainer.appendChild(insertBtn);
+            
+            // Insert after the current item
+            item.after(linkContainer);
+        }
+    });
+}

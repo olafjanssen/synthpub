@@ -18,6 +18,8 @@ tomli
 tomli_w
 blinker
 defusedxml>=0.7.1
+networkx
+grandalf
 
 # LLM integration
 langchain-ollama

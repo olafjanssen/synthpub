@@ -4,7 +4,13 @@ Unit tests for the Topic model.
 
 from datetime import datetime
 
-from api.models.topic import Representation, Topic, TopicBase, TopicCreate, TopicUpdate
+from src.api.models.topic import (
+    Representation,
+    Topic,
+    TopicBase,
+    TopicCreate,
+    TopicUpdate,
+)
 
 
 def test_topic_base_creation():
@@ -81,26 +87,19 @@ def test_topic_creation():
     assert topic.name == "Test Topic"
     assert topic.article == "article-456"
     assert isinstance(topic.created_at, datetime)
-    assert len(topic.representations) == 0
     assert len(topic.processed_feeds) == 0
 
 
-def test_add_representation():
-    """Test adding a representation to a topic."""
-    topic = Topic(
-        id="topic-123",
-        name="Test Topic",
-        description="This is a test topic",
-        feed_urls=["https://example.com/feed1"],
+def test_representation_model():
+    """Test representation model independently since Topic no longer has direct representation management."""
+    representation = Representation(
+        type="summary", content="This is a summary", metadata={"source": "test"}
     )
 
-    metadata = {"source": "test"}
-    topic.add_representation("summary", "This is a summary", metadata)
-
-    assert len(topic.representations) == 1
-    assert topic.representations[0].type == "summary"
-    assert topic.representations[0].content == "This is a summary"
-    assert topic.representations[0].metadata == metadata
+    assert representation.type == "summary"
+    assert representation.content == "This is a summary"
+    assert representation.metadata == {"source": "test"}
+    assert isinstance(representation.created_at, datetime)
 
 
 def test_topic_from_fixture(sample_topic_data):

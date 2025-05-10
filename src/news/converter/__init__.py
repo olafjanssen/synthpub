@@ -14,7 +14,3 @@ CONVERTERS = [
     Prompt,
     PodcastEpisodeRSSConverter,
 ]
-
-# Connect signals for all converters
-for converter in CONVERTERS:
-    converter.connect_signals()

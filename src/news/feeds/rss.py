@@ -5,7 +5,7 @@ RSS connector for fetching links from RSS feeds.
 import ssl
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 import feedparser
@@ -48,7 +48,7 @@ def get_pub_date(entry) -> datetime:
         return datetime.min
 
 
-def fetch_rss_links(url: str) -> List[Dict[str, str]]:
+def fetch_rss_links(url: str) -> List[Dict[str, Any]]:
     """
     Fetch all entries from an RSS feed and return their links.
 
@@ -58,17 +58,11 @@ def fetch_rss_links(url: str) -> List[Dict[str, str]]:
     Returns:
         List of dicts containing title, link, and published date
     """
-    # Create a custom SSL context with verification
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = True
-    ssl_context.verify_mode = ssl.CERT_REQUIRED
-
-    # Use the custom SSL context
+    # Disable SSL verification
     if hasattr(ssl, "_create_unverified_context"):
-        ssl._create_default_https_context = lambda: ssl_context
+        ssl._create_default_https_context = ssl._create_unverified_context
 
     feed = feedparser.parse(url)
-
     entries = feed.entries
 
     # Sort entries by published date (oldest to newest)
@@ -89,7 +83,7 @@ class RSSConnector(FeedConnector):
         )
 
     @staticmethod
-    def fetch_content(url: str) -> List[Dict[str, str]]:
+    def fetch_content(url: str) -> List[Dict[str, Any]]:
         try:
             entries = fetch_rss_links(url)
             return [
