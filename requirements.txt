@@ -38,6 +38,7 @@ PyPDF2
 
 # Media processing
 piper-tts>=1.2.0
+kokoro
 numpy
 pydub
 
