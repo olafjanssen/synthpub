@@ -6,7 +6,8 @@ import io
 from typing import List
 
 from kokoro import KPipeline
-from pydub import AudioSegment
+import soundfile as sf
+import numpy as np
 
 from api.models.article import Article
 from utils.logging import debug, error, info, warning
@@ -52,7 +53,7 @@ class KokoroTTS(Converter):
         text: str,
         voice_key: str = DEFAULT_VOICE,
         speed: float = 1.0,
-    ) -> AudioSegment:
+    ) -> bytes:
         """Generate audio for a piece of text using Kokoro TTS.
 
         Args:
@@ -61,7 +62,7 @@ class KokoroTTS(Converter):
             speed: Speech speed multiplier (default: 1.0)
 
         Returns:
-            AudioSegment containing the generated speech
+            bytes containing the generated speech in MP3 format
         """
         debug(
             "KOKORO_TTS",
@@ -75,29 +76,29 @@ class KokoroTTS(Converter):
             generator = pipeline(text, voice=voice_key, speed=speed)
             
             # Process each chunk and combine audio segments
-            audio_segments = []
+            audio_chunks = []
             for i, (gs, ps, audio) in enumerate(generator):
                 debug("KOKORO_TTS", f"Processing chunk {i}", f"Graphemes: {gs}, Phonemes: {ps}")
-                
-                # Convert numpy array to audio segment
-                audio_segment = AudioSegment(
-                    audio.tobytes(),
-                    frame_rate=24000,  # Kokoro's sample rate
-                    sample_width=2,  # 16-bit audio
-                    channels=1  # Mono audio
-                )
-                audio_segments.append(audio_segment)
+                audio_chunks.append(audio)
             
-            if not audio_segments:
+            if not audio_chunks:
                 raise ValueError("No audio was generated")
                 
-            # Combine all segments
-            combined_audio = sum(audio_segments)
+            # Combine all chunks
+            combined_audio = np.concatenate(audio_chunks)
+            
+            # Convert to MP3 using soundfile and io
+            buffer = io.BytesIO()
+            sf.write(buffer, combined_audio, 24000, format='MP3')
+            audio_bytes = buffer.getvalue()
+            
             debug(
-                "KOKORO_TTS", "Audio generated", f"Duration: {len(combined_audio)/1000}s"
+                "KOKORO_TTS", 
+                "Audio generated", 
+                f"Duration: {len(combined_audio)/24000:.1f}s"
             )
             
-            return combined_audio
+            return audio_bytes
 
         except Exception as e:
             error("KOKORO_TTS", "Audio generation failed", f"Error: {str(e)}")
@@ -146,15 +147,10 @@ class KokoroTTS(Converter):
                 )
 
             # Generate audio for the entire content
-            combined_audio = cls.generate_audio(content, voice_key, speed)
-
-            # Export to bytes buffer
-            buffer = io.BytesIO()
-            combined_audio.export(buffer, format="mp3")
-            audio_bytes = buffer.getvalue()
+            audio_bytes = cls.generate_audio(content, voice_key, speed)
 
             # Add audio representation
-            total_duration = len(combined_audio) / 1000  # in seconds
+            total_duration = len(audio_bytes) / 24000  # in seconds
             info(
                 "KOKORO_TTS",
                 "Conversion complete",
