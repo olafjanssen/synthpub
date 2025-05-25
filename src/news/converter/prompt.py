@@ -3,6 +3,8 @@ Content converter using a prompt from the prompt database.
 """
 
 from langchain.prompts import PromptTemplate
+from langchain.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
 
 from api.db.prompt_db import get_prompt
 from api.models.article import Article
@@ -11,6 +13,13 @@ from utils.logging import debug, error, info, warning
 
 from .converter_interface import Converter
 
+class ConverterOutput(BaseModel):
+    """Structured output from the LLM conversion process."""
+    output: str = Field(
+        description="The converted content following the instructions of the prompt.",
+        min_length=1,
+        max_length=10000  # Reasonable limit to prevent endless outputs
+    )
 
 class Prompt(Converter):
 
@@ -89,17 +98,36 @@ Use a clear, concise style appropriate for the content.
             debug("PROMPT", "Getting LLM", "Using article_refinement model")
             llm = get_llm("article_refinement")
 
-            prompt = PromptTemplate.from_template(template_text)
+            # Set up the output parser
+            parser = PydanticOutputParser(pydantic_object=ConverterOutput)
+            
+            # Create the prompt with output format instructions
+            prompt = PromptTemplate.from_template(
+                template_text + "\n\n{format_instructions}",
+                partial_variables={"format_instructions": parser.get_format_instructions()}
+            )
 
             debug("PROMPT", "Invoking LLM", f"Content length: {len(content)}")
-            converted_content = llm.invoke(
+            raw_output = llm.invoke(
                 prompt.format(content=content)
             ).content.strip()
-            debug(
-                "PROMPT",
-                "LLM response received",
-                f"Output length: {len(converted_content)}",
-            )
+            
+            # Parse the output using Pydantic
+            try:
+                parsed_output = parser.parse(raw_output)
+                converted_content = parsed_output.output
+                debug(
+                    "PROMPT",
+                    "LLM response parsed successfully",
+                    f"Output length: {len(converted_content)}",
+                )
+            except Exception as parse_error:
+                error(
+                    "PROMPT",
+                    "Failed to parse LLM output",
+                    f"Error: {str(parse_error)}, using raw output",
+                )
+                converted_content = raw_output
 
             article.add_representation(
                 content_type, converted_content, {"extension": "txt"}
