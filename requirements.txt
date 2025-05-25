@@ -38,9 +38,10 @@ PyPDF2
 
 # Media processing
 piper-tts>=1.2.0
-kokoro
-numpy
+kokoro>=0.9.4
+numpy<2.0
 pydub
+soundfile
 
 # Desktop
 pywebview

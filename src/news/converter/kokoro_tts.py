@@ -3,11 +3,9 @@ Content converter using Kokoro TTS to generate long-form audio from articles loc
 """
 
 import io
-import os
-import tempfile
 from typing import List
 
-from kokoro import Kokoro
+from kokoro import KPipeline
 from pydub import AudioSegment
 
 from api.models.article import Article
@@ -18,9 +16,6 @@ from .converter_interface import Converter
 
 class KokoroTTS(Converter):
     """Converter for generating audio using Kokoro TTS."""
-
-    # Cache for loaded voice models to avoid reloading
-    _voice_cache = {}
 
     # Default voice
     DEFAULT_VOICE = "bm_george"
@@ -52,27 +47,6 @@ class KokoroTTS(Converter):
         return sentences
 
     @classmethod
-    def get_voice(cls, voice_key: str = DEFAULT_VOICE) -> Kokoro:
-        """Get or load a Kokoro voice model."""
-        if voice_key in cls._voice_cache:
-            return cls._voice_cache[voice_key]
-
-        debug("KOKORO_TTS", "Loading voice model", f"Voice: {voice_key}")
-
-        try:
-            # Initialize Kokoro with the specified voice
-            voice = Kokoro(voice=voice_key)
-            cls._voice_cache[voice_key] = voice
-            return voice
-        except Exception as e:
-            error(
-                "KOKORO_TTS",
-                "Failed to load voice model",
-                f"Voice: {voice_key}, Error: {str(e)}",
-            )
-            raise
-
-    @classmethod
     def generate_audio(
         cls,
         text: str,
@@ -95,38 +69,39 @@ class KokoroTTS(Converter):
             f"Text length: {len(text)}, Voice: {voice_key}, Speed: {speed}",
         )
 
-        # Get the voice model
-        voice = cls.get_voice(voice_key)
-
-        # Create a temporary WAV file
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as wav_file:
-            wav_file_path = wav_file.name
-
         try:
-            # Generate audio using Kokoro
-            voice.synthesize(text, wav_file_path, speed=speed)
-
-            # Load the generated audio file
-            audio_segment = AudioSegment.from_wav(wav_file_path)
+            # Initialize pipeline and generate audio
+            pipeline = KPipeline(lang_code='a')
+            generator = pipeline(text, voice=voice_key, speed=speed)
+            
+            # Process each chunk and combine audio segments
+            audio_segments = []
+            for i, (gs, ps, audio) in enumerate(generator):
+                debug("KOKORO_TTS", f"Processing chunk {i}", f"Graphemes: {gs}, Phonemes: {ps}")
+                
+                # Convert numpy array to audio segment
+                audio_segment = AudioSegment(
+                    audio.tobytes(),
+                    frame_rate=24000,  # Kokoro's sample rate
+                    sample_width=2,  # 16-bit audio
+                    channels=1  # Mono audio
+                )
+                audio_segments.append(audio_segment)
+            
+            if not audio_segments:
+                raise ValueError("No audio was generated")
+                
+            # Combine all segments
+            combined_audio = sum(audio_segments)
             debug(
-                "KOKORO_TTS", "Audio generated", f"Duration: {len(audio_segment)/1000}s"
+                "KOKORO_TTS", "Audio generated", f"Duration: {len(combined_audio)/1000}s"
             )
-
-            return audio_segment
+            
+            return combined_audio
 
         except Exception as e:
             error("KOKORO_TTS", "Audio generation failed", f"Error: {str(e)}")
             raise
-        finally:
-            # Clean up temporary file
-            try:
-                os.unlink(wav_file_path)
-            except Exception as e:
-                warning(
-                    "KOKORO_TTS",
-                    "Failed to delete temp file",
-                    f"Path: {wav_file_path}, Error: {str(e)}",
-                )
 
     @staticmethod
     def can_handle(content_type: str) -> bool:
@@ -170,30 +145,8 @@ class KokoroTTS(Converter):
                     "Using original article content",
                 )
 
-            # Split content into manageable chunks
-            sentences = cls.split_into_sentences(content)
-            info("KOKORO_TTS", "Processing chunks", f"Chunks: {len(sentences)}")
-
-            # Generate audio for each chunk
-            audio_segments = []
-            for i, sentence in enumerate(sentences):
-                debug("KOKORO_TTS", "Processing chunk", f"{i+1}/{len(sentences)}")
-                try:
-                    audio_segment = cls.generate_audio(sentence, voice_key, speed)
-                    audio_segments.append(audio_segment)
-                except Exception as chunk_error:
-                    error(
-                        "KOKORO_TTS",
-                        "Chunk processing failed",
-                        f"Chunk {i+1}: {str(chunk_error)}",
-                    )
-                    # Continue with other chunks
-
-            if not audio_segments:
-                raise ValueError("No audio was generated from any chunks")
-
-            # Concatenate all audio segments
-            combined_audio = sum(audio_segments)
+            # Generate audio for the entire content
+            combined_audio = cls.generate_audio(content, voice_key, speed)
 
             # Export to bytes buffer
             buffer = io.BytesIO()
