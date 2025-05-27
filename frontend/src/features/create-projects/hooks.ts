@@ -1,15 +1,20 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+	//useQuery,
+	useMutation,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { apiClient } from "@/api";
-import { CreateProject } from ".";
+//import { CreateProject } from ".";
 
-const fetchProjects = async () => {
-	const response = await apiClient.get("/projects/");
-	return response.data;
-};
+// const fetchProjects = async () => {
+// 	const response = await apiClient.get("/projects/");
+// 	return response.data;
+// };
 
 const createProject = async (newProject: {
 	title: string;
 	description: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	topic_ids?: any[];
 }) => {
 	const response = await apiClient.post("/projects/", newProject);

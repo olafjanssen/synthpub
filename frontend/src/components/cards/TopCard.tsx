@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Image from "next/image";
-import { useRouter } from "next/router";
+//import { useRouter } from "next/router";
 interface TopCardProps {
 	imageSrc?: any;
 	title?: string;
@@ -22,7 +22,7 @@ const TopCard: React.FC<TopCardProps> = ({
 }) => {
 	const subtitleLines = subtitle ? subtitle.split("\n").filter(Boolean) : [];
 	const isMultiLine = subtitleLines.length > 1;
-	const router = useRouter();
+	//const router = useRouter();
 	const cardContent = (
 		<div
 			className={`p-2 w-56 flex flex-col rounded-none shadow-[0.3em_0.3em_0px_#4a6a5f]  text-white cursor-pointer hover:filter hover:grayscale ${bgColor}`}

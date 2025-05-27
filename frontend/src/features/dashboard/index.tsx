@@ -1,5 +1,5 @@
 import Link from "next/link";
-import CreateProjectModal from "@/features/create-projects";
+//import CreateProjectModal from "@/features/create-projects";
 import EmptyCard from "@/components/cards/EmptyCard";
 import ProjectCard from "@/components/cards/ProjectCard";
 import { useFetchProjects } from "./hooks";
@@ -8,6 +8,7 @@ import CreateProject from "@/features/create-projects";
 export interface Project {
 	title: string;
 	description: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	topic_ids: any;
 	id: string;
 	created_at: Date;
