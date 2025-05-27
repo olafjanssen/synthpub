@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api";
-import { Project } from "./";
+import { Project } from "../../utils/types";
 
 const fetchProjects = async () => {
 	const response = await apiClient.get("/projects/");

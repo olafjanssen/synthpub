@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Logo from "@/assets/images/dpbtse_logo.png";
-import SettingsModal from "./settings";
-import TopCard from "./cards/TopCard";
+import SettingsModal from "../../components/settings";
+import TopCard from "../../components/cards/TopCard";
 
 interface Props {
 	setIsModalOpen?: (ele: boolean) => void;
+	title?: string;
+	projectId?: string;
 }
 
-const Navbar: React.FC<Props> = ({ setIsModalOpen }) => {
+const Navbar: React.FC<Props> = ({ setIsModalOpen, title, projectId }) => {
 	const router = useRouter();
 	const [showSettingsModal, setShowSettingsModal] = useState(false);
 
@@ -34,12 +36,18 @@ const Navbar: React.FC<Props> = ({ setIsModalOpen }) => {
 					</>
 				) : (
 					<>
-						<TopCard subtitle={"PROJECT NAME"} />
+						<TopCard
+							subtitle={title}
+							onClick={() => {
+								router.push(`/project/${projectId}`);
+							}}
+						/>
 
 						<TopCard
 							bgColor="bg-topCardBgSecond"
 							textColor="text-topCardTextSecond"
 							subtitle={"CREATE NEW TOPIC"}
+							onClick={() => setIsModalOpen && setIsModalOpen(true)}
 						/>
 						<TopCard
 							bgColor="bg-topCardBgSecond"
