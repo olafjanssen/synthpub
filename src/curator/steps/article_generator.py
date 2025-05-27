@@ -17,7 +17,7 @@ from services.llm_service import get_llm
 from utils.logging import debug, error, info
 
 # Import the global version graph instance from the curator package
-from curator import version_graph
+# from curator import version_graph
 
 def should_generate(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
     """
