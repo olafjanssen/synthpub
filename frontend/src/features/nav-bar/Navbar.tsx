@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Logo from "@/assets/images/dpbtse_logo.png";
-import SettingsModal from "../../components/settings";
+import SettingsModal from "../settings";
 import TopCard from "../../components/cards/TopCard";
 
 interface Props {

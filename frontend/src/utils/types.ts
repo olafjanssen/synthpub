@@ -23,3 +23,24 @@ export interface ContentData {
 	title: string;
 	description: string;
 }
+
+export interface LLMSettings {
+	settings: Settings;
+}
+
+interface Settings {
+	article_generation: ArticleGeneration;
+	article_refinement: ArticleRefinement;
+}
+
+interface ArticleGeneration {
+	provider: string;
+	model_name: string;
+	max_tokens: number;
+}
+
+interface ArticleRefinement {
+	provider: string;
+	model_name: string;
+	max_tokens: number;
+}

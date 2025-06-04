@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { FormEvent, useEffect, useState } from "react";
+import { useFetchProjectDetails, useSaveLLMSettings } from "./hooks";
+import { LLMSettings } from "@/utils/types";
 
 interface SettingsModalProps {
 	onClose: () => void;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
+	const { data: llm } = useFetchProjectDetails();
+	const { mutate } = useSaveLLMSettings();
+
 	const [activeSection, setActiveSection] = useState<"env" | "llm">("env");
 
 	const [databaseLocation, setDatabaseLocation] = useState("");
@@ -12,22 +17,72 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose }) => {
 	const [youtubeApiKey, setYoutubeApiKey] = useState("");
 	const [githubToken, setGithubToken] = useState("");
 
-	const [articleProvider, setArticleProvider] = useState("OpenAI");
-	const [articleModel, setArticleModel] = useState("gpt-4");
-	const [articleMaxTokens, setArticleMaxTokens] = useState(800);
+	const [articleProvider, setArticleProvider] = useState(
+		llm?.settings?.article_generation?.provider ?? ""
+	);
+	const [articleModel, setArticleModel] = useState(
+		llm?.settings?.article_generation?.model_name ?? ""
+	);
+	const [articleMaxTokens, setArticleMaxTokens] = useState(
+		llm?.settings?.article_generation?.max_tokens ?? 0
+	);
 
-	const [refinementProvider, setRefinementProvider] = useState("OpenAI");
-	const [refinementModel, setRefinementModel] = useState("gpt-4");
-	const [refinementMaxTokens, setRefinementMaxTokens] = useState(800);
+	const [refinementProvider, setRefinementProvider] = useState(
+		llm?.settings?.article_refinement?.provider ?? ""
+	);
+	const [refinementModel, setRefinementModel] = useState(
+		llm?.settings?.article_refinement?.model_name ?? ""
+	);
+	const [refinementMaxTokens, setRefinementMaxTokens] = useState(
+		llm?.settings?.article_refinement?.max_tokens ?? 0
+	);
+
+	useEffect(() => {
+		setArticleProvider(llm?.settings?.article_generation?.provider ?? "");
+		setArticleModel(llm?.settings?.article_generation?.model_name ?? "");
+		setArticleMaxTokens(llm?.settings?.article_generation?.max_tokens ?? 0);
+
+		setRefinementProvider(llm?.settings?.article_refinement?.provider ?? "");
+		setRefinementModel(llm?.settings?.article_refinement?.model_name ?? "");
+		setRefinementMaxTokens(llm?.settings?.article_refinement?.max_tokens ?? 0);
+	}, [llm]);
 
 	const handleSaveEnvVariables = () => {
 		// TODO: Implement saving environment variables
 		alert("Environment variables saved!");
 	};
 
-	const handleSaveLLMSettings = () => {
+	const handleSaveLLMSettings = (e: FormEvent) => {
 		// TODO: Implement saving LLM settings
-		alert("LLM settings saved!");
+		e.preventDefault();
+
+		const newLLMSettings: LLMSettings = {
+			settings: {
+				article_generation: {
+					provider: articleProvider,
+					model_name: articleModel,
+					max_tokens: articleMaxTokens,
+				},
+				article_refinement: {
+					provider: refinementProvider,
+					model_name: refinementModel,
+					max_tokens: refinementMaxTokens,
+				},
+			},
+		};
+
+		console.log(newLLMSettings);
+
+		mutate(newLLMSettings, {
+			onSuccess: () => {
+				onClose();
+			},
+
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			onError: (e: any) => {
+				alert(e);
+			},
+		});
 	};
 
 	return (
