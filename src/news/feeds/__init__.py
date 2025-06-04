@@ -1,4 +1,5 @@
 """Feed connector initialization."""
+
 from .arxiv import ArxivConnector
 from .file import FileConnector
 from .gmail import GmailConnector

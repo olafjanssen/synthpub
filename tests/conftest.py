@@ -1,6 +1,7 @@
 """
 Common test fixtures for SynthPub tests.
 """
+
 import pytest
 import yaml
 
@@ -9,30 +10,32 @@ import yaml
 def sample_settings_data():
     """Return sample settings data for tests."""
     return {
-        'env_vars': {
-            'OPENAI_API_KEY': 'test_openai_key',
-            'YOUTUBE_API_KEY': 'test_youtube_key',
-            'PEXELS_API_KEY': 'test_pexels_key',
+        "env_vars": {
+            "OPENAI_API_KEY": "test_openai_key",
+            "YOUTUBE_API_KEY": "test_youtube_key",
+            "PEXELS_API_KEY": "test_pexels_key",
         },
-        'llm': {
-            'article_generation': {
-                'provider': 'openai',
-                'model_name': 'gpt-4',
-                'max_tokens': 800,
+        "llm": {
+            "article_generation": {
+                "provider": "openai",
+                "model_name": "gpt-4",
+                "max_tokens": 800,
             },
         },
-        'db_path': '../test_db',
+        "db_path": "../test_db",
     }
+
 
 @pytest.fixture
 def temp_settings_file(tmp_path, sample_settings_data):
     """Create a temporary settings.yaml file for testing."""
     settings_file = tmp_path / "settings.yaml"
-    
-    with open(settings_file, 'w') as f:
+
+    with open(settings_file, "w") as f:
         yaml.dump(sample_settings_data, f)
-    
+
     return settings_file
+
 
 @pytest.fixture
 def mock_feed_data():
@@ -57,4 +60,4 @@ def mock_feed_data():
                 "published": "Tue, 02 Jan 2023 12:00:00 GMT",
             },
         ],
-    } 
+    }

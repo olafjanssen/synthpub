@@ -1,3 +1,6 @@
+# No MKL - https://github.com/nuitka/nuitka/issues/1504
+nomkl
+
 # Core dependencies
 langchain
 langchain-community
@@ -5,8 +8,8 @@ langgraph
 graphviz
 six==1.16.0
 pyyaml==6.0.1
-requests==2.31.0
-fastapi==0.110.0
+requests==2.32.0
+fastapi>=0.115.11
 uvicorn==0.27.1
 pydantic==2.9.2
 loguru==0.7.2
@@ -15,6 +18,8 @@ tomli
 tomli_w
 blinker
 defusedxml>=0.7.1
+networkx
+grandalf
 
 # LLM integration
 langchain-ollama
@@ -32,9 +37,11 @@ arxiv
 PyPDF2
 
 # Media processing
-piper-tts
-numpy
+piper-tts>=1.2.0
+kokoro>=0.9.4
+numpy<2.0
 pydub
+soundfile
 
 # Desktop
 pywebview
@@ -48,6 +55,7 @@ flake8
 black
 isort
 mypy
+httpx
 
 # Types
 types-requests 
