@@ -1,7 +1,12 @@
 import ArticleMeta from "@/components/articles/article-meta";
 import { Accordion, AccordionDetails } from "@/components/Accordion";
+import articleMockData from "../../mock-article/article.json";
+import { ArticleType } from "@/utils/types";
 
 const Article: React.FC = () => {
+	const article = articleMockData as ArticleType;
+	console.log(article);
+
 	return (
 		<section className="flex justify-center items-center h-screen mt-5">
 			<div className="min-w-[800px] min-h-full bg-[#F8F9FA] rounded-sm shadow-md flex flex-col gap-5 p-5">

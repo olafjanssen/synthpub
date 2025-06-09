@@ -21,7 +21,8 @@ const Articles: NextPage<ArticlePageProps> = ({ articleId, pid, title }) => {
 		return (
 			<>
 				<Navbar projectId={pid} title={title} />
-				<div>No article available.</div>
+				<Article />
+				{/* <div>No article available.</div> */}
 			</>
 		);
 	}

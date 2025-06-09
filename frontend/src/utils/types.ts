@@ -48,3 +48,19 @@ interface ArticleRefinement {
 	model_name: string;
 	max_tokens: number;
 }
+
+export interface ArticleType {
+	id: string;
+	title: string;
+	topic_id: string;
+	content: string;
+	version: number;
+	created_at: string;
+	updated_at: string;
+	previous_version: string | null;
+	next_version: string | null;
+	source_feed: {
+		url: string;
+		accessed_at: string;
+	};
+}
