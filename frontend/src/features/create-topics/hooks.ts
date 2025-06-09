@@ -24,7 +24,7 @@ export const useCreateTopic = (projectId: string) => {
 		mutationFn: (newTopic: CreateTopicPayload) =>
 			createTopic(projectId, newTopic),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ["topics", projectId] });
+			queryClient.invalidateQueries({ queryKey: ["topics"] });
 		},
 	});
 };

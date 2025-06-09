@@ -16,14 +16,14 @@ const Projects: React.FC<Props> = ({
 	isModalOpen,
 	setIsModalOpen,
 }) => {
-	//TODO: fetch by project id
+	const { data: topics, isLoading, isError, error } = useFetchTopics();
 
-	const { data: topics } = useFetchTopics();
+	if (isLoading) return <p>Loading articles...</p>;
+	if (isError) return <p>Error: {error?.message}</p>;
 
 	return (
 		<div className="flex flex-wrap gap-1 gap-y-4" id="projects-list">
 			{topics?.map((topic, index) => (
-				//TODO: will update the url
 				<Link
 					key={topic.id}
 					href={`/articles/${

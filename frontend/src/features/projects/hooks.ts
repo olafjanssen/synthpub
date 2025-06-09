@@ -27,7 +27,7 @@ export const useFetchTopics = () => {
 	return useQuery<Topic[]>({
 		queryKey: ["topics"],
 		queryFn: fetchTopics,
-		staleTime: 60000,
+		staleTime: 60,
 		retry: 2,
 	});
 };

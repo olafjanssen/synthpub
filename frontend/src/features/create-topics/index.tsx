@@ -26,7 +26,6 @@ const CreateTopics: React.FC<CreateTopicModalProps> = ({
 	const { mutate, error } = useCreateTopic(projectId ?? "");
 
 	const handleSubmit = () => {
-		//TODO: Will update this method
 		const newTopic: CreateTopicPayload = {
 			name,
 			description,

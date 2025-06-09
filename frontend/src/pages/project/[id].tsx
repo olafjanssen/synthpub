@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 const Projects = dynamic(
 	() => import("@/features/projects").then((mod) => mod.default),
 	{
-		loading: () => <div>Loading...</div>,
+		loading: () => <p>Loading articles...</p>,
 		ssr: true,
 	}
 );
