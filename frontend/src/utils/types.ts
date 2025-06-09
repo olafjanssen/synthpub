@@ -63,4 +63,6 @@ export interface ArticleType {
 		url: string;
 		accessed_at: string;
 	};
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	representations: any[];
 }
