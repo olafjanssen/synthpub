@@ -14,6 +14,15 @@ const Navbar: React.FC<Props> = ({ setIsModalOpen, title, projectId }) => {
 	const router = useRouter();
 	const [showSettingsModal, setShowSettingsModal] = useState(false);
 
+	const isHome = router.pathname === "/";
+	const isProject =
+		router.pathname.startsWith("/project") ||
+		router.asPath.startsWith("/project");
+
+	const handleProjectClick = () => {
+		if (projectId) router.push(`/project/${projectId}`);
+	};
+
 	return (
 		<nav>
 			<div className="flex flex-wrap gap-1 mb-4" id="top-cards">
@@ -23,54 +32,49 @@ const Navbar: React.FC<Props> = ({ setIsModalOpen, title, projectId }) => {
 					imageSrc={Logo}
 					onClick={() => router.push("/")}
 				/>
-				{router.pathname === "/" ? (
+
+				{isHome && (
 					<>
 						<TopCard
 							subtitle={"CREATE\nNEW PROJECT"}
-							onClick={() => setIsModalOpen && setIsModalOpen(true)}
+							onClick={() => setIsModalOpen?.(true)}
 						/>
 						<TopCard
 							subtitle={"SETTINGS"}
 							onClick={() => setShowSettingsModal(true)}
 						/>
 					</>
-				) : (
-					<>
-						<TopCard
-							subtitle={title}
-							onClick={() => {
-								router.push(`/project/${projectId}`);
-							}}
-						/>
+				)}
 
+				{isProject && (
+					<>
+						<TopCard subtitle={title} onClick={handleProjectClick} />
 						<TopCard
 							bgColor="bg-topCardBgSecond"
 							textColor="text-topCardTextSecond"
-							subtitle={"CREATE NEW TOPIC"}
-							onClick={() => setIsModalOpen && setIsModalOpen(true)}
+							subtitle="CREATE NEW TOPIC"
+							onClick={() => setIsModalOpen?.(true)}
 						/>
-						<TopCard
-							bgColor="bg-topCardBgSecond"
-							textColor="text-topCardTextSecond"
-							subtitle={"LATEST TOPIC"}
-						/>
-						<TopCard
-							bgColor="bg-topCardBgSecond"
-							textColor="text-topCardTextSecond"
-							subtitle={"OLDEST TOPIC"}
-						/>
-						<TopCard
-							bgColor="bg-topCardBgSecond"
-							textColor="text-topCardTextSecond"
-							subtitle={"MOST ACTIVE TOPIC"}
-						/>
+						{["LATEST", "OLDEST", "MOST ACTIVE"].map((label) => (
+							<TopCard
+								key={label}
+								bgColor="bg-topCardBgSecond"
+								textColor="text-topCardTextSecond"
+								subtitle={`${label} TOPIC`}
+							/>
+						))}
 						<TopCard
 							bgColor="bg-topCardBgLast"
-							subtitle={"MOST ACTIVE ARTICLE"}
+							subtitle="MOST ACTIVE ARTICLE"
 						/>
 					</>
 				)}
+
+				{!isHome && !isProject && (
+					<TopCard subtitle={title} onClick={handleProjectClick} />
+				)}
 			</div>
+
 			{showSettingsModal && (
 				<SettingsModal onClose={() => setShowSettingsModal(false)} />
 			)}

@@ -11,9 +11,13 @@ export interface Project {
 export interface Topic {
 	name: string;
 	description: string;
-	publish_urls: string;
+	feed_urls: string[];
+	publish_urls: string[];
 	thumbnail_url: string;
+	slug: string | null;
+	prompt_id: string | null;
 	id: string;
+	article: string | null;
 	processed_feeds: string[];
 	created_at: Date;
 	updated_at: Date | null;

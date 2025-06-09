@@ -20,13 +20,16 @@ const Projects: React.FC<Props> = ({
 
 	const { data: topics } = useFetchTopics();
 
-	console.log(topics);
-
 	return (
 		<div className="flex flex-wrap gap-1 gap-y-4" id="projects-list">
 			{topics?.map((topic, index) => (
 				//TODO: will update the url
-				<Link key={topic.id} href="http://www.google.com">
+				<Link
+					key={topic.id}
+					href={`/articles/${
+						topic?.article === null ? "no-article" : topic.article
+					}?pid=${project?.id}&&title=${project?.title}`}
+				>
 					<ContentCard
 						data={{ title: topic.name, description: topic.description }}
 						count={index}
