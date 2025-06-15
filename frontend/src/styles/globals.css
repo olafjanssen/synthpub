@@ -20,6 +20,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+h4 {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 1rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.article-sources {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
 
 .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
   margin-top: 0;

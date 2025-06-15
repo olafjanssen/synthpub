@@ -5,6 +5,8 @@ import { Accordion, AccordionDetails } from "@/components/Accordion";
 //import { ArticleType } from "@/utils/types";
 import { formatDate, hexToAudioUrl } from "@/utils/function";
 import ReactMarkdown from "react-markdown";
+//import topicSources from "../../mock-article/topics.json";
+import Link from "next/link";
 import { useFetchArticleDetails } from "./hooks";
 
 interface Props {
@@ -12,22 +14,23 @@ interface Props {
 }
 
 const Article: React.FC<Props> = ({ articleId }) => {
-	const { data: article } = useFetchArticleDetails(articleId);
+	const { data } = useFetchArticleDetails(articleId);
 	//const article = articleMockData as ArticleType;
+	//const sources = topicSources.processed_feeds;
 
 	return (
 		<section className="flex justify-center items-center  mt-5">
 			<div className="min-w-[800px] min-h-full bg-[#F8F9FA] rounded-sm shadow-md flex flex-col gap-5 p-5">
 				<ArticleMeta
-					version={article?.version.toString()}
-					createdAt={formatDate(article?.created_at)}
-					updatedAt={formatDate(article?.updated_at)}
-					source={article?.source_feed.url}
-					AccessedAt={formatDate(article?.source_feed.accessed_at)}
+					version={data?.article?.version.toString()}
+					createdAt={formatDate(data?.article?.created_at)}
+					updatedAt={formatDate(data?.article?.updated_at)}
+					source={data?.article?.source_feed.url}
+					AccessedAt={formatDate(data?.article?.source_feed.accessed_at)}
 				/>
-				{article && (
+				{data?.article && (
 					<Accordion>
-						{article.representations?.map((item: any, index: number) => {
+						{data?.article.representations?.map((item: any, index: number) => {
 							if (item.type === "kokoro-tts/af_kore:1.2") {
 								return (
 									<AccordionDetails
@@ -72,8 +75,29 @@ const Article: React.FC<Props> = ({ articleId }) => {
 				)}
 
 				<div className="markdown-body max-w-[800px]">
-					<ReactMarkdown>{article?.content}</ReactMarkdown>
+					<ReactMarkdown>{data?.article?.content}</ReactMarkdown>
 				</div>
+				{data?.sources && data?.sources?.length > 0 ? (
+					<div className="article-sources">
+						<h4>Sources</h4>
+						<ul>
+							{data?.sources &&
+								data?.sources.map((source, index) => (
+									<li key={index} className="mt-0 mb-4 list-disc ml-[30px]">
+										<Link
+											href={source.url}
+											className="text-blue-600 hover:underline"
+										>
+											{source.url}
+										</Link>{" "}
+										({formatDate(source.accessed_at)})
+									</li>
+								))}
+						</ul>
+					</div>
+				) : (
+					"<></>"
+				)}
 			</div>
 		</section>
 	);

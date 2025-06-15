@@ -8,6 +8,19 @@ export interface Project {
 	updated_at: Date | null;
 }
 
+export interface ProcessedFeed {
+	url: string;
+	accessed_at: string; // ISO timestamp
+	content_hash: string;
+	is_relevant: boolean;
+	relevance_explanation: string;
+	needs_further_processing: boolean;
+	new_information: string;
+	enforcing_information: string;
+	contradicting_information: string;
+	article_id: string;
+}
+
 export interface Topic {
 	name: string;
 	description: string;
@@ -18,7 +31,7 @@ export interface Topic {
 	prompt_id: string | null;
 	id: string;
 	article: string | null;
-	processed_feeds: string[];
+	processed_feeds: ProcessedFeed[];
 	created_at: Date;
 	updated_at: Date | null;
 }
