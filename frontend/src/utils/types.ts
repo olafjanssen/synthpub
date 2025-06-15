@@ -64,17 +64,17 @@ interface ArticleRefinement {
 
 export interface ArticleType {
 	id: string;
-	title: string;
-	topic_id: string;
-	content: string;
-	version: number;
-	created_at: string;
-	updated_at: string;
+	title: string | null;
+	topic_id: string | null;
+	content: string | null;
+	version: number | null;
+	created_at: string | null;
+	updated_at: string | null;
 	previous_version: string | null;
 	next_version: string | null;
 	source_feed: {
-		url: string;
-		accessed_at: string;
+		url: string | null;
+		accessed_at: string | null;
 	};
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	representations: any[];
