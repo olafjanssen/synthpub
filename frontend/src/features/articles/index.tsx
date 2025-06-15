@@ -22,11 +22,11 @@ const Article: React.FC<Props> = ({ articleId }) => {
 		<section className="flex justify-center items-center  mt-5">
 			<div className="min-w-[800px] min-h-full bg-[#F8F9FA] rounded-sm shadow-md flex flex-col gap-5 p-5">
 				<ArticleMeta
-					version={data?.article?.version.toString()}
-					createdAt={formatDate(data?.article?.created_at)}
-					updatedAt={formatDate(data?.article?.updated_at)}
-					source={data?.article?.source_feed.url}
-					AccessedAt={formatDate(data?.article?.source_feed.accessed_at)}
+					version={data?.article?.version?.toString()}
+					createdAt={formatDate(data?.article?.created_at ?? "")}
+					updatedAt={formatDate(data?.article?.updated_at ?? "")}
+					source={data?.article?.source_feed?.url ?? ""}
+					AccessedAt={formatDate(data?.article?.source_feed?.accessed_at ?? "")}
 				/>
 				{data?.article && (
 					<Accordion>
@@ -85,7 +85,7 @@ const Article: React.FC<Props> = ({ articleId }) => {
 								data?.sources.map((source, index) => (
 									<li key={index} className="mt-0 mb-4 list-disc ml-[30px]">
 										<Link
-											href={source.url}
+											href={source?.url}
 											className="text-blue-600 hover:underline"
 										>
 											{source.url}
