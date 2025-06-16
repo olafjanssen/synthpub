@@ -1,5 +1,5 @@
 import type { NextPage, GetServerSideProps } from "next";
-import Navbar from "@/features/nav-bar/Navbar";
+import Navbar from "@/features/nav-bar";
 import dynamic from "next/dynamic";
 
 const Article = dynamic(

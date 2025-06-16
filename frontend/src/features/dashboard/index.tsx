@@ -1,9 +1,9 @@
 import Link from "next/link";
-import EmptyCard from "@/components/cards/EmptyCard";
+import EmptyCard from "@/components/cards/empty-card";
 //import ProjectCard from "@/components/cards/ProjectCard";
 import { useFetchProjects } from "./hooks";
 import CreateProject from "@/features/create-projects";
-import ContentCard from "@/components/cards/ContentCard";
+import ContentCard from "@/components/cards/content-card";
 
 interface Props {
 	isModalOpen: boolean;

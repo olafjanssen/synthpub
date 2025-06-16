@@ -1,5 +1,5 @@
 import type { NextPage, GetServerSideProps } from "next";
-import Navbar from "@/features/nav-bar/Navbar";
+import Navbar from "@/features/nav-bar";
 import { useFetchProjectDetails } from "../../features/projects/hooks";
 import { useState } from "react";
 

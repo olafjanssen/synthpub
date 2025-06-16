@@ -1,7 +1,7 @@
 import Link from "next/link";
-import EmptyCard from "@/components/cards/EmptyCard";
+import EmptyCard from "@/components/cards/empty-card";
 import { Project } from "@/utils/types";
-import ContentCard from "@/components/cards/ContentCard";
+import ContentCard from "@/components/cards/content-card";
 import CreateTopics from "../create-topics";
 import { useFetchTopics } from "./hooks";
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Button from "@/components/Button";
+import Button from "@/components/button";
 import { useRouter } from "next/router";
 //import Link from "next/link";
 

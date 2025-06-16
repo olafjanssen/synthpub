@@ -1,6 +1,6 @@
 // components/Accordion.tsx
 import { ReactElement, isValidElement, Children } from "react";
-import { AccordionDetailsProps } from "./AccordionDetails";
+import { AccordionDetailsProps } from "./accordion-details";
 
 type AccordionProps = {
 	children:

@@ -1,8 +1,8 @@
 // features/topics/CreateTopics.tsx
 
 import { useState } from "react";
-import Modal from "@/components/Modal";
-import Button from "@/components/Button";
+import Modal from "@/components/modal";
+import Button from "@/components/button";
 import { useCreateTopic, CreateTopicPayload } from "./hooks";
 
 interface CreateTopicModalProps {

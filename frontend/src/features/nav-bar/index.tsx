@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Logo from "@/assets/images/dpbtse_logo.png";
 import SettingsModal from "../settings";
-import TopCard from "../../components/cards/TopCard";
+import TopCard from "../../components/cards/top-card";
 
 interface Props {
 	setIsModalOpen?: (ele: boolean) => void;

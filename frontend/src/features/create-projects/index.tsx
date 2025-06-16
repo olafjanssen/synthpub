@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
-import Modal from "@/components/Modal";
-import Button from "@/components/Button";
+import Modal from "@/components/modal";
+import Button from "@/components/button";
 import { useCreateProject } from "./hooks";
 
 interface CreateProjectModalProps {

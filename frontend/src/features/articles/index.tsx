@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ArticleMeta from "@/components/articles/article-meta";
-import { Accordion, AccordionDetails } from "@/components/Accordion";
+import { Accordion, AccordionDetails } from "@/components/accordion";
 //import articleMockData from "../../mock-article/article.json";
 //import { ArticleType } from "@/utils/types";
 import { formatDate, hexToAudioUrl } from "@/utils/function";

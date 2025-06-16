@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import Navbar from "@/features/nav-bar/Navbar";
+import Navbar from "@/features/nav-bar";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 
