@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 //import topicSources from "../../mock-article/topics.json";
 import Link from "next/link";
 import { useFetchArticleDetails } from "./hooks";
+import BarGraph from "@/components/charts/bar-chart";
 
 interface Props {
 	articleId: string;
@@ -28,6 +29,11 @@ const Article: React.FC<Props> = ({ articleId }) => {
 					source={data?.article?.source_feed?.url ?? ""}
 					AccessedAt={formatDate(data?.article?.source_feed?.accessed_at ?? "")}
 				/>
+				{true && (
+					<div className="h-56">
+						<BarGraph />
+					</div>
+				)}
 				{data?.article && (
 					<Accordion>
 						{data?.article.representations?.map((item: any, index: number) => {
