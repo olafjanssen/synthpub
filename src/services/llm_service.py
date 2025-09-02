@@ -39,7 +39,7 @@ def get_llm(task: str):
 
     # Create rate limiter
     rate_limiter = InMemoryRateLimiter(
-        requests_per_second=0.75,
+        requests_per_second=0.5,
     )
 
     # Map providers to their API key environment variables

@@ -24,7 +24,7 @@ class KokoroTTS(Converter):
     # Sample rate for audio
     SAMPLE_RATE = 24000
     # Silence duration in seconds
-    SILENCE_DURATION = 0.5
+    SILENCE_DURATION = 0.35
 
     @staticmethod
     def split_into_sentences(text: str, max_length: int = 1000) -> List[str]:
