@@ -132,7 +132,7 @@ def extract_substance(
         "Extracting substance",
         f"Topic: {topic.name}, Source: {feed_item.url}",
     )
-    
+
     # Use retry decorator for LLM call
     @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
     def _invoke_llm():
@@ -144,7 +144,7 @@ def extract_substance(
                 new_context=feed_content,
             )
         )
-    
+
     extraction_result = _invoke_llm()
 
     # Parse the result into a SubstanceResponse object using the parser

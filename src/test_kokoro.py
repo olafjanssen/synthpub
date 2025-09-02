@@ -1,12 +1,11 @@
-from kokoro import KPipeline
 import soundfile as sf
-pipeline = KPipeline(lang_code='a')
-text = '''
+from kokoro import KPipeline
+
+pipeline = KPipeline(lang_code="a")
+text = """
 [Kokoro](/kˈOkəɹO/) is an open-weight TTS model with 82 million parameters. Despite its lightweight architecture, it delivers comparable quality to larger models while being significantly faster and more cost-efficient. With Apache-licensed weights, [Kokoro](/kˈOkəɹO/) can be deployed anywhere from production environments to personal projects.
-'''
-generator = pipeline(text, voice='af_heart')
+"""
+generator = pipeline(text, voice="af_heart")
 for i, (gs, ps, audio) in enumerate(generator):
     print(i, gs, ps)
-    sf.write(f'{i}.wav', audio, 24000)
-
-    
+    sf.write(f"{i}.wav", audio, 24000)

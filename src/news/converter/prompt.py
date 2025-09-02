@@ -2,8 +2,8 @@
 Content converter using a prompt from the prompt database.
 """
 
-from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
+from langchain.prompts import PromptTemplate
 from pydantic import BaseModel, Field
 
 from api.db.prompt_db import get_prompt
@@ -14,13 +14,16 @@ from utils.rate_limit_utils import retry_with_backoff
 
 from .converter_interface import Converter
 
+
 class ConverterOutput(BaseModel):
     """Structured output from the LLM conversion process."""
+
     output: str = Field(
         description="The converted content following the instructions of the prompt.",
         min_length=1,
-        max_length=10000  # Reasonable limit to prevent endless outputs
+        max_length=10000,  # Reasonable limit to prevent endless outputs
     )
+
 
 class Prompt(Converter):
 
@@ -101,22 +104,24 @@ Use a clear, concise style appropriate for the content.
 
             # Set up the output parser
             parser = PydanticOutputParser(pydantic_object=ConverterOutput)
-            
+
             # Create the prompt with output format instructions
             prompt = PromptTemplate.from_template(
                 template_text + "\n\n{format_instructions}",
-                partial_variables={"format_instructions": parser.get_format_instructions()}
+                partial_variables={
+                    "format_instructions": parser.get_format_instructions()
+                },
             )
 
             debug("PROMPT", "Invoking LLM", f"Content length: {len(content)}")
-            
+
             # Use retry decorator for LLM call
             @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
             def _invoke_llm():
                 return llm.invoke(prompt.format(content=content)).content.strip()
-            
+
             raw_output = _invoke_llm()
-            
+
             # Parse the output using Pydantic
             try:
                 parsed_output = parser.parse(raw_output)

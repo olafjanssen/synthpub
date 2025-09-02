@@ -67,7 +67,7 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
             "Refining article",
             f"Topic: {topic.name}, Source: {feed_item.url}",
         )
-        
+
         # Use retry decorator for LLM call
         @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
         def _invoke_llm():
@@ -82,7 +82,7 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
                     contradicting_information=contradicting_information,
                 )
             ).content
-        
+
         refined_content = _invoke_llm()
 
         # Update the article in the database

@@ -180,5 +180,5 @@ def determine_relevance(
                 "new_context": feed_content,
             }
         )
-    
+
     return _invoke_relevance_chain()

@@ -6,9 +6,9 @@ import io
 import re
 from typing import List
 
-from kokoro import KPipeline
-import soundfile as sf
 import numpy as np
+import soundfile as sf
+from kokoro import KPipeline
 
 from api.models.article import Article
 from utils.logging import debug, error, info, warning
@@ -29,50 +29,50 @@ class KokoroTTS(Converter):
     @staticmethod
     def split_into_sentences(text: str, max_length: int = 1000) -> List[str]:
         """Split text into sentences of maximum length.
-        
+
         Uses regex-based splitting on common sentence endings, with basic handling
         for common abbreviations.
-        
+
         Args:
             text: The text to split into sentences
             max_length: Maximum length of each sentence chunk
-            
+
         Returns:
             List of sentence chunks, each not exceeding max_length
         """
         # First replace common abbreviations with a temporary marker
         abbreviations = {
-            'Mr.': 'Mr@',
-            'Mrs.': 'Mrs@',
-            'Dr.': 'Dr@',
-            'Prof.': 'Prof@',
-            'St.': 'St@',
-            'Ave.': 'Ave@',
-            'Blvd.': 'Blvd@',
-            'Rd.': 'Rd@',
-            'Inc.': 'Inc@',
-            'Ltd.': 'Ltd@',
-            'Co.': 'Co@',
-            'Corp.': 'Corp@',
-            'vs.': 'vs@',
-            'e.g.': 'eg@',
-            'i.e.': 'ie@',
-            'etc.': 'etc@',
-            'approx.': 'approx@',
-            'no.': 'no@'
+            "Mr.": "Mr@",
+            "Mrs.": "Mrs@",
+            "Dr.": "Dr@",
+            "Prof.": "Prof@",
+            "St.": "St@",
+            "Ave.": "Ave@",
+            "Blvd.": "Blvd@",
+            "Rd.": "Rd@",
+            "Inc.": "Inc@",
+            "Ltd.": "Ltd@",
+            "Co.": "Co@",
+            "Corp.": "Corp@",
+            "vs.": "vs@",
+            "e.g.": "eg@",
+            "i.e.": "ie@",
+            "etc.": "etc@",
+            "approx.": "approx@",
+            "no.": "no@",
         }
-        
+
         # Replace abbreviations with markers
         for abbr, marker in abbreviations.items():
             text = text.replace(abbr, marker)
-        
+
         # Split on sentence endings
-        sentences = [s.strip() for s in re.split(r'[.!?]\s+', text) if s.strip()]
-        
+        sentences = [s.strip() for s in re.split(r"[.!?]\s+", text) if s.strip()]
+
         # Restore abbreviations in each sentence
         for abbr, marker in abbreviations.items():
             sentences = [s.replace(marker, abbr) for s in sentences]
-        
+
         info("KOKORO_TTS", "Text split", f"Split into {len(sentences)} chunks")
         return sentences
 
@@ -102,48 +102,56 @@ class KokoroTTS(Converter):
         try:
             # Split text into sentences first
             sentences = cls.split_into_sentences(text)
-            info("KOKORO_TTS", "Processing sentences", f"Number of sentences: {len(sentences)}")
-            
+            info(
+                "KOKORO_TTS",
+                "Processing sentences",
+                f"Number of sentences: {len(sentences)}",
+            )
+
             # Initialize pipeline
-            pipeline = KPipeline(lang_code='a')
-            
+            pipeline = KPipeline(lang_code="a")
+
             # Process each sentence and combine audio segments
             audio_chunks = []
             for i, sentence in enumerate(sentences):
-                info("KOKORO_TTS", f"Processing sentence {i+1}/{len(sentences)}", f"Length: {len(sentence)}, {sentence}")
+                info(
+                    "KOKORO_TTS",
+                    f"Processing sentence {i+1}/{len(sentences)}",
+                    f"Length: {len(sentence)}, {sentence}",
+                )
                 generator = pipeline(sentence, voice=voice_key, speed=speed)
-                
+
                 # Process each chunk from the generator
                 for gs, ps, audio in generator:
                     audio_chunks.append(audio)
-            
+
             if not audio_chunks:
                 raise ValueError("No audio was generated")
-                
+
             # Create silence array
             silence_samples = int(cls.SILENCE_DURATION * cls.SAMPLE_RATE)
             silence = np.zeros(silence_samples)
-            
+
             # Combine all chunks with silence between them
             combined_audio = []
             for i, chunk in enumerate(audio_chunks):
                 combined_audio.append(chunk)
                 if i < len(audio_chunks) - 1:  # Don't add silence after the last chunk
                     combined_audio.append(silence)
-            
+
             combined_audio = np.concatenate(combined_audio)
-            
+
             # Convert to MP3 using soundfile and io
             buffer = io.BytesIO()
-            sf.write(buffer, combined_audio, cls.SAMPLE_RATE, format='MP3')
+            sf.write(buffer, combined_audio, cls.SAMPLE_RATE, format="MP3")
             audio_bytes = buffer.getvalue()
-            
+
             info(
-                "KOKORO_TTS", 
-                "Audio generated", 
-                f"Duration: {len(combined_audio)/cls.SAMPLE_RATE:.1f}s"
+                "KOKORO_TTS",
+                "Audio generated",
+                f"Duration: {len(combined_audio)/cls.SAMPLE_RATE:.1f}s",
             )
-            
+
             return audio_bytes
 
         except Exception as e:
@@ -162,7 +170,7 @@ class KokoroTTS(Converter):
             # Parse voice key and speed from content type if specified
             voice_key = cls.DEFAULT_VOICE
             speed = 1.0
-            
+
             if "/" in content_type:
                 parts = content_type.split("/", 1)[1].split(":")
                 voice_key = parts[0]
@@ -215,4 +223,4 @@ class KokoroTTS(Converter):
                 "Conversion failed",
                 f"Article: {article.title}, Error: {str(e)}",
             )
-            return False 
+            return False

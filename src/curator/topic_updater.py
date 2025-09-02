@@ -92,7 +92,11 @@ def handle_topic_publishing(sender):
                     for publisher in PUBLISHERS:
                         publisher.handle_publish_requested(article, cmd)
     except RateLimitError as e:
-        error("TOPIC", "Publishing stopped due to rate limit", f"Topic: {topic.name}, Error: {str(e)}")
+        error(
+            "TOPIC",
+            "Publishing stopped due to rate limit",
+            f"Topic: {topic.name}, Error: {str(e)}",
+        )
         # Re-raise the rate limit error to stop the entire publishing chain
         raise
     except Exception as e:
@@ -124,7 +128,11 @@ def process_queue():
                             try:
                                 handle_topic_publishing(topic)
                             except RateLimitError as e:
-                                error("SYSTEM", "Publishing stopped due to rate limit", f"Topic: {topic.name}, Error: {str(e)}")
+                                error(
+                                    "SYSTEM",
+                                    "Publishing stopped due to rate limit",
+                                    f"Topic: {topic.name}, Error: {str(e)}",
+                                )
                                 # Don't re-raise here to avoid stopping the queue processor
             else:
                 # Small sleep to prevent CPU spinning

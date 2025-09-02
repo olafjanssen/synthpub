@@ -136,14 +136,14 @@ def generate_article(topic: Topic) -> Article:
 
     # Invoke the LLM to generate content
     info("GENERATOR", "Generating article", f"Topic: {topic_title}")
-    
+
     # Use retry decorator for LLM call
     @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
     def _invoke_llm():
         return llm.invoke(
             prompt.format(topic_title=topic_title, topic_description=topic_description)
         ).content
-    
+
     content = _invoke_llm()
 
     # Create the article using the database function

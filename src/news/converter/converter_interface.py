@@ -48,7 +48,14 @@ class Converter(Protocol):
             except Exception as e:
                 # Check if this is a rate limit error and re-raise it
                 if is_rate_limit_error(e):
-                    error("CONVERT", "Rate limit error", f"Type: {content_type}, Error: {str(e)}")
-                    raise RateLimitError(f"Rate limit error in converter {cls.__name__}: {str(e)}", original_exception=e)
+                    error(
+                        "CONVERT",
+                        "Rate limit error",
+                        f"Type: {content_type}, Error: {str(e)}",
+                    )
+                    raise RateLimitError(
+                        f"Rate limit error in converter {cls.__name__}: {str(e)}",
+                        original_exception=e,
+                    )
                 else:
                     error("CONVERT", "Failed", f"Type: {content_type}, Error: {str(e)}")

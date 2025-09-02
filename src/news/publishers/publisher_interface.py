@@ -46,7 +46,14 @@ class Publisher(Protocol):
             except Exception as e:
                 # Check if this is a rate limit error and re-raise it
                 if is_rate_limit_error(e):
-                    error("PUBLISH", "Rate limit error", f"URL: {publish_url}, Error: {str(e)}")
-                    raise RateLimitError(f"Rate limit error in publisher {cls.__name__}: {str(e)}", original_exception=e)
+                    error(
+                        "PUBLISH",
+                        "Rate limit error",
+                        f"URL: {publish_url}, Error: {str(e)}",
+                    )
+                    raise RateLimitError(
+                        f"Rate limit error in publisher {cls.__name__}: {str(e)}",
+                        original_exception=e,
+                    )
                 else:
                     error("PUBLISH", "Failed", f"URL: {publish_url}, Error: {str(e)}")
