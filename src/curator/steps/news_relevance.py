@@ -14,6 +14,7 @@ from api.db.prompt_db import get_prompt
 from api.db.topic_db import save_topic
 from services.llm_service import get_llm
 from utils.logging import debug, error, warning
+from utils.rate_limit_utils import retry_with_backoff
 
 
 class RelevanceResponse(BaseModel):
@@ -167,13 +168,17 @@ def determine_relevance(
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
 
-    # Create and invoke the relevance chain
-    relevance_chain = prompt | llm | parser
-    return relevance_chain.invoke(
-        {
-            "topic_title": topic_title,
-            "topic_description": topic_description,
-            "article": article_content,
-            "new_context": feed_content,
-        }
-    )
+    # Create and invoke the relevance chain with retry logic
+    @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
+    def _invoke_relevance_chain():
+        relevance_chain = prompt | llm | parser
+        return relevance_chain.invoke(
+            {
+                "topic_title": topic_title,
+                "topic_description": topic_description,
+                "article": article_content,
+                "new_context": feed_content,
+            }
+        )
+    
+    return _invoke_relevance_chain()

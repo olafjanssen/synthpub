@@ -12,6 +12,7 @@ from curator.graph_workflow import process_feed_item as graph_process_feed_item
 from news.converter import CONVERTERS
 from news.publishers import PUBLISHERS
 from utils.logging import debug, error, info, warning
+from utils.rate_limit_utils import RateLimitError
 
 # Single processing queue for all items
 # Each item is a tuple (topic_id, content, feed_item)
@@ -72,23 +73,31 @@ def handle_topic_publishing(sender):
     article.representations = []
     debug("TOPIC", "Cleared representations", f"Article: {article.title}")
 
-    for publish_url in topic.publish_urls:
-        # split publish_url into piped elements
-        commands = [cmd.strip() for cmd in publish_url.split("|")]
+    try:
+        for publish_url in topic.publish_urls:
+            # split publish_url into piped elements
+            commands = [cmd.strip() for cmd in publish_url.split("|")]
 
-        # Start with default Content converter
-        commands.insert(0, "convert://content")
+            # Start with default Content converter
+            commands.insert(0, "convert://content")
 
-        for cmd in commands:
-            if cmd.startswith("convert://"):
-                conversion_type = cmd.split("://", 1)[1].strip()
-                info("CONVERT", conversion_type, f"Article: {article.title}")
-                for converter in CONVERTERS:
-                    converter.handle_convert_requested(article, conversion_type)
-            else:
-                info("PUBLISH", cmd, f"Article: {article.title}")
-                for publisher in PUBLISHERS:
-                    publisher.handle_publish_requested(article, cmd)
+            for cmd in commands:
+                if cmd.startswith("convert://"):
+                    conversion_type = cmd.split("://", 1)[1].strip()
+                    info("CONVERT", conversion_type, f"Article: {article.title}")
+                    for converter in CONVERTERS:
+                        converter.handle_convert_requested(article, conversion_type)
+                else:
+                    info("PUBLISH", cmd, f"Article: {article.title}")
+                    for publisher in PUBLISHERS:
+                        publisher.handle_publish_requested(article, cmd)
+    except RateLimitError as e:
+        error("TOPIC", "Publishing stopped due to rate limit", f"Topic: {topic.name}, Error: {str(e)}")
+        # Re-raise the rate limit error to stop the entire publishing chain
+        raise
+    except Exception as e:
+        error("TOPIC", "Publishing failed", f"Topic: {topic.name}, Error: {str(e)}")
+        # For non-rate-limit errors, we can continue with other publish URLs
 
 
 def process_queue():
@@ -112,7 +121,11 @@ def process_queue():
                         # Trigger publishing after processing
                         topic = get_topic(topic_id)
                         if topic:
-                            handle_topic_publishing(topic)
+                            try:
+                                handle_topic_publishing(topic)
+                            except RateLimitError as e:
+                                error("SYSTEM", "Publishing stopped due to rate limit", f"Topic: {topic.name}, Error: {str(e)}")
+                                # Don't re-raise here to avoid stopping the queue processor
             else:
                 # Small sleep to prevent CPU spinning
                 time.sleep(0.1)

@@ -10,6 +10,7 @@ from api.db.prompt_db import get_prompt
 from api.models.article import Article
 from services.llm_service import get_llm
 from utils.logging import debug, error, info, warning
+from utils.rate_limit_utils import retry_with_backoff
 
 from .converter_interface import Converter
 
@@ -108,9 +109,13 @@ Use a clear, concise style appropriate for the content.
             )
 
             debug("PROMPT", "Invoking LLM", f"Content length: {len(content)}")
-            raw_output = llm.invoke(
-                prompt.format(content=content)
-            ).content.strip()
+            
+            # Use retry decorator for LLM call
+            @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
+            def _invoke_llm():
+                return llm.invoke(prompt.format(content=content)).content.strip()
+            
+            raw_output = _invoke_llm()
             
             # Parse the output using Pydantic
             try:

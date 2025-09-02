@@ -19,6 +19,7 @@ from api.models.topic import Topic
 from curator.steps import version_graph
 from services.llm_service import get_llm
 from utils.logging import debug, error, info
+from utils.rate_limit_utils import retry_with_backoff
 
 
 def should_generate(true_node: str, false_node: str) -> Callable[[Dict[str, Any]], str]:
@@ -135,9 +136,15 @@ def generate_article(topic: Topic) -> Article:
 
     # Invoke the LLM to generate content
     info("GENERATOR", "Generating article", f"Topic: {topic_title}")
-    content = llm.invoke(
-        prompt.format(topic_title=topic_title, topic_description=topic_description)
-    ).content
+    
+    # Use retry decorator for LLM call
+    @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
+    def _invoke_llm():
+        return llm.invoke(
+            prompt.format(topic_title=topic_title, topic_description=topic_description)
+        ).content
+    
+    content = _invoke_llm()
 
     # Create the article using the database function
     new_article = create_article(title=topic_title, topic_id=topic.id, content=content)

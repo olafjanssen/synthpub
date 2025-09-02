@@ -13,6 +13,7 @@ from api.db.prompt_db import get_prompt
 from api.db.topic_db import save_topic
 from services.llm_service import get_llm
 from utils.logging import debug, error, info
+from utils.rate_limit_utils import retry_with_backoff
 
 
 def _handle_refinement_error(state: Dict[str, Any], e: Exception) -> Dict[str, Any]:
@@ -66,17 +67,23 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
             "Refining article",
             f"Topic: {topic.name}, Source: {feed_item.url}",
         )
-        refined_content = llm.invoke(
-            prompt.format(
-                topic_title=topic.name,
-                topic_description=topic.description,
-                article=article.content,
-                new_context=feed_content,
-                new_information=new_information,
-                enforcing_information=enforcing_information,
-                contradicting_information=contradicting_information,
-            )
-        ).content
+        
+        # Use retry decorator for LLM call
+        @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
+        def _invoke_llm():
+            return llm.invoke(
+                prompt.format(
+                    topic_title=topic.name,
+                    topic_description=topic.description,
+                    article=article.content,
+                    new_context=feed_content,
+                    new_information=new_information,
+                    enforcing_information=enforcing_information,
+                    contradicting_information=contradicting_information,
+                )
+            ).content
+        
+        refined_content = _invoke_llm()
 
         # Update the article in the database
         refined_article = update_article(

@@ -17,6 +17,7 @@ from api.models.feed_item import FeedItem
 from api.models.topic import Topic
 from services.llm_service import get_llm
 from utils.logging import debug, error, info
+from utils.rate_limit_utils import retry_with_backoff
 
 
 class SubstanceResponse(BaseModel):
@@ -131,14 +132,20 @@ def extract_substance(
         "Extracting substance",
         f"Topic: {topic.name}, Source: {feed_item.url}",
     )
-    extraction_result = llm.invoke(
-        prompt.format(
-            topic_title=topic.name,
-            topic_description=topic.description,
-            article=current_article.content,
-            new_context=feed_content,
+    
+    # Use retry decorator for LLM call
+    @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
+    def _invoke_llm():
+        return llm.invoke(
+            prompt.format(
+                topic_title=topic.name,
+                topic_description=topic.description,
+                article=current_article.content,
+                new_context=feed_content,
+            )
         )
-    )
+    
+    extraction_result = _invoke_llm()
 
     # Parse the result into a SubstanceResponse object using the parser
     substance = parser.parse(extraction_result.content)
