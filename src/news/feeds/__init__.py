@@ -2,6 +2,8 @@
 
 from .arxiv import ArxivConnector
 from .file import FileConnector
+from .gitlab_group import GitLabGroupConnector
+from .gitlab_repo import GitLabRepoConnector
 from .gmail import GmailConnector
 from .rss import RSSConnector
 from .web import WebConnector
@@ -11,6 +13,8 @@ from .youtube import YouTubeConnector
 CONNECTORS = [
     FileConnector,
     GmailConnector,
+    GitLabGroupConnector,
+    GitLabRepoConnector,
     RSSConnector,
     WebConnector,
     YouTubeConnector,
