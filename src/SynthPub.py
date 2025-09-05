@@ -26,7 +26,11 @@ def load_environment():
             settings = yaml.safe_load(f)
             env_vars = settings.get("env_vars", {})
             for key, value in env_vars.items():
-                os.environ[key] = value
+                if isinstance(value, str):
+                    os.environ[key] = value
+                elif isinstance(value, dict):
+                    # Convert dictionary to YAML string for environment variable
+                    os.environ[key] = yaml.dump(value, default_flow_style=False)
 
 
 # Load environment variables before starting the app

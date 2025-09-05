@@ -46,7 +46,7 @@ class GitLabPublisher(Publisher):
             api_base = get_api_base_url(host)
 
             # Get the GitLab token from environment variables
-            token = get_gitlab_token()
+            token = get_gitlab_token(host)
 
             # Use the most recent representation if available, otherwise use article content
             if article.representations:

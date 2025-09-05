@@ -10,14 +10,65 @@ import requests
 from utils.logging import debug, error, info
 
 
-def get_gitlab_token() -> str:
-    """Get GitLab token from environment variables."""
-    token = os.getenv("GITLAB_TOKEN")
-    if not token:
-        error("GITLAB", "Missing API key", "GITLAB_TOKEN environment variable not found")
-        raise ValueError("GITLAB_TOKEN environment variable not found")
-    debug("GITLAB", "API key loaded", "Token available")
-    return token
+def get_gitlab_token(host: str = None) -> str:
+    """
+    Get GitLab token from environment variables.
+    
+    Args:
+        host: GitLab hostname to get specific token for (e.g., 'gitlab.com')
+              If None, tries to get a single GITLAB_TOKEN value.
+    
+    Returns:
+        GitLab API token for the specified host
+        
+    Raises:
+        ValueError: If no token is found for the host
+    """
+    if host:
+        # Try dictionary approach first
+        token_dict_str = os.getenv("GITLAB_TOKEN")
+        if token_dict_str:
+            try:
+                import yaml
+                token_dict = yaml.safe_load(token_dict_str)
+                if isinstance(token_dict, dict) and host in token_dict:
+                    token = token_dict[host]
+                    if token:
+                        debug("GITLAB", "API key loaded", f"Token for {host} found in dictionary")
+                        return token
+            except (yaml.YAMLError, TypeError):
+                # Fallback to simple key-value parsing
+                try:
+                    lines = token_dict_str.strip().split('\n')
+                    token_dict = {}
+                    for line in lines:
+                        if ':' in line:
+                            key, value = line.split(':', 1)
+                            token_dict[key.strip()] = value.strip()
+                    
+                    if host in token_dict and token_dict[host]:
+                        debug("GITLAB", "API key loaded", f"Token for {host} found in simple format")
+                        return token_dict[host]
+                except Exception:
+                    pass
+        
+        # Try hostname suffix approach as fallback
+        host_key = f"GITLAB_TOKEN_{host.upper().replace('.', '_').replace('-', '_')}"
+        token = os.getenv(host_key)
+        if token:
+            debug("GITLAB", "API key loaded", f"Token for {host} found via {host_key}")
+            return token
+        
+        error("GITLAB", "Missing API key", f"No token found for host {host}")
+        raise ValueError(f"No GitLab token found for host: {host}")
+    else:
+        # Fallback to single token approach
+        token = os.getenv("GITLAB_TOKEN")
+        if not token:
+            error("GITLAB", "Missing API key", "GITLAB_TOKEN environment variable not found")
+            raise ValueError("GITLAB_TOKEN environment variable not found")
+        debug("GITLAB", "API key loaded", "Single token available")
+        return token
 
 
 def get_api_base_url(host: str) -> str:
@@ -91,7 +142,12 @@ def make_gitlab_request(url: str, params: Optional[Dict[str, Any]] = None) -> Li
     Returns:
         List of response items
     """
-    token = get_gitlab_token()
+    # Extract host from URL for token selection
+    from urllib.parse import urlparse
+    parsed_url = urlparse(url)
+    host = parsed_url.netloc
+    
+    token = get_gitlab_token(host)
     headers = {"PRIVATE-TOKEN": token}
     
     all_items = []

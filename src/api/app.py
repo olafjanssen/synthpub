@@ -33,7 +33,11 @@ async def lifespan(app: FastAPI):
             env_vars = settings.get("env_vars", {})
             debug("CONFIG", "Environment variables", f"Found {len(env_vars)} variables")
             for key, value in env_vars.items():
-                os.environ[key] = value
+                if isinstance(value, str):
+                    os.environ[key] = value
+                elif isinstance(value, dict):
+                    # Convert dictionary to YAML string for environment variable
+                    os.environ[key] = yaml.dump(value, default_flow_style=False)
 
     debug("SYSTEM", "Server starting", "SynthPub API")
 
@@ -42,7 +46,8 @@ async def lifespan(app: FastAPI):
 
     # Initialize the news scheduler
     try:
-        from news.news_scheduler import start_scheduler_thread, stop_scheduler_thread
+        from news.news_scheduler import (start_scheduler_thread,
+                                         stop_scheduler_thread)
 
         start_scheduler_thread()
         debug("SYSTEM", "News scheduler started")
