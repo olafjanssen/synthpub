@@ -6,7 +6,8 @@ from services.gitlab_service import (fetch_commit_details, fetch_issue_details,
                                      fetch_project_commits,
                                      fetch_project_issues,
                                      format_commit_content,
-                                     format_issue_content, parse_gitlab_url)
+                                     format_issue_content, parse_gitlab_url,
+                                     resolve_project_id)
 from utils.logging import error, info
 
 from .feed_connector import FeedConnector
@@ -52,18 +53,22 @@ class GitLabRepoConnector(FeedConnector):
             
             info("GITLAB_REPO", "Processing repository", f"Host: {host}, Project: {project_path}")
             
-            # We need to get the project ID first
-            # For now, we'll use the project path as the identifier
-            # In a real implementation, you might want to resolve the project ID first
+            # Resolve project path to project ID
+            try:
+                project_id = resolve_project_id(host, project_path)
+                info("GITLAB_REPO", "Project resolved", f"Path: {project_path} -> ID: {project_id}")
+            except ValueError as e:
+                error("GITLAB_REPO", "Failed to resolve project", f"Path: {project_path}, Error: {str(e)}")
+                return []
             
             all_items = []
             
             # Fetch commits
             try:
-                commits = fetch_project_commits(host, project_path, since_days=7)
+                commits = fetch_project_commits(host, project_id, since_days=7)
                 for commit in commits:
                     # Fetch detailed commit information including diff
-                    commit_details = fetch_commit_details(host, project_path, commit.get("id", ""))
+                    commit_details = fetch_commit_details(host, project_id, commit.get("id", ""))
                     if commit_details:
                         commit.update(commit_details)  # Merge detailed info
                     
@@ -84,10 +89,10 @@ class GitLabRepoConnector(FeedConnector):
             
             # Fetch issues
             try:
-                issues = fetch_project_issues(host, project_path, since_days=7)
+                issues = fetch_project_issues(host, project_id, since_days=7)
                 for issue in issues:
                     # Fetch detailed issue information including discussions
-                    issue_details = fetch_issue_details(host, project_path, issue.get("iid", 0))
+                    issue_details = fetch_issue_details(host, project_id, issue.get("iid", 0))
                     if issue_details:
                         issue.update(issue_details)  # Merge detailed info
                     

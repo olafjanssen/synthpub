@@ -182,6 +182,64 @@ def make_gitlab_request(url: str, params: Optional[Dict[str, Any]] = None) -> Li
     return all_items
 
 
+def resolve_project_id(host: str, project_path: str) -> str:
+    """
+    Resolve a project path to a project ID using the search endpoint.
+    
+    Args:
+        host: GitLab host
+        project_path: Project path (e.g., 'group/project' or 'group/subgroup/project')
+        
+    Returns:
+        Project ID as string
+        
+    Raises:
+        ValueError: If project is not found
+    """
+    api_base = get_api_base_url(host)
+    url = f"{api_base}/projects"
+    
+    try:
+        token = get_gitlab_token(host)
+        headers = {"PRIVATE-TOKEN": token}
+        
+        # Search for projects with the exact path
+        params = {
+            "search": project_path,
+            "search_namespaces": True,
+            "per_page": 100
+        }
+        
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            projects = response.json()
+            
+            # Look for exact match on path_with_namespace
+            for project in projects:
+                if project.get("path_with_namespace") == project_path:
+                    project_id = str(project.get("id"))
+                    debug("GITLAB", "Project resolved", f"Path: {project_path} -> ID: {project_id}")
+                    return project_id
+            
+            # If no exact match, try partial matches
+            for project in projects:
+                if project_path in project.get("path_with_namespace", ""):
+                    project_id = str(project.get("id"))
+                    debug("GITLAB", "Project resolved (partial match)", f"Path: {project_path} -> ID: {project_id}")
+                    return project_id
+            
+            error("GITLAB", "Project not found", f"Path: {project_path}, Found {len(projects)} projects")
+            raise ValueError(f"Project not found: {project_path}")
+        else:
+            error("GITLAB", "Search failed", f"Path: {project_path}, Status: {response.status_code}")
+            raise ValueError(f"Failed to search for project: {project_path}")
+            
+    except requests.exceptions.RequestException as e:
+        error("GITLAB", "Failed to resolve project", f"Path: {project_path}, Error: {str(e)}")
+        raise ValueError(f"Failed to resolve project: {project_path}")
+
+
 def fetch_group_projects(host: str, group_path: str, include_subgroups: bool = True) -> List[Dict[str, Any]]:
     """
     Fetch all projects in a GitLab group.
