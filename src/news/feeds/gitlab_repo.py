@@ -65,7 +65,7 @@ class GitLabRepoConnector(FeedConnector):
             
             # Fetch commits
             try:
-                commits = fetch_project_commits(host, project_id, since_days=7)
+                commits = fetch_project_commits(host, project_id)
                 for commit in commits:
                     # Fetch detailed commit information including diff
                     commit_details = fetch_commit_details(host, project_id, commit.get("id", ""))
@@ -89,7 +89,7 @@ class GitLabRepoConnector(FeedConnector):
             
             # Fetch issues
             try:
-                issues = fetch_project_issues(host, project_id, since_days=7)
+                issues = fetch_project_issues(host, project_id)
                 for issue in issues:
                     # Fetch detailed issue information including discussions
                     issue_details = fetch_issue_details(host, project_id, issue.get("iid", 0))

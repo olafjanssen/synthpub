@@ -1,7 +1,6 @@
 """Shared utilities for GitLab feed connectors."""
 
 import os
-from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
@@ -298,14 +297,13 @@ def fetch_group_projects(host: str, group_path: str, include_subgroups: bool = T
     return make_gitlab_request(url, params)
 
 
-def fetch_project_commits(host: str, project_id: str, since_days: int = 7) -> List[Dict[str, Any]]:
+def fetch_project_commits(host: str, project_id: str) -> List[Dict[str, Any]]:
     """
     Fetch recent commits from a GitLab project.
     
     Args:
         host: GitLab host
         project_id: Project ID
-        since_days: Number of days to look back for commits
         
     Returns:
         List of commit dictionaries
@@ -313,24 +311,21 @@ def fetch_project_commits(host: str, project_id: str, since_days: int = 7) -> Li
     api_base = get_api_base_url(host)
     url = f"{api_base}/projects/{project_id}/repository/commits"
     
-    since_date = datetime.now() - timedelta(days=since_days)
     params = {
-        "since": since_date.isoformat(),
         "order": "default"
     }
     
-    debug("GITLAB", "Fetching project commits", f"Project: {project_id}, Since: {since_date}")
+    debug("GITLAB", "Fetching project commits", f"Project: {project_id}")
     return make_gitlab_request(url, params)
 
 
-def fetch_project_issues(host: str, project_id: str, since_days: int = 7) -> List[Dict[str, Any]]:
+def fetch_project_issues(host: str, project_id: str) -> List[Dict[str, Any]]:
     """
     Fetch recent issues from a GitLab project.
     
     Args:
         host: GitLab host
         project_id: Project ID
-        since_days: Number of days to look back for issues
         
     Returns:
         List of issue dictionaries
@@ -338,15 +333,13 @@ def fetch_project_issues(host: str, project_id: str, since_days: int = 7) -> Lis
     api_base = get_api_base_url(host)
     url = f"{api_base}/projects/{project_id}/issues"
     
-    since_date = datetime.now() - timedelta(days=since_days)
     params = {
-        "created_after": since_date.isoformat(),
         "state": "opened",
         "order_by": "created_at",
         "sort": "desc"
     }
     
-    debug("GITLAB", "Fetching project issues", f"Project: {project_id}, Since: {since_date}")
+    debug("GITLAB", "Fetching project issues", f"Project: {project_id}")
     return make_gitlab_request(url, params)
 
 

@@ -76,7 +76,7 @@ class GitLabGroupConnector(FeedConnector):
                 info("GITLAB_GROUP", "Processing project", f"Name: {project_name}, ID: {project_id}")
                 
                 # Fetch commits
-                commits = fetch_project_commits(host, str(project_id), since_days=7)
+                commits = fetch_project_commits(host, str(project_id))
                 for commit in commits:
                     # Fetch detailed commit information including diff
                     commit_details = fetch_commit_details(host, str(project_id), commit.get("id", ""))
@@ -97,7 +97,7 @@ class GitLabGroupConnector(FeedConnector):
                         })
                 
                 # Fetch issues
-                issues = fetch_project_issues(host, str(project_id), since_days=7)
+                issues = fetch_project_issues(host, str(project_id))
                 for issue in issues:
                     # Fetch detailed issue information including discussions
                     issue_details = fetch_issue_details(host, str(project_id), issue.get("iid", 0))
