@@ -182,6 +182,39 @@ def make_gitlab_request(url: str, params: Optional[Dict[str, Any]] = None) -> Li
     return all_items
 
 
+def make_gitlab_single_request(url: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Make a request to GitLab API with authentication for single item responses.
+    
+    Args:
+        url: Full API URL
+        params: Query parameters
+        
+    Returns:
+        Single response item as dictionary
+    """
+    # Extract host from URL for token selection
+    from urllib.parse import urlparse
+    parsed_url = urlparse(url)
+    host = parsed_url.netloc
+    
+    token = get_gitlab_token(host)
+    headers = {"PRIVATE-TOKEN": token}
+    
+    try:
+        response = requests.get(url, headers=headers, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            error("GITLAB", "API request failed", f"URL: {url}, Status: {response.status_code}")
+            return {}
+            
+    except requests.exceptions.RequestException as e:
+        error("GITLAB", "API request failed", f"URL: {url}, Error: {str(e)}")
+        return {}
+
+
 def resolve_project_id(host: str, project_path: str) -> str:
     """
     Resolve a project path to a project ID using the search endpoint.
@@ -331,21 +364,19 @@ def fetch_commit_details(host: str, project_id: str, commit_sha: str) -> Dict[st
     """
     api_base = get_api_base_url(host)
     
-    # Fetch commit details
+    # Fetch commit details (single commit object)
     commit_url = f"{api_base}/projects/{project_id}/repository/commits/{commit_sha}"
-    commit_details = make_gitlab_request(commit_url)
+    commit_data = make_gitlab_single_request(commit_url)
     
-    if not commit_details:
+    if not commit_data:
         return {}
     
-    commit_data = commit_details[0]
-    
-    # Fetch commit diff
+    # Fetch commit diff (list of diff objects)
     diff_url = f"{api_base}/projects/{project_id}/repository/commits/{commit_sha}/diff"
     diff_data = make_gitlab_request(diff_url)
     
     # Add diff to commit data
-    commit_data["diff"] = diff_data
+    commit_data["diff"] = diff_data if diff_data else []
     
     return commit_data
 
@@ -364,21 +395,19 @@ def fetch_issue_details(host: str, project_id: str, issue_iid: int) -> Dict[str,
     """
     api_base = get_api_base_url(host)
     
-    # Fetch issue details
+    # Fetch issue details (single issue object)
     issue_url = f"{api_base}/projects/{project_id}/issues/{issue_iid}"
-    issue_details = make_gitlab_request(issue_url)
+    issue_data = make_gitlab_single_request(issue_url)
     
-    if not issue_details:
+    if not issue_data:
         return {}
     
-    issue_data = issue_details[0]
-    
-    # Fetch issue discussions (comments)
+    # Fetch issue discussions (comments) - this returns a list
     discussions_url = f"{api_base}/projects/{project_id}/issues/{issue_iid}/discussions"
     discussions_data = make_gitlab_request(discussions_url)
     
     # Add discussions to issue data
-    issue_data["discussions"] = discussions_data
+    issue_data["discussions"] = discussions_data if discussions_data else []
     
     return issue_data
 

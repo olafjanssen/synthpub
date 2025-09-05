@@ -147,7 +147,7 @@ def retry_with_backoff(
                     return func(*args, **kwargs)
                 except Exception as e:
                     last_exception = e
-
+                    print(f"Exception occurred in {func.__name__}: {e!r}")
                     # Only retry on rate limit or retryable errors
                     if not is_retryable_error(e):
                         raise e
