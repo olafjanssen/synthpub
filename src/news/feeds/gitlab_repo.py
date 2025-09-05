@@ -110,8 +110,8 @@ class GitLabRepoConnector(FeedConnector):
             except Exception as e:
                 error("GITLAB_REPO", "Failed to fetch issues", f"Project: {project_path}, Error: {str(e)}")
             
-            # Sort by date (newest first)
-            all_items.sort(key=lambda x: x.get("date", ""), reverse=True)
+            # Sort by date (oldest first)
+            all_items.sort(key=lambda x: x.get("date", ""), reverse=False)
             
             info("GITLAB_REPO", "Content fetched", f"Total items: {len(all_items)}")
             return all_items
