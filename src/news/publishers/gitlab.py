@@ -1,68 +1,17 @@
 """GitLab publisher for committing content to GitLab repositories."""
 
-import os
-from urllib.parse import urlparse
-
 import requests
 
 from api.models.article import Article
+from services.gitlab_service import (get_api_base_url, get_gitlab_token,
+                                     parse_gitlab_publisher_url)
 from utils.logging import debug, error, info
 
 from .publisher_interface import Publisher
 from .utils import process_filename_template
 
 
-def get_api_key():
-    """Get Gitlab token API key from environment variables"""
-    api_key = os.getenv("GITLAB_TOKEN")
-    if not api_key:
-        error(
-            "GITLAB", "Missing API key", "GITLAB_TOKEN environment variable not found"
-        )
-        raise ValueError("GITLAB_TOKEN environment variable not found in settings")
-    debug("GITLAB", "API key loaded", "Token available")
-    return api_key
-
-
-def parse_gitlab_url(url: str) -> tuple[str, str, str, str]:
-    """
-    Parse a gitlab:// URL and return project components.
-    Example URL: gitlab://gitlab_host/project_id/branch/path/to/file.md
-    """
-    if not url.startswith("gitlab://"):
-        error("GITLAB", "Invalid URL", f"URL must start with gitlab://, got {url}")
-        raise ValueError("URL must start with gitlab://")
-
-    parsed = urlparse(url)
-    parts = parsed.path.strip("/").split("/")
-
-    debug("GITLAB", "URL parsed", f"Host: {parsed.netloc}, Path parts: {len(parts)}")
-
-    if len(parts) < 3:
-        error(
-            "GITLAB",
-            "Invalid URL",
-            "URL must include host, project, branch, and file path",
-        )
-        raise ValueError("URL must include host, project, branch, and file path")
-
-    host = parsed.netloc
-    project_id = parts[0]
-    branch = parts[1]
-    file_path = "/".join(parts[2:])
-
-    debug(
-        "GITLAB",
-        "URL components",
-        f"Host: {host}, Project: {project_id}, Branch: {branch}, Path: {file_path}",
-    )
-    return host, project_id, branch, file_path
-
-
 class GitLabPublisher(Publisher):
-    def API_BASE(host):
-        return f"https://{host}/api/v4"
-
     @staticmethod
     def can_handle(url: str) -> bool:
         return url.startswith("gitlab://")
@@ -73,7 +22,7 @@ class GitLabPublisher(Publisher):
             info(
                 "GITLAB", "Publishing content", f"URL: {url}, Article: {article.title}"
             )
-            host, project_id, branch, file_path = parse_gitlab_url(url)
+            host, project_id, branch, file_path = parse_gitlab_publisher_url(url)
 
             # Process filename templates in the path
             # Extract directory and filename components
@@ -94,10 +43,10 @@ class GitLabPublisher(Publisher):
                 debug("GITLAB", "Path after template processing", file_path)
 
             # Get the API base URL
-            api_base = GitLabPublisher.API_BASE(host)
+            api_base = get_api_base_url(host)
 
             # Get the GitLab token from environment variables
-            token = get_api_key()
+            token = get_gitlab_token()
 
             # Use the most recent representation if available, otherwise use article content
             if article.representations:

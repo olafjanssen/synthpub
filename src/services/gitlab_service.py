@@ -45,6 +45,41 @@ def parse_gitlab_url(url: str) -> tuple[str, str]:
     return host, path
 
 
+def parse_gitlab_publisher_url(url: str) -> tuple[str, str, str, str]:
+    """
+    Parse a gitlab:// URL for publisher and return project components.
+    Example URL: gitlab://gitlab_host/project_id/branch/path/to/file.md
+    """
+    if not url.startswith("gitlab://"):
+        error("GITLAB", "Invalid URL", f"URL must start with gitlab://, got {url}")
+        raise ValueError("URL must start with gitlab://")
+
+    parsed = urlparse(url)
+    parts = parsed.path.strip("/").split("/")
+
+    debug("GITLAB", "URL parsed", f"Host: {parsed.netloc}, Path parts: {len(parts)}")
+
+    if len(parts) < 3:
+        error(
+            "GITLAB",
+            "Invalid URL",
+            "URL must include host, project, branch, and file path",
+        )
+        raise ValueError("URL must include host, project, branch, and file path")
+
+    host = parsed.netloc
+    project_id = parts[0]
+    branch = parts[1]
+    file_path = "/".join(parts[2:])
+
+    debug(
+        "GITLAB",
+        "URL components",
+        f"Host: {host}, Project: {project_id}, Branch: {branch}, Path: {file_path}",
+    )
+    return host, project_id, branch, file_path
+
+
 def make_gitlab_request(url: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """
     Make a request to GitLab API with authentication.

@@ -2,13 +2,14 @@
 
 from typing import Any, Dict, List
 
+from services.gitlab_service import (fetch_commit_details, fetch_issue_details,
+                                     fetch_project_commits,
+                                     fetch_project_issues,
+                                     format_commit_content,
+                                     format_issue_content, parse_gitlab_url)
 from utils.logging import error, info
 
 from .feed_connector import FeedConnector
-from .gitlab_utils import (fetch_commit_details, fetch_issue_details,
-                           fetch_project_commits, fetch_project_issues,
-                           format_commit_content, format_issue_content,
-                           parse_gitlab_url)
 
 
 class GitLabRepoConnector(FeedConnector):
