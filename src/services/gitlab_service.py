@@ -407,66 +407,25 @@ def fetch_issue_details(host: str, project_id: str, issue_iid: int) -> Dict[str,
 
 def format_commit_content(commit: Dict[str, Any], project_name: str) -> str:
     """Format commit data into readable content with full details."""
-    author = commit.get("author_name", "Unknown")
-    message = commit.get("message", "").strip()
-    date = commit.get("committed_date", "")
-    commit_id = commit.get("id", "")
-    
-    # Clean up commit message (remove merge commit noise)
-    if message.startswith("Merge branch") or message.startswith("Merge remote-tracking branch"):
-        return ""
-    
-    content = f"Commit in {project_name}\n"
-    content += f"Author: {author}\n"
-    content += f"Date: {date}\n"
-    content += f"Commit ID: {commit_id}\n"
-    content += f"Message: {message}\n"
-    
-    # Add diff if available
-    diff = commit.get("diff", [])
-    if diff:
-        content += "\nChanges:\n"
-        for change in diff:
-            file_path = change.get("new_path", change.get("old_path", "Unknown"))
-            content += f"\n--- {file_path} ---\n"
-            content += change.get("diff", "")
-    
-    return content
+    try:
+        import json
+        
+        # Return the raw JSON string with proper formatting
+        return json.dumps(commit, indent=2, ensure_ascii=False)
+        
+    except Exception as e:
+        error("GITLAB", "Failed to format commit content", f"Error: {str(e)}")
+        return f"# Commit: {commit.get('message', 'Unknown')}"
 
 
 def format_issue_content(issue: Dict[str, Any], project_name: str) -> str:
     """Format issue data into readable content with full details."""
-    title = issue.get("title", "")
-    description = issue.get("description", "")
-    author = issue.get("author", {}).get("name", "Unknown")
-    created_at = issue.get("created_at", "")
-    state = issue.get("state", "unknown")
-    labels = issue.get("labels", [])
-    issue_iid = issue.get("iid", "")
-    
-    content = f"Issue in {project_name}\n"
-    content += f"Title: {title}\n"
-    content += f"Author: {author}\n"
-    content += f"State: {state}\n"
-    content += f"Created: {created_at}\n"
-    content += f"Issue #: {issue_iid}\n"
-    
-    if labels:
-        content += f"Labels: {', '.join(labels)}\n"
-    
-    if description:
-        content += f"\nDescription:\n{description}\n"
-    
-    # Add discussions if available
-    discussions = issue.get("discussions", [])
-    if discussions:
-        content += "\n--- Discussions ---\n"
-        for discussion in discussions:
-            notes = discussion.get("notes", [])
-            for note in notes:
-                note_author = note.get("author", {}).get("name", "Unknown")
-                note_body = note.get("body", "")
-                note_created = note.get("created_at", "")
-                content += f"\n{note_author} ({note_created}):\n{note_body}\n"
-    
-    return content
+    try:
+        import json
+        
+        # Return the raw JSON string with proper formatting
+        return json.dumps(issue, indent=2, ensure_ascii=False)
+        
+    except Exception as e:
+        error("GITLAB", "Failed to format issue content", f"Error: {str(e)}")
+        return f"# Issue: {issue.get('title', 'Unknown')}"
