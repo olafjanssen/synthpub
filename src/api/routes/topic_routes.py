@@ -15,6 +15,7 @@ from api.db.topic_db import (
     save_topic,
     update_topic,
 )
+from api.db.cleanup_utils import run_full_cleanup
 from api.models.topic import Topic, TopicCreate, TopicUpdate
 from curator.graph_workflow import create_curator_graph
 from curator.topic_updater import (
@@ -128,6 +129,17 @@ async def get_topic_route(topic_id: str):
     """Get a specific topic by ID."""
     topic = get_topic(topic_id)
     if not topic:
+        # Try to clean up orphaned references before giving up
+        from api.db.cleanup_utils import cleanup_orphaned_topic_references
+        cleaned_count = cleanup_orphaned_topic_references()
+        
+        if cleaned_count > 0:
+            # Try again after cleanup
+            topic = get_topic(topic_id)
+            if topic:
+                debug("TOPIC", "Retrieved after cleanup", f"ID: {topic_id}, Cleaned: {cleaned_count}")
+                return topic
+        
         error("TOPIC", "Not found", f"ID: {topic_id}")
         raise HTTPException(status_code=404, detail="Topic not found")
     debug("TOPIC", "Retrieved", topic.name)
@@ -439,3 +451,32 @@ async def restart_topic_route(topic_id: str, background_tasks: BackgroundTasks):
             # If error formatting fails, use a simple error response
             print(f"Error during exception handling: {formatting_error}")
             raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post(
+    "/cleanup",
+    response_model=dict,
+    summary="Cleanup Orphaned References",
+    description="Remove orphaned topic, article, and feed references from the database",
+    response_description="Summary of cleanup operations performed",
+    responses={500: {"description": "Internal server error"}},
+)
+async def cleanup_orphaned_references():
+    """Clean up orphaned references in the database."""
+    try:
+        info("CLEANUP", "Manual cleanup requested", "Starting cleanup via API")
+        results = run_full_cleanup()
+        
+        return {
+            "message": "Cleanup completed successfully",
+            "results": results,
+            "total_cleaned": sum(results.values())
+        }
+        
+    except Exception as e:
+        error_message = str(e)
+        error("CLEANUP", "Cleanup failed", error_message)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Cleanup failed: {error_message}"
+        )
