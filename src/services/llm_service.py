@@ -68,6 +68,7 @@ def get_llm(task: str):
             "model": model_name,
             "base_url": base_url,
             "temperature": temperature,
+            "model_provider": "ollama",  # Explicitly specify the provider
         }
         
         # Add max_tokens if supported by the model
