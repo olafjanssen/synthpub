@@ -94,8 +94,10 @@ def parse_template(template_content: str) -> TemplateStructure:
     while i < len(lines):
         line = lines[i].strip()
         
-        # Check for title placeholder
-        if line.startswith('{title}') and not title_placeholder:
+        # Check for title placeholder (either standalone or as heading)
+        if line == '{title}' and not title_placeholder:
+            title_placeholder = line
+        elif line == '# {title}' and not title_placeholder:
             title_placeholder = line
         
         # Check for headings
@@ -103,6 +105,11 @@ def parse_template(template_content: str) -> TemplateStructure:
         if heading_match:
             level = len(heading_match.group(1))
             heading_text = heading_match.group(2).strip()
+            
+            # Skip if this is a title placeholder heading
+            if heading_text == '{title}':
+                i += 1
+                continue
             
             # Collect guidance text (everything until next heading or end)
             guidance_lines = []

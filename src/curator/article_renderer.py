@@ -115,6 +115,10 @@ def render_article(
             rendered_lines.append(llm_response['title'])
             i += 1
             continue
+        elif line.strip() == '# {title}' and 'title' in llm_response:
+            rendered_lines.append(f"# {llm_response['title']}")
+            i += 1
+            continue
         
         # Handle headings and their guidance
         heading_match = None
