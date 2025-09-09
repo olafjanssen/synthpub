@@ -62,7 +62,8 @@ class TemplateService:
         topic_title: str,
         topic_description: str,
         llm_config: str = "article_generation",
-        max_retries: int = 3
+        max_retries: int = 3,
+        template_only: bool = False
     ) -> str:
         """
         Generate an article using a structured template.
@@ -73,6 +74,7 @@ class TemplateService:
             topic_description: Article topic description
             llm_config: LLM configuration to use
             max_retries: Maximum number of retry attempts
+            template_only: If True, return template structure without LLM generation
             
         Returns:
             Generated markdown article
@@ -82,6 +84,10 @@ class TemplateService:
         """
         # Load template
         template_structure = self.load_template(template_id)
+        
+        # If template_only mode, return template structure with title filled in
+        if template_only:
+            return self._render_template_only(template_structure, topic_title)
         
         # Get LLM
         llm = get_llm(llm_config)
@@ -245,6 +251,32 @@ Refine the existing article by integrating the new information while maintaining
         """Create retry prompt with error feedback."""
         from .article_renderer import create_retry_prompt
         return create_retry_prompt(original_prompt, error_message, template_structure)
+    
+    def _render_template_only(self, template_structure: TemplateStructure, topic_title: str) -> str:
+        """
+        Render template structure without LLM generation.
+        
+        Args:
+            template_structure: Parsed template structure
+            topic_title: Article title
+            
+        Returns:
+            Template structure with title filled in
+        """
+        lines = template_structure.raw_content.split('\n')
+        rendered_lines = []
+        
+        for line in lines:
+            # Replace title placeholders
+            if line.strip() == '{title}':
+                rendered_lines.append(topic_title)
+            elif line.strip() == '# {title}':
+                rendered_lines.append(f"# {topic_title}")
+            else:
+                # Keep other lines as-is, including headings and guidance
+                rendered_lines.append(line)
+        
+        return '\n'.join(rendered_lines)
     
     @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
     def _call_llm_with_retry(self, llm, prompt_text: str) -> str:

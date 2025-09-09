@@ -110,14 +110,15 @@ def generate_article(topic: Topic) -> Article:
     
     try:
         # Generate article using template service
-        info("GENERATOR", "Generating article with template", 
+        info("GENERATOR", "Creating article template structure", 
              f"Topic: {topic_title}, Template: {template_id_to_use}")
         
         content = template_service.generate_article_with_template(
             template_id=template_id_to_use,
             topic_title=topic_title,
             topic_description=topic_description,
-            llm_config="article_generation"
+            llm_config="article_generation",
+            template_only=True  # Use template-only mode to avoid hallucination
         )
         
     except Exception as e:

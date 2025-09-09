@@ -102,13 +102,35 @@ Explain the broader context that led to this news:
 ```python
 from curator.template_service import template_service
 
-# Generate article using template
+# Generate article using template (template-only mode for new articles)
 article_content = template_service.generate_article_with_template(
     template_id="project-update-template",
     topic_title="AI Research Project Update",
-    topic_description="Monthly progress report on our AI research initiative"
+    topic_description="Monthly progress report on our AI research initiative",
+    template_only=True  # Avoids hallucination when no news data is available
 )
 ```
+
+### Template-Only Mode
+
+For new article creation when no news data is available yet:
+
+```python
+# Create template structure without LLM generation
+template_content = template_service.generate_article_with_template(
+    template_id="project-update-template",
+    topic_title="AI Research Project Update",
+    topic_description="Monthly progress report on our AI research initiative",
+    template_only=True  # Returns template structure with title filled in
+)
+```
+
+**Benefits of Template-Only Mode:**
+- ✅ No hallucination - Only uses actual template structure
+- ✅ No LLM costs - Avoids unnecessary API calls  
+- ✅ Faster generation - Instant template rendering
+- ✅ Consistent structure - Always follows template exactly
+- ✅ Safe for new articles - No made-up content
 
 ### Article Refinement
 
