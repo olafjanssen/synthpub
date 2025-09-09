@@ -46,6 +46,7 @@ def get_llm(task: str):
     provider_api_keys = {
         "openai": "OPENAI_API_KEY",
         "mistralai": "MISTRAL_API_KEY",
+        "ollama": None,  # Ollama doesn't require API key
     }
 
     # Prepare API key if needed
@@ -56,18 +57,36 @@ def get_llm(task: str):
         if not api_key:
             raise ValueError(f"{api_key_env} not found in environment variables")
 
-    # Initialize model parameters
-    model_params = {
-        "model": model_name,
-        "api_key": api_key,
-        "max_tokens": max_tokens,
-        "rate_limiter": rate_limiter,
-        "temperature": temperature,
-    }
+    # Initialize model parameters based on provider
+    if provider == "ollama":
+        # Ollama-specific configuration
+        ollama_host = os.getenv("OLLAMA_HOST", "localhost")
+        ollama_port = os.getenv("OLLAMA_PORT", "11434")
+        base_url = f"http://{ollama_host}:{ollama_port}"
+        
+        model_params = {
+            "model": model_name,
+            "base_url": base_url,
+            "temperature": temperature,
+        }
+        
+        # Add max_tokens if supported by the model
+        if max_tokens:
+            model_params["max_tokens"] = max_tokens
+            
+    else:
+        # Standard API providers (OpenAI, Mistral, etc.)
+        model_params = {
+            "model": model_name,
+            "api_key": api_key,
+            "max_tokens": max_tokens,
+            "rate_limiter": rate_limiter,
+            "temperature": temperature,
+        }
 
-    # Add random_seed if provided and provider supports it
-    if random_seed is not None and provider in ["mistralai"]:
-        model_params["random_seed"] = random_seed
+        # Add random_seed if provided and provider supports it
+        if random_seed is not None and provider in ["mistralai"]:
+            model_params["random_seed"] = random_seed
 
     # Initialize the chat model using the generalized method
     return init_chat_model(**model_params)
