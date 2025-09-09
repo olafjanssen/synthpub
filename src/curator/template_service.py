@@ -219,28 +219,50 @@ class TemplateService:
         enforcing_information: str,
         contradicting_information: str
     ) -> str:
-        """Create prompt for article refinement."""
-        from .template_parser import create_llm_prompt
+        """Create prompt for article refinement using the enhanced template refinement prompt."""
+        from api.db.prompt_db import get_prompt
+        from langchain.prompts import PromptTemplate
         
-        context = f"""## Existing Article
-{existing_article}
-
-## New Context
-{new_context}
-
-## New Information
-{new_information}
-
-## Supporting Information
-{enforcing_information}
-
-## Contradicting Information
-{contradicting_information}
-
-## Instructions
-Refine the existing article by integrating the new information while maintaining the template structure. Focus on improving the content within each section rather than changing the overall structure."""
+        # Get the enhanced template refinement prompt
+        prompt_data = get_prompt("template-refinement")
+        if not prompt_data:
+            raise ValueError("Template refinement prompt not found in the database")
         
-        return create_llm_prompt(template_structure, topic_title, topic_description, context)
+        # Create template guidance string
+        template_guidance = self._create_template_guidance(template_structure)
+        
+        # Create and format the prompt
+        prompt = PromptTemplate.from_template(prompt_data.template)
+        
+        return prompt.format(
+            topic_title=topic_title,
+            topic_description=topic_description,
+            article=existing_article,
+            new_information=new_information,
+            enforcing_information=enforcing_information,
+            contradicting_information=contradicting_information,
+            template_guidance=template_guidance
+        )
+    
+    def _create_template_guidance(self, template_structure: TemplateStructure) -> str:
+        """
+        Create template guidance string for the refinement prompt.
+        
+        Args:
+            template_structure: Parsed template structure
+            
+        Returns:
+            Formatted template guidance string
+        """
+        guidance_parts = []
+        
+        for section in template_structure.sections:
+            guidance_parts.append(f"**{section.heading}**")
+            guidance_parts.append(f"ID: {section.id}")
+            guidance_parts.append(f"Guidance: {section.guidance}")
+            guidance_parts.append("")
+        
+        return "\n".join(guidance_parts)
     
     def _create_retry_prompt(
         self,
