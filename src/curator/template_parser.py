@@ -254,8 +254,11 @@ def create_llm_prompt(
         "",
         "**Important:**",
         "- Return ONLY the JSON object",
-        "- No markdown formatting in the JSON values",
-        "- No explanations or additional text",
+        "- Use Markdown formatting within JSON values (bold, italic, lists, etc.)",
+        "- Include bullet points, numbered lists, and subheadings as appropriate",
+        "- Use **bold** for emphasis and *italic* for subtle emphasis",
+        "- Create clear structure with proper Markdown syntax",
+        "- No explanations or additional text outside the JSON",
         "- Ensure all required keys are present"
     ])
     

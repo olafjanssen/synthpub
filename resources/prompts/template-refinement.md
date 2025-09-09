@@ -57,7 +57,7 @@ You must generate content for the following sections based on the template:
    - **CRITICAL**: Follow the template's guidance for each section's purpose and tone
 
 4. LENGTH DISCIPLINE
-   - Maintain a consistent length of 300-500 words maximum for the entire article
+   - Maintain a consistent length of 300-500 words maximum per section
    - When adding new information, **remove less essential existing content**
    - Avoid the temptation to include something merely because it exists
    - **CRITICAL**: Distribute content appropriately across template sections
@@ -88,6 +88,13 @@ Return ONLY a JSON object with the following structure:
 - [section_id_1]: [refined content for first template section]
 - [section_id_2]: [refined content for second template section]
 - ... [one key for each template section]
+
+**IMPORTANT FORMATTING GUIDELINES:**
+- Use Markdown formatting within each section's content (bold, italic, lists, links, etc.)
+- Include bullet points, numbered lists, and subheadings as appropriate
+- Use **bold** for emphasis and *italic* for subtle emphasis
+- Create clear structure with proper Markdown syntax
+- Maintain readability and visual hierarchy within each section
 
 Do not include explanations, code fences, or any text outside the JSON object.
 
