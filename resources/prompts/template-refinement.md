@@ -68,6 +68,15 @@ You must generate content for the following sections based on the template:
    - Do not add sections not specified in the template
    - Do not modify the template's organizational structure
 
+6. **CRITICAL - NO HALLUCINATION**
+   - If you do not have sufficient information for a section, leave it empty or write 'No information available'
+   - Do NOT make up facts, statistics, or details that are not provided in the context
+   - Do NOT invent examples, case studies, or scenarios
+   - Do NOT speculate about future events, outcomes, or implications
+   - Only include information that is explicitly provided in the existing article or new context
+   - It is better to have an empty section than to include fabricated content
+   - When in doubt, leave the section empty rather than guessing
+
 ## DELIVERY REQUIREMENTS
 
 Produce a refined article that:
@@ -95,6 +104,15 @@ Return ONLY a JSON object with the following structure:
 - Use **bold** for emphasis and *italic* for subtle emphasis
 - Create clear structure with proper Markdown syntax
 - Maintain readability and visual hierarchy within each section
+
+**CRITICAL - HANDLING MISSING INFORMATION:**
+- If you do not have sufficient information for a section, use one of these approaches:
+  - Leave the section completely empty: `"section_id": ""`
+  - Use a clear placeholder: `"section_id": "No information available"`
+  - Use a brief acknowledgment: `"section_id": "Information not provided in the context"`
+- Do NOT fill sections with made-up content
+- Do NOT use phrases like "Based on available information" followed by speculation
+- It is better to have empty sections than fabricated content
 
 Do not include explanations, code fences, or any text outside the JSON object.
 

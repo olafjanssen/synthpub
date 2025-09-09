@@ -259,7 +259,15 @@ def create_llm_prompt(
         "- Use **bold** for emphasis and *italic* for subtle emphasis",
         "- Create clear structure with proper Markdown syntax",
         "- No explanations or additional text outside the JSON",
-        "- Ensure all required keys are present"
+        "- Ensure all required keys are present",
+        "",
+        "**CRITICAL - NO HALLUCINATION:**",
+        "- If you do not have sufficient information for a section, leave it empty or write 'No information available'",
+        "- Do NOT make up facts, statistics, or details that are not provided",
+        "- Do NOT invent examples or case studies",
+        "- Do NOT speculate about future events or outcomes",
+        "- Only include information that is explicitly provided in the context",
+        "- It is better to have an empty section than to include fabricated content"
     ])
     
     return '\n'.join(prompt_parts)

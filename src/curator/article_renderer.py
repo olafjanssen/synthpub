@@ -234,6 +234,14 @@ Return a JSON object with these exact keys:
 - No explanations or additional text
 - Ensure all required keys are present
 - All values must be strings
+
+## CRITICAL - NO HALLUCINATION
+- If you do not have sufficient information for a section, leave it empty or write 'No information available'
+- Do NOT make up facts, statistics, or details that are not provided
+- Do NOT invent examples or case studies
+- Do NOT speculate about future events or outcomes
+- Only include information that is explicitly provided in the context
+- It is better to have an empty section than to include fabricated content
 """
     
     return retry_prompt
