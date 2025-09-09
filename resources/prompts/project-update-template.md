@@ -1,49 +1,55 @@
 # {title}
 
-## Executive Summary
+## Project Overview
 
-Provide a concise overview of the project's current status, key achievements, and immediate next steps. Keep this section to 2-3 sentences maximum.
+Provide a comprehensive overview of the project, including:
+- **Project Description**: What the project does and its main purpose
+- **Team Composition**: Key team members (ideally by name)
+- **Current Phase**: Development stage (e.g., MVP, Beta, Production, Maintenance)
+- **Technology Stack**: Primary technologies and frameworks used
+- **Target Audience**: Who benefits from this project
 
-## Project Status
+## Key features
 
-Describe the current phase of the project, including:
-- Overall progress percentage
-- Current milestones achieved
-- Any delays or challenges encountered
+Provide a list of the main features of the project and how it links to the project goals.
+- **Feature 1** : description
+- **Feature 2** : description
+- **Feature 3** : description
 
-## Key Achievements
+## Recent Development Summary (Last 6 Months)
 
-List the most significant accomplishments since the last update:
-- Specific deliverables completed
-- Major milestones reached
-- Important decisions made
+### Development Activity
+- **Most Active Contributors**: [List top contributor(s)]
+- **Primary Focus Areas**: [Main development themes]
 
-## Technical Updates
+## Feature Breakdown
 
-Detail any technical developments, including:
-- New features implemented
-- Architecture changes
-- Performance improvements
-- Security updates
+### 🚀 New Features (Last 6 Months)
+| Feature | Description | Impact | Status |
+|---------|-------------|--------|--------|
+| [Feature 1] | [Brief description] | [High/Medium/Low] | [Completed/In Progress] |
+| [Feature 2] | [Brief description] | [High/Medium/Low] | [Completed/In Progress] |
+| [Feature 3] | [Brief description] | [High/Medium/Low] | [Completed/In Progress] |
 
-## Challenges and Risks
+### 🔧 Enhanced Features
+| Feature | Previous State | Current State | Improvement |
+|---------|----------------|---------------|-------------|
+| [Feature A] | [Old functionality] | [New functionality] | [What improved] |
+| [Feature B] | [Old functionality] | [New functionality] | [What improved] |
 
-Identify current obstacles and potential risks:
-- Technical challenges
-- Resource constraints
-- Timeline concerns
-- External dependencies
+### 🐛 Major Bug Fixes
+| Issue | Description | Impact | Resolution |
+|-------|-------------|--------|------------|
+| [Bug 1] | [Brief description] | [High/Medium/Low] | [How it was fixed] |
+| [Bug 2] | [Brief description] | [High/Medium/Low] | [How it was fixed] |
 
-## Next Steps
+### 🚨 Open Issues & Risks
+| Priority | Issue | Description | Impact | Mitigation |
+|----------|-------|-------------|--------|------------|
+| **High** | [Issue 1] | [Brief description] | [Potential impact] | [Mitigation strategy] |
+| **Medium** | [Issue 2] | [Brief description] | [Potential impact] | [Mitigation strategy] |
+| **Low** | [Issue 3] | [Brief description] | [Potential impact] | [Mitigation strategy] |
 
-Outline immediate priorities and upcoming milestones:
-- Short-term goals (next 2-4 weeks)
-- Medium-term objectives (next 1-3 months)
-- Resource requirements
+## Conclusion
 
-## Team Updates
-
-Provide information about team changes, if any:
-- New team members
-- Role changes
-- Capacity adjustments
+Summarize the project's current state, key achievements, and future direction. Highlight the most important developments and what stakeholders should expect in the coming months.
