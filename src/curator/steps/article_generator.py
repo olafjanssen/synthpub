@@ -190,8 +190,21 @@ def _generate_article_legacy(topic_title: str, topic_description: str, prompt_id
     # Use retry decorator for LLM call
     @retry_with_backoff(max_retries=3, base_delay=2.0, max_delay=120.0)
     def _invoke_llm():
-        return llm.invoke(
-            prompt.format(topic_title=topic_title, topic_description=topic_description)
-        ).content
+        from utils.date_utils import get_current_datetime_context, format_datetime_context_for_prompt
+        
+        # Get current date/time context
+        datetime_context = get_current_datetime_context()
+        datetime_info = format_datetime_context_for_prompt(datetime_context)
+        
+        # Format the prompt with date/time context
+        formatted_prompt = prompt.format(
+            topic_title=topic_title, 
+            topic_description=topic_description
+        )
+        
+        # Add date/time context to the prompt
+        enhanced_prompt = f"{formatted_prompt}\n\n## Current Date/Time Context\n\n{datetime_info}\n\n**Important:** Use this date/time information to properly contextualize any temporal references in the content."
+        
+        return llm.invoke(enhanced_prompt).content
 
     return _invoke_llm()

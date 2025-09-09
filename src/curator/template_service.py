@@ -204,9 +204,21 @@ class TemplateService:
         topic_title: str,
         topic_description: str
     ) -> str:
-        """Create prompt for article generation."""
+        """Create prompt for article generation with date/time context."""
         from .template_parser import create_llm_prompt
-        return create_llm_prompt(template_structure, topic_title, topic_description)
+        from utils.date_utils import get_current_datetime_context, format_datetime_context_for_prompt
+        
+        # Get current date/time context
+        datetime_context = get_current_datetime_context()
+        datetime_info = format_datetime_context_for_prompt(datetime_context)
+        
+        # Create base prompt
+        base_prompt = create_llm_prompt(template_structure, topic_title, topic_description)
+        
+        # Add date/time context to the prompt
+        enhanced_prompt = f"{base_prompt}\n\n## Current Date/Time Context\n\n{datetime_info}\n\n**Important:** Use this date/time information to properly contextualize any temporal references in the content."
+        
+        return enhanced_prompt
     
     def _create_refinement_prompt(
         self,
@@ -219,14 +231,19 @@ class TemplateService:
         enforcing_information: str,
         contradicting_information: str
     ) -> str:
-        """Create prompt for article refinement using the enhanced template refinement prompt."""
+        """Create prompt for article refinement using the enhanced template refinement prompt with date/time context."""
         from api.db.prompt_db import get_prompt
         from langchain.prompts import PromptTemplate
+        from utils.date_utils import get_current_datetime_context, format_datetime_context_for_prompt
         
         # Get the enhanced template refinement prompt
         prompt_data = get_prompt("template-refinement")
         if not prompt_data:
             raise ValueError("Template refinement prompt not found in the database")
+        
+        # Get current date/time context
+        datetime_context = get_current_datetime_context()
+        datetime_info = format_datetime_context_for_prompt(datetime_context)
         
         # Create template guidance string
         template_guidance = self._create_template_guidance(template_structure)
@@ -234,7 +251,8 @@ class TemplateService:
         # Create and format the prompt
         prompt = PromptTemplate.from_template(prompt_data.template)
         
-        return prompt.format(
+        # Format the base prompt
+        base_prompt = prompt.format(
             topic_title=topic_title,
             topic_description=topic_description,
             article=existing_article,
@@ -243,6 +261,11 @@ class TemplateService:
             contradicting_information=contradicting_information,
             template_guidance=template_guidance
         )
+        
+        # Add date/time context to the prompt
+        enhanced_prompt = f"{base_prompt}\n\n## Current Date/Time Context\n\n{datetime_info}\n\n**Important:** Use this date/time information to properly contextualize any temporal references in the content, especially when determining if news is about past, present, or future events."
+        
+        return enhanced_prompt
     
     def _create_template_guidance(self, template_structure: TemplateStructure) -> str:
         """
