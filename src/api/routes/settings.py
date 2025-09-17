@@ -20,6 +20,10 @@ class LLMTaskSettings(BaseModel):
     max_tokens: int = Field(
         description="Maximum number of tokens to generate in completions"
     )
+    service_tier: str = Field(
+        default="standard",
+        description="Service tier for OpenAI (standard or flex for cost savings)"
+    )
     model_config = {"protected_namespaces": ()}  # Disable protected namespace checks
 
 

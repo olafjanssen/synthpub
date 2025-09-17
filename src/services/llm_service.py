@@ -34,8 +34,9 @@ def get_llm(task: str):
     provider = task_settings.get("provider", "openai")
     model_name = task_settings.get("model_name", "gpt-4")
     max_tokens = task_settings.get("max_tokens", 4000)
-    temperature = task_settings.get("temperature", 0.2)
+    temperature = task_settings.get("temperature", 1)
     random_seed = task_settings.get("random_seed", 424242)
+    service_tier = task_settings.get("service_tier", "standard")  # Add service tier support
 
     # Create rate limiter
     rate_limiter = InMemoryRateLimiter(
@@ -78,12 +79,17 @@ def get_llm(task: str):
     else:
         # Standard API providers (OpenAI, Mistral, etc.)
         model_params = {
+            "model_provider": provider,
             "model": model_name,
             "api_key": api_key,
             "max_tokens": max_tokens,
             "rate_limiter": rate_limiter,
             "temperature": temperature,
         }
+
+        # Add service_tier for OpenAI flex pricing
+        if provider == "openai" and service_tier == "flex":
+            model_params["service_tier"] = "flex"
 
         # Add random_seed if provided and provider supports it
         if random_seed is not None and provider in ["mistralai"]:
