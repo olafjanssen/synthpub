@@ -4,7 +4,7 @@
 
 Provide a comprehensive overview of the project, including:
 - **Project Description**: What the project does and its main purpose
-- **Team Composition**: Key team members (ideally by name)
+- **Team Composition**: Key team members (ideally by name, but only if certain)
 - **Current Phase**: Development stage (e.g., MVP, Beta, Production, Maintenance)
 - **Technology Stack**: Primary technologies and frameworks used
 - **Target Audience**: Who benefits from this project

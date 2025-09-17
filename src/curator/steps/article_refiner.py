@@ -23,6 +23,29 @@ def _handle_refinement_error(state: Dict[str, Any], e: Exception) -> Dict[str, A
     return new_state
 
 
+def _should_use_incremental_refinement(topic, state: Dict[str, Any]) -> bool:
+    """
+    Determine whether to use incremental refinement based on topic configuration or state.
+    
+    Args:
+        topic: Topic object
+        state: Current workflow state
+        
+    Returns:
+        True if incremental refinement should be used, False otherwise
+    """
+    # Check if topic has incremental refinement enabled
+    if hasattr(topic, 'use_incremental_refinement') and topic.use_incremental_refinement:
+        return True
+    
+    # Check if state explicitly requests incremental refinement
+    if state.get('use_incremental_refinement', False):
+        return True
+    
+    # Default to traditional refinement (incremental is opt-in only)
+    return False
+
+
 def process(state: Dict[str, Any]) -> Dict[str, Any]:
     """
     Refine an existing article with new relevant content.
@@ -46,6 +69,16 @@ def process(state: Dict[str, Any]) -> Dict[str, Any]:
     contradicting_information = state.get("contradicting_information")
 
     try:
+        # Check if incremental refinement is enabled
+        use_incremental = _should_use_incremental_refinement(topic, state)
+        
+        if use_incremental:
+            # Use incremental refinement approach
+            debug("REFINER", "Using incremental refinement", f"Topic: {topic.name}")
+            from curator.steps.incremental_article_refiner import process as incremental_process
+            return incremental_process(state)
+        
+        # Use traditional refinement approach
         # Determine which template to use for refinement
         # Use custom template if specified, otherwise use the default
         template_id_to_use = topic.prompt_id if topic.prompt_id else "article-refinement"
