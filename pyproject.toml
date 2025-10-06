@@ -1,0 +1,79 @@
+[project]
+name = "synthpub"
+version = "0.1.0"
+description = "AI Curated Digital Garden: Automated content synthesis, curation, and publishing platform."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Olaf Janssen" }
+]
+license = { file = "LICENSE" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "nomkl",
+    "langchain",
+    "langchain-community",
+    "langgraph",
+    "graphviz",
+    "six==1.16.0",
+    "pyyaml==6.0.1",
+    "requests==2.32.0",
+    "fastapi>=0.115.11",
+    "uvicorn==0.27.1",
+    "pydantic==2.9.2",
+    "loguru==0.7.2",
+    "websockets>=10.4",
+    "tomli",
+    "tomli_w",
+    "blinker",
+    "defusedxml>=0.7.1",
+    "networkx",
+    "grandalf",
+    "langchain-ollama",
+    "openai",
+    "langchain_openai",
+    "langchain_mistralai",
+    "beautifulsoup4==4.12.3",
+    "feedparser==6.0.11",
+    "youtube-transcript-api",
+    "google_auth_oauthlib",
+    "google-api-python-client",
+    "arxiv",
+    "PyPDF2",
+    "piper-tts>=1.2.0",
+    "kokoro>=0.9.4",
+    "numpy<2.0",
+    "pydub",
+    "soundfile",
+    "pywebview",
+    "chardet",
+    "nuitka",
+    "pytest",
+    "pytest-cov",
+    "flake8",
+    "black",
+    "isort",
+    "mypy",
+    "httpx",
+    "types-requests",
+    "types-beautifulsoup4",
+    "types-defusedxml",
+    "types-PyYAML"
+]
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-report=term-missing"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
