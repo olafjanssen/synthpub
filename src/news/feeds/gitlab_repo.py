@@ -67,22 +67,21 @@ class GitLabRepoConnector(FeedConnector):
             try:
                 commits = fetch_project_commits(host, project_id)
                 for commit in commits:
-                    # Fetch detailed commit information including diff
-                    commit_details = fetch_commit_details(host, project_id, commit.get("id", ""))
-                    if commit_details:
-                        commit.update(commit_details)  # Merge detailed info
-                    
-                    content = format_commit_content(commit, project_path.split("/")[-1])
-                    if content:  # Skip empty content (e.g., merge commits)
+                    commit_sha = commit.get("id", "")
+                    if commit_sha:
+                        commit_message = commit.get("message", "")
+                        commit_date = commit.get("committed_date", "")
+                        commit_author = commit.get("author_name", "Unknown")
+                        
                         all_items.append({
-                            "url": f"gitlab://{host}/{project_path}/-/commit/{commit.get('id', '')}",
-                            "content": content,
-                            "title": f"Commit: {commit.get('message', '')}",
-                            "needs_further_processing": False,
+                            "url": f"https://{host}/{project_path}/-/commit/{commit_sha}",
+                            "content": f"Commit: {commit_message}",
+                            "title": f"Commit: {commit_message}",
+                            "needs_further_processing": True,  # Mark for individual processing
                             "type": "commit",
                             "project": project_path.split("/")[-1],
-                            "author": commit.get("author_name", "Unknown"),
-                            "date": commit.get("committed_date", "")
+                            "author": commit_author,
+                            "date": commit_date
                         })
             except Exception as e:
                 error("GITLAB_REPO", "Failed to fetch commits", f"Project: {project_path}, Error: {str(e)}")
@@ -91,29 +90,29 @@ class GitLabRepoConnector(FeedConnector):
             try:
                 issues = fetch_project_issues(host, project_id)
                 for issue in issues:
-                    # Fetch detailed issue information including discussions
-                    issue_details = fetch_issue_details(host, project_id, issue.get("iid", 0))
-                    if issue_details:
-                        issue.update(issue_details)  # Merge detailed info
-                    
-                    content = format_issue_content(issue, project_path.split("/")[-1])
-                    all_items.append({
-                        "url": f"gitlab://{host}/{project_path}/-/issues/{issue.get('iid', '')}",
-                        "content": content,
-                        "title": f"Issue: {issue.get('title', '')}",
-                        "needs_further_processing": False,
-                        "type": "issue",
-                        "project": project_path.split("/")[-1],
-                        "author": issue.get("author", {}).get("name", "Unknown"),
-                        "date": issue.get("created_at", "")
-                    })
+                    issue_number = issue.get("iid", 0)
+                    if issue_number:
+                        issue_title = issue.get("title", "")
+                        issue_date = issue.get("created_at", "")
+                        issue_author = issue.get("author", {}).get("name", "Unknown")
+                        
+                        all_items.append({
+                            "url": f"https://{host}/{project_path}/-/issues/{issue_number}",
+                            "content": f"Issue #{issue_number}: {issue_title}",
+                            "title": f"Issue #{issue_number}: {issue_title}",
+                            "needs_further_processing": True,  # Mark for individual processing
+                            "type": "issue",
+                            "project": project_path.split("/")[-1],
+                            "author": issue_author,
+                            "date": issue_date
+                        })
             except Exception as e:
                 error("GITLAB_REPO", "Failed to fetch issues", f"Project: {project_path}, Error: {str(e)}")
             
             # Sort by date (oldest first)
             all_items.sort(key=lambda x: x.get("date", ""), reverse=False)
             
-            info("GITLAB_REPO", "Content fetched", f"Total items: {len(all_items)}")
+            info("GITLAB_REPO", "URLs collected", f"Total items: {len(all_items)}")
             return all_items
             
         except Exception as e:
