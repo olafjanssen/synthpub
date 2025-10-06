@@ -4,8 +4,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./db:/app/db
+      - /Users/nullelement/OneDrive - Office 365 Fontys/synthpub-db:/app/db
     environment:
-      - HOST=0.0.0.0
+      - SYNTHPUB_HOST=0.0.0.0
     command: python -m api.run
     restart: unless-stopped 
