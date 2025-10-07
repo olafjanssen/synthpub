@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 import requests
 
 from utils.logging import debug, error, info
+from urllib.parse import quote
 
 
 def get_gitlab_token(host: str = None) -> str:
@@ -285,7 +286,9 @@ def fetch_group_projects(host: str, group_path: str, include_subgroups: bool = T
         List of project dictionaries
     """
     api_base = get_api_base_url(host)
-    url = f"{api_base}/groups/{group_path}/projects"
+    # GitLab API requires URL-encoded namespaced paths for :id
+    encoded_group_path = quote(group_path, safe="")
+    url = f"{api_base}/groups/{encoded_group_path}/projects"
     
     params = {
         "include_subgroups": include_subgroups,
