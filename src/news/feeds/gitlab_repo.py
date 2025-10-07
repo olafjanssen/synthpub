@@ -16,8 +16,8 @@ from .feed_connector import FeedConnector
 class GitLabRepoConnector(FeedConnector):
     """Connector for individual GitLab repositories that fetches commits and issues."""
     
-    # Cache repository data for 30 minutes
-    cache_expiration = 1800
+    # Cache repository data for 1 hour
+    cache_expiration = 3600
     
     @staticmethod
     def can_handle(url: str) -> bool:

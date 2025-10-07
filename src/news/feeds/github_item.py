@@ -18,8 +18,8 @@ from .feed_connector import FeedConnector
 class GitHubItemConnector(FeedConnector):
     """Connector for individual GitHub commits and issues."""
     
-    # Cache individual items for 1 hour
-    cache_expiration = 3600
+    # Cache individual items forever because they are not likely to change
+    cache_expiration = -1
     
     @staticmethod
     def can_handle(url: str) -> bool:

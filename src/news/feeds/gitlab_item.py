@@ -8,7 +8,6 @@ from services.gitlab_service import (
     fetch_issue_details,
     format_commit_content,
     format_issue_content,
-    parse_gitlab_url,
     resolve_project_id,
 )
 from utils.logging import error, info
@@ -19,26 +18,24 @@ from .feed_connector import FeedConnector
 class GitLabItemConnector(FeedConnector):
     """Connector for individual GitLab commits and issues."""
     
-    # Cache individual items for 1 hour
-    cache_expiration = 3600
+    # Cache individual items forever because they are not likely to change  
+    cache_expiration = -1
     
     @staticmethod
     def can_handle(url: str) -> bool:
         """Check if this connector can handle the given URL."""
         parsed = urlparse(url)
         
-        # Check if it's a GitLab URL
-        if not (parsed.netloc == "gitlab.com" or parsed.netloc.endswith(".gitlab.com")):
+        # Recognize GitLab-style paths on any host: /group[/subgroup]*/project/-/(commit|issues)/id
+        path_parts = parsed.path.strip("/").split("/")
+        if len(path_parts) < 5:
             return False
         
-        # Check if it's a commit or issue URL
-        path_parts = parsed.path.strip("/").split("/")
-        if len(path_parts) >= 4:
-            # Format: /group/project/-/commit/sha or /group/project/-/issues/number
-            if len(path_parts) >= 5 and path_parts[-2] in ["commit", "issues"]:
-                return True
+        # Ensure GitLab pattern with "-" segment before the type
+        if path_parts[-3] != "-":
+            return False
         
-        return False
+        return path_parts[-2] in ["commit", "issues"]
     
     @staticmethod
     def fetch_content(url: str) -> List[Dict[str, Any]]:
